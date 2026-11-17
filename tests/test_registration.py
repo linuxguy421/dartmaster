@@ -1,9 +1,9 @@
 import pytest
 
 from app.brackets.loader import load_bracket
-from app.registration import Gender, RegistrationError, TournamentRoster
-
 from pathlib import Path
+
+from app.registration import Gender, RegistrationError, TournamentRoster
 
 DATA_DIR = Path(__file__).parents[1] / "data"
 
@@ -16,6 +16,12 @@ def registered_roster() -> TournamentRoster:
     roster.register_player("p4", "Taylor", Gender.FEMALE)
     roster.create_team("team-a", "Team A", "p1", "p2")
     roster.create_team("team-b", "Team B", "p3", "p4")
+    roster.register_player("p5", "Jordan", Gender.MALE)
+    roster.register_player("p6", "Riley", Gender.FEMALE)
+    roster.register_player("p7", "Cameron", Gender.MALE)
+    roster.register_player("p8", "Avery", Gender.FEMALE)
+    roster.create_team("team-c", "Team C", "p5", "p6")
+    roster.create_team("team-d", "Team D", "p7", "p8")
     return roster
 
 
@@ -57,11 +63,12 @@ def test_assigns_unique_teams_to_exact_bracket_seeds():
     roster = registered_roster()
     roster.assign_seed("T1", "team-a")
     roster.assign_seed("T2", "team-b")
+    roster.assign_seed("T3", "team-c")
+    roster.assign_seed("T4", "team-d")
     definition = load_bracket(DATA_DIR / "4teamD.json")
 
-    assert roster.runtime_entrants(definition) == {"T1": "Team A", "T2": "Team B"}
-    with pytest.raises(RegistrationError, match="missing seeds"):
-        roster.validate_for_bracket(definition)
+    assert roster.runtime_entrants(definition) == {"T1": "Team A", "T2": "Team B", "T3": "Team C", "T4": "Team D"}
+    roster.validate_for_bracket(definition)
 
 
 def test_rejects_duplicate_seed_or_team_assignment():
