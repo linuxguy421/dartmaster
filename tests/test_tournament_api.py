@@ -57,10 +57,10 @@ def test_live_dashboard_exposes_four_boards_and_manual_enable(tmp_path, monkeypa
     assert all(board["status"] == "disabled" for board in status["boards"])
     assert status["scheduler"]["mode"] == "manual"
     assert [match["match_id"] for match in status["bracket"]] == [
-        "G1", "G2", "G3", "CHAMPIONSHIP"
+        "G1", "G2", "G3", "G4", "G5", "CHAMPIONSHIP"
     ]
     assert [match["status"] for match in status["bracket"]] == [
-        "ready", "ready", "waiting", "waiting"
+        "ready", "ready", "waiting", "waiting", "waiting", "waiting"
     ]
 
     enabled = client.post(
