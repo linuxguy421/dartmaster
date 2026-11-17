@@ -62,6 +62,9 @@ class BoardScheduler:
         self.mode = SchedulerMode(mode)
         if self.mode == SchedulerMode.AUTO:
             self._enabled_boards.clear()
+        else:
+            # Active assignments remain in service when switching from auto.
+            self._enabled_boards = set(self._assignments)
 
     def enable_board(self, board_id: int) -> None:
         self._validate_board(board_id)
