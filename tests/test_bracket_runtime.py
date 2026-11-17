@@ -56,6 +56,7 @@ def test_upper_bracket_finalist_winning_ends_championship_without_reset():
     assert runtime.champion == "Team One"
     assert runtime.championship_phase == ChampionshipPhase.COMPLETE
     assert runtime.ready_matches() == ()
+    assert runtime.placements["2nd"] == "Team Four"
     assert "GGF" not in runtime.results
 
 
