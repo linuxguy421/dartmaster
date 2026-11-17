@@ -112,6 +112,7 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
     assert created.status_code == 201
     assert created.json()["team_count"] == 4
     assert created.json()["scheduler_mode"] == "manual"
+    assert created.json()["dashboard_url"] == f"/tournaments/{created.json()['tournament_id']}"
 
 
 def test_seed_assignment_rejects_incomplete_bracket_mapping(tmp_path, monkeypatch):
@@ -138,3 +139,4 @@ def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypa
     assert 'Bracket selected automatically' in response.text
     assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
     assert 'id="bracket-select" disabled' in response.text
+    assert "window.location.assign(result.dashboard_url)" in response.text
