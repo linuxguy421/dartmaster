@@ -110,7 +110,7 @@ class BoardScheduler:
         return {
             "board_count": self.board_count,
             "mode": self.mode.value,
-            "enabled_boards": list(sorted(self._enabled_boards)),
+            "enabled_boards": sorted(self._enabled_boards),
             "assignments": [
                 {
                     "board_id": item.board_id,
@@ -137,14 +137,14 @@ class BoardScheduler:
             )
             enabled = snapshot["enabled_boards"]
             if not isinstance(enabled, list):
-                raise ValueError("enabled_boards must be a list")
+                raise TypeError("enabled_boards must be a list")
             for board_id in enabled:
                 scheduler._validate_board(board_id)
                 scheduler._enabled_boards.add(board_id)
 
             assignments = snapshot["assignments"]
             if not isinstance(assignments, list):
-                raise ValueError("assignments must be a list")
+                raise TypeError("assignments must be a list")
             for raw in assignments:
                 board_id = raw["board_id"]
                 scheduler._validate_board(board_id)
