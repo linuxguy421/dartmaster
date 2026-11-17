@@ -4,7 +4,7 @@ import pytest
 
 from app.brackets.loader import load_bracket
 from app.brackets.runtime import BracketRuntime, ChampionshipPhase
-from app.brackets.scheduler import BoardScheduler, SchedulerMode
+from app.brackets.scheduler import BoardScheduler
 from app.state.store import TournamentStateStore, TournamentStoreError
 
 DATA_DIR = Path(__file__).parents[1] / "data"
@@ -21,13 +21,12 @@ def make_runtime() -> BracketRuntime:
     return BracketRuntime(definition, entrants)
 
 
-def test_save_and_restore_preserves_results_board_assignments_and_manual_mode(tmp_path):
+def test_save_and_restore_preserves_results_and_operator_board_assignments(tmp_path):
     definition = load_bracket(DATA_DIR / "4teamD.json")
     runtime = make_runtime()
     scheduler = BoardScheduler()
-    scheduler.enable_board(2)
-    scheduler.enable_board(4)
-    scheduler.start_available(runtime)
+    scheduler.assign(2, "G1", runtime)
+    scheduler.assign(4, "G2", runtime)
 
     store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
     store.save(
@@ -46,8 +45,7 @@ def test_save_and_restore_preserves_results_board_assignments_and_manual_mode(tm
     assert bracket_file == "data/4teamD.json"
     assert restored_runtime.entrants == runtime.entrants
     assert restored_runtime.results == {}
-    assert restored_scheduler.mode == SchedulerMode.MANUAL
-    assert restored_scheduler.enabled_boards == (2, 4)
+    assert restored_scheduler.enabled_boards == (1, 2, 3, 4)
     assert [
         (item.board_id, item.match.match_id) for item in restored_scheduler.assignments
     ] == [(2, "G1"), (4, "G2")]
@@ -63,8 +61,8 @@ def test_restore_replays_results_and_preserves_championship_reset_board(tmp_path
     runtime.record_winner("G4", "Team Four")
     runtime.record_winner("G5", "Team Four")
 
-    scheduler = BoardScheduler(mode=SchedulerMode.AUTO)
-    championship = scheduler.start_available(runtime)[0]
+    scheduler = BoardScheduler()
+    championship = scheduler.assign(3, "CHAMPIONSHIP", runtime)
     assert championship.match.match_id == "CHAMPIONSHIP"
     scheduler.complete(championship.board_id, "Team Four", runtime)
 
@@ -83,7 +81,8 @@ def test_restore_replays_results_and_preserves_championship_reset_board(tmp_path
 
     assert restored_runtime.championship_phase == ChampionshipPhase.RESET
     assert restored_runtime.results["GF"].winner == "Team Four"
-    assert restored_scheduler.mode == SchedulerMode.AUTO
+    assert restored_scheduler.mode.value == "manual"
+    assert restored_scheduler.enabled_boards == (1, 2, 3, 4)
     assert len(restored_scheduler.assignments) == 1
     assignment = restored_scheduler.assignments[0]
     assert assignment.board_id == championship.board_id
