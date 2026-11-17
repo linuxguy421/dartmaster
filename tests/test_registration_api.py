@@ -233,3 +233,34 @@ def test_completed_tournaments_are_not_listed_as_unfinished(tmp_path, monkeypatc
         f"{base}/1/winner", json={"winner": final_match["participants"][0]}
     ).status_code == 200
     assert client.get("/api/tournaments").json() == []
+
+
+def test_unfinished_tournament_can_be_permanently_deleted(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=4, females=4)
+    players = client.get("/api/registration").json()["players"]
+    draws = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
+    }
+    assert client.post("/api/registration/draw", json={"mixed_draws": draws}).status_code == 200
+    teams = client.get("/api/registration").json()["teams"]
+    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
+    assert client.put("/api/registration/seeds", json={"bracket_file": "4teamD.json", "assignments": assignments}).status_code == 200
+    created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"})
+    assert created.status_code == 201
+    tournament_id = created.json()["tournament_id"]
+
+    assert client.get(f"/api/tournaments/{tournament_id}").status_code == 200
+    assert client.delete(f"/api/tournaments/{tournament_id}").status_code == 204
+    assert client.get(f"/api/tournaments/{tournament_id}").status_code == 404
+    assert client.get("/api/tournaments").json() == []
+    assert client.delete(f"/api/tournaments/{tournament_id}").status_code == 404
+
+
+def test_registration_page_offers_confirmed_permanent_tournament_deletion(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "data-delete-tournament" in response.text
+    assert "Permanently delete this tournament and all of its saved match/event history? This cannot be undone." in response.text
