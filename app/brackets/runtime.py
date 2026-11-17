@@ -99,7 +99,9 @@ class BracketRuntime:
 
         raise BracketRuntimeError(f"Unsupported participant reference: {reference}")
 
-    def _participants(self, game_id: str) -> tuple[str, str] | None:
+    def _participants(
+        self, game_id: str, *, strict: bool = False
+    ) -> tuple[str, str] | None:
         game = self.definition.games.get(game_id)
         if not isinstance(game, dict):
             raise BracketRuntimeError(f"Missing or invalid game definition: {game_id}")
@@ -114,6 +116,8 @@ class BracketRuntime:
             try:
                 resolved.append(self._resolve(reference))
             except BracketRuntimeError:
+                if strict:
+                    raise
                 return None
 
         if resolved[0] == resolved[1]:
@@ -131,7 +135,7 @@ class BracketRuntime:
                 continue
             if game_id == "GF":
                 if self.championship_phase == ChampionshipPhase.RESET:
-                    participants = self._participants("GGF")
+                    participants = self._participants("GGF", strict=True)
                     if participants is not None:
                         ready.append(
                             ReadyMatch(
@@ -209,8 +213,11 @@ class BracketRuntime:
                 self.championship_phase = ChampionshipPhase.COMPLETE
                 self._record_terminal_route("GF", "winner_advances_to", winner)
                 self._record_terminal_route("GF", "loser_drops_to", loser)
-                second_place_route = self.definition.games.get("GGF", {}).get(
-                    "loser_drops_to", {}
+                reset_game = self.definition.games.get("GGF")
+                second_place_route = (
+                    reset_game.get("loser_drops_to", {})
+                    if isinstance(reset_game, dict)
+                    else {}
                 )
                 if (
                     isinstance(second_place_route, dict)
