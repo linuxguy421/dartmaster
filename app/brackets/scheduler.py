@@ -60,6 +60,8 @@ class BoardScheduler:
 
     def set_mode(self, mode: SchedulerMode) -> None:
         self.mode = SchedulerMode(mode)
+        if self.mode == SchedulerMode.AUTO:
+            self._enabled_boards.clear()
 
     def enable_board(self, board_id: int) -> None:
         self._validate_board(board_id)
@@ -101,7 +103,6 @@ class BoardScheduler:
         for board_id, match in zip(free_boards, ready):
             self._assignments[board_id] = BoardAssignment(board_id, match)
         return self.assignments
-
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -202,10 +203,10 @@ class BoardScheduler:
         ):
             try:
                 reset_match = next(
-                        match
-                        for match in runtime.ready_matches()
-                        if match.match_id == "CHAMPIONSHIP"
-                    )
+                    match
+                    for match in runtime.ready_matches()
+                    if match.match_id == "CHAMPIONSHIP"
+                )
                 updated = BoardAssignment(board_id, reset_match)
             except (BracketRuntimeError, StopIteration) as exc:
                 # Keep the board reserved even when the source reset definition
