@@ -64,17 +64,16 @@ class RegistrationDraftStore:
             if draw_state is not None
             else None
         )
-        with closing(self._connect()) as connection:
-            with connection:
-                connection.execute(
-                    """
-                    INSERT INTO registration_drafts (
-                        draft_id, roster_json, draw_json, updated_at
-                    ) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(draft_id) DO UPDATE SET
-                        roster_json = excluded.roster_json,
-                        draw_json = excluded.draw_json,
-                        updated_at = CURRENT_TIMESTAMP
-                    """,
-                    (self.DRAFT_ID, roster_json, draw_json),
-                )
+        with closing(self._connect()) as connection, connection:
+            connection.execute(
+                """
+                INSERT INTO registration_drafts (
+                    draft_id, roster_json, draw_json, updated_at
+                ) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(draft_id) DO UPDATE SET
+                    roster_json = excluded.roster_json,
+                    draw_json = excluded.draw_json,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (self.DRAFT_ID, roster_json, draw_json),
+            )
