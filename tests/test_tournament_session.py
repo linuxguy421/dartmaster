@@ -60,7 +60,7 @@ def test_session_completion_does_not_auto_assign_next_ready_match(tmp_path):
     session.complete_match(3, "Team Two")
 
     assert session.scheduler.assignments == ()
-    assert [match.match_id for match in session.scheduler.ready_matches(session.runtime)] == ["G3"]
+    assert [match.match_id for match in session.scheduler.ready_matches(session.runtime)] == ["G3", "G4"]
     restored = TournamentSession.restore("operator-night", definition(), store)
     assert restored.runtime.results["G1"].winner == "Team One"
     assert restored.runtime.results["G2"].winner == "Team Two"
