@@ -96,7 +96,8 @@ function render(){
 function renderDrawInputs(){
  const order=firstGender(),other=order==='male'?'female':'male';
  $('draw-order').textContent='Draw order: '+order+' first, then '+other+'. Enter the number each player draws.';
- $('draw-inputs').innerHTML=state.players.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">'+p.gender+'</span><input type="number" min="1" step="1" required data-mixed="'+p.player_id+'" aria-label="Initial draw number for '+escapeHtml(p.display_name)+'"></label>').join('');
+ const orderedPlayers=[...state.players].sort((a,b)=>(a.gender===order?0:1)-(b.gender===order?0:1));
+ $('draw-inputs').innerHTML=orderedPlayers.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">'+p.gender+'</span><input type="number" min="1" step="1" required data-mixed="'+p.player_id+'" aria-label="Initial draw number for '+escapeHtml(p.display_name)+'"></label>').join('');
  $('draw-off-area').classList.add('hidden');drawOffIds=[];
  $('draw-inputs').querySelectorAll('input').forEach(input=>input.addEventListener('input',previewDrawOff));
 }
