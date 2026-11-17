@@ -78,8 +78,7 @@ function boardMarkup(board){
  if(match){
   body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' · Conditional reset':'')+'</div>'+
    '<div class="teams"><div class="team">'+esc(match.participants[0])+'</div><div class="vs">versus</div><div class="team">'+esc(match.participants[1])+'</div></div>'+
-   (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'')+
-   '<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'"> '+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>';
+   (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'">'+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>');
  }else if(board.configured&&current.scheduler.mode==='manual'){
   body='<div class="status">'+statusText+'</div><div class="actions">'+(board.enabled?'<button class="secondary" data-disable="'+board.board_id+'">Disable board</button>':'<button data-enable="'+board.board_id+'">Enable board</button>')+'</div>';
  }else{
