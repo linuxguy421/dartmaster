@@ -115,6 +115,9 @@ def health() -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard() -> str:
+    # A visit to the registration page always begins a fresh registration.
+    # Tournament snapshots are stored separately and remain available to resume.
+    registration_store().clear()
     return (ROOT / "app" / "templates" / "registration.html").read_text(encoding="utf-8")
 
 
