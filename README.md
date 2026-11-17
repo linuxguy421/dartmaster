@@ -59,7 +59,7 @@ The foundation includes the ordered JSON bracket loader, read-only bracket audit
 2. Record the larger group's number draw first (females draw first when group sizes are equal), then the other group's matching numbers.
 3. Record a draw-off number for every unmatched player; each draw-off number must occur exactly twice to identify a partner.
 4. Review the generated mixed and same-gender teams.
-5. Assign each team to a seed in the selected JSON bracket and start the tournament.\n6. Use the live dashboard to enable boards, record winners, and monitor progression. The dashboard always renders four board positions; unconfigured boards are dimmed.
+5. Dartmaster automatically selects the JSON bracket matching the generated team count; assign each team to a seed and start the tournament.\n6. Use the live dashboard to enable boards, record winners, and monitor progression. The dashboard always renders four board positions; unconfigured boards are dimmed.
 
 The registration draft, recorded draw numbers, teams, and seed assignments persist in SQLite. Starting a tournament snapshots the validated roster alongside bracket progression and scheduler state. The tournament engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible).
 
