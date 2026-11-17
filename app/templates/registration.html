@@ -61,7 +61,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;
 <section id="seeds-section" class="hidden">
   <h2>4. Assign bracket seeds</h2>
   <div class="row">
-    <label>Bracket<select id="bracket-select"></select></label>
+    <label>Bracket selected automatically<select id="bracket-select" disabled></select></label>
     <label>Scheduler mode<select id="scheduler-mode"><option value="manual">Manual (default)</option><option value="auto">Automatic</option></select></label>
     <label>Boards in service<select id="board-count"><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
   </div>
@@ -126,11 +126,18 @@ $('draw-button').addEventListener('click',async()=>{try{
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
 function renderSeeds(){
- const bracket=brackets.find(b=>b.filename===$('bracket-select').value)||brackets[0];if(!bracket)return;
+ const bracket=brackets.find(b=>b.team_count===state.teams.length);
+ $('bracket-select').value=bracket?.filename||'';
+ if(!bracket){
+  $('seed-inputs').innerHTML='<p class="error">No bracket definition is available for '+state.teams.length+' teams. Add the matching JSON bracket before continuing.</p>';
+  $('start-tournament').disabled=true;
+  $('save-seeds').disabled=true;
+  return;
+ }
+ $('save-seeds').disabled=false;
  $('seed-inputs').innerHTML=Array.from({length:bracket.team_count},(_,i)=>{const seed='T'+(i+1),current=state.seed_assignments[seed]||'';return '<label>Seed '+seed+'<select data-seed="'+seed+'"><option value="">Select team</option>'+state.teams.map(t=>'<option value="'+t.team_id+'" '+(current===t.team_id?'selected':'')+'>'+escapeHtml(t.name)+' — '+escapeHtml(t.player_one)+' / '+escapeHtml(t.player_two)+'</option>').join('')+'</select></label>'}).join('');
  $('start-tournament').disabled=Object.keys(state.seed_assignments).length!==bracket.team_count;
 }
-$('bracket-select').addEventListener('change',renderSeeds);
 $('save-seeds').addEventListener('click',async()=>{try{const assignments={};$('seed-inputs').querySelectorAll('select').forEach(s=>{if(!s.value)throw new Error('Assign a team to every seed.');assignments[s.dataset.seed]=s.value});state=await api('/api/registration/seeds',{method:'PUT',body:JSON.stringify({bracket_file:$('bracket-select').value,assignments})});render();notify('Seed assignments saved.')}catch(err){notify(err.message,true)}});
 $('start-tournament').addEventListener('click',async()=>{try{const result=await api('/api/tournaments',{method:'POST',body:JSON.stringify({bracket_file:$('bracket-select').value,board_count:Number($('board-count').value),scheduler_mode:$('scheduler-mode').value})});$('tournament-result').classList.remove('hidden');$('tournament-result').innerHTML='<strong class="success">Tournament created</strong><br> ID: '+escapeHtml(result.tournament_id)+'<br> '+result.team_count+' teams · '+result.scheduler_mode+' scheduling';notify('Tournament created.')}catch(err){notify(err.message,true)}});
 async function refresh(){state=await api('/api/registration');render();}
