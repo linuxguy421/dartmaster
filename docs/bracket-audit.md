@@ -33,6 +33,8 @@ These findings are intentionally recorded as diagnostics, not repaired in place:
   bracket at `G15`. The intended finalist reference requires confirmation.
 - **9 teams:** The incoming loser route from `G10` targets `G12` slot 0, but that
   slot says `L-10` rather than `L-G10`.
+- **9 teams:** The incoming winner route from `G13` targets `GF` slot 0, but that
+  slot says `W-G15` rather than `W-G13`.
 - **9 teams:** The incoming winner route from `G15` targets `GF` slot 1, but that
   slot says `W-G17` rather than `W-G15`.
 
