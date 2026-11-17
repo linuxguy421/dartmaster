@@ -106,7 +106,7 @@ def test_malformed_five_team_reset_is_reported_not_repaired():
     # Seed upstream results to isolate the conditional-reset reference check.
     runtime.results["G5"] = GameResult("G5", "Team 1", "Team 2")
     runtime.results["G7"] = GameResult("G7", "Team 3", "Team 4")
-    runtime.record_winner("CHAMPIONSHIP", "Team 4")
+    runtime.record_winner("CHAMPIONSHIP", "Team 3")
 
     with pytest.raises(BracketRuntimeError, match="W-G8 cannot resolve"):
         runtime.ready_matches()
