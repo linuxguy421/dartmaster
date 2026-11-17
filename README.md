@@ -29,13 +29,13 @@ Set `DARTMASTER_DB_PATH` to use a different SQLite database location.
 
 ## Current implementation
 
-The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, four-board scheduler, SQLite-backed tournament session/state store, and player/team registration domain. The browser setup workflow is served at `/`:
+The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, four-board scheduler, SQLite-backed tournament session/state store, and player/team registration domain. The browser setup workflow is served at `/`. Starting a tournament opens its live four-board dashboard at `/tournaments/{tournament_id}`, with polling updates, manual board controls, scheduler mode changes, winner-only match completion, and a completed-match history:
 
 1. Register players with a display name and gender.
 2. Record the larger group's number draw first (females draw first when group sizes are equal), then the other group's matching numbers.
 3. Record a draw-off number for every unmatched player; each draw-off number must occur exactly twice to identify a partner.
 4. Review the generated mixed and same-gender teams.
-5. Assign each team to a seed in the selected JSON bracket and start the tournament.
+5. Assign each team to a seed in the selected JSON bracket and start the tournament.\n6. Use the live dashboard to enable boards, record winners, and monitor progression. The dashboard always renders four board positions; unconfigured boards are dimmed.
 
 The registration draft, recorded draw numbers, teams, and seed assignments persist in SQLite. Starting a tournament snapshots the validated roster alongside bracket progression and scheduler state. The tournament engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible).
 
