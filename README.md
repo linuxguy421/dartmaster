@@ -26,7 +26,7 @@ Open http://127.0.0.1:8000.
 
 ## Current implementation
 
-The foundation includes the FastAPI entrypoint, ordered JSON bracket loader, read-only bracket audit CLI, an in-memory progression engine, and a four-board scheduler. The engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible). See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
+The foundation includes the FastAPI entrypoint, ordered JSON bracket loader, read-only bracket audit CLI, an in-memory progression engine, a four-board scheduler, and a SQLite-backed tournament session/state store. The engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible). Use `TournamentSession.create(...)` to start a persisted tournament and `TournamentSession.restore(...)` to recover it after restart. Operator actions and match results are snapshotted transactionally alongside an append-only event history. See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
 
 Run the audit with:
 
