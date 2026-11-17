@@ -98,13 +98,13 @@ function renderDrawInputs(){
  $('draw-order').textContent='Draw order: '+order+' first, then '+other+'. Enter the number each player draws.';
  const orderedPlayers=[...state.players].sort((a,b)=>(a.gender===order?0:1)-(b.gender===order?0:1));
  $('draw-inputs').innerHTML=orderedPlayers.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">'+p.gender+'</span><input type="number" min="1" step="1" required data-mixed="'+p.player_id+'" aria-label="Initial draw number for '+escapeHtml(p.display_name)+'"></label>').join('');
- $('draw-off-area').classList.add('hidden');drawOffIds=[];
+ $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];
  $('draw-inputs').querySelectorAll('input').forEach(input=>input.addEventListener('input',previewDrawOff));
 }
 function previewDrawOff(){
  const values={};let valid=true;
  $('draw-inputs').querySelectorAll('input').forEach(input=>{if(!input.value){valid=false;return;}values[input.dataset.mixed]=Number(input.value)});
- if(!valid){$('draw-off-area').classList.add('hidden');return;}
+ if(!valid){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];return;}
  const numbersByGender={male:new Set(),female:new Set()};
  state.players.forEach(p=>numbersByGender[p.gender].add(values[p.player_id]));
  const first=firstGender(),second=first==='male'?'female':'male';
@@ -113,7 +113,7 @@ function previewDrawOff(){
  state.players.filter(p=>p.gender===first).forEach(p=>{if(numbersByGender[second].has(values[p.player_id]))matchedIds.add(p.player_id)});
  state.players.filter(p=>p.gender===second).forEach(p=>{if(numbersByGender[first].has(values[p.player_id]))matchedIds.add(p.player_id)});
  drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
- if(drawOffIds.length===0){$('draw-off-area').classList.add('hidden');return;}
+ if(drawOffIds.length===0){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
  $('draw-off-area').classList.remove('hidden');
  $('draw-off-inputs').innerHTML=drawOffIds.map(id=>{const p=state.players.find(x=>x.player_id===id);return '<label class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">'+p.gender+'</span><input type="number" min="1" step="1" required data-off="'+id+'" aria-label="Draw-off number for '+escapeHtml(p.display_name)+'"></label>'}).join('');
 }
@@ -121,7 +121,7 @@ $('player-form').addEventListener('submit',async e=>{e.preventDefault();try{awai
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
  const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
- const off={};$('draw-off-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a draw-off number for every unmatched player.');off[i.dataset.off]=Number(i.value)});
+ const off={};if(drawOffIds.length){$('draw-off-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a draw-off number for every unmatched player.');off[i.dataset.off]=Number(i.value)});}
  const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed,draw_off_draws:off})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
