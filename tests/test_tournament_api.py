@@ -86,7 +86,7 @@ def test_operator_assigns_ready_matches_and_completion_does_not_auto_assign(tmp_
     completed = client.post(base + "/3/winner", json={"winner": second[0]})
     assert completed.status_code == 200
     assert completed.json()["boards"][2]["match"] is None
-    assert [match["match_id"] for match in completed.json()["ready_matches"]] == ["G3"]
+    assert [match["match_id"] for match in completed.json()["ready_matches"]] == ["G3", "G4"]
     assert completed.json()["scheduler"]["recommended_boards"] == [1, 3]
 
 
