@@ -114,6 +114,21 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
     assert created.json()["scheduler_mode"] == "manual"
     assert created.json()["dashboard_url"] == f"/tournaments/{created.json()['tournament_id']}"
 
+    tournament = client.get(created.json()["dashboard_url"]).status_code
+    assert tournament == 200
+    state = client.get(f"/api/tournaments/{created.json()['tournament_id']}").json()
+    expected_players = {
+        frozenset((team["player_one"], team["player_two"]))
+        for team in teams
+    }
+    actual_players = {
+        frozenset(match["participants"])
+        for match in state["bracket"]
+        if match["status"] == "ready"
+    }
+    assert actual_players == expected_players
+    assert all("Team " not in player for pair in actual_players for player in pair)
+
 
 def test_seed_assignment_rejects_incomplete_bracket_mapping(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
