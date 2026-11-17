@@ -57,13 +57,16 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
         player["player_id"]: number
         for player, number in zip(players, [1, 2, 3, 4, 1, 2], strict=True)
     }
+    female_numbers = {
+        mixed[player["player_id"]]
+        for player in players
+        if player["gender"] == "female"
+    }
     unmatched = [
         player["player_id"]
         for player in players
-        if player["gender"] == "male" and player["player_id"] not in {
-            next(p["player_id"] for p in players if p["gender"] == "female" and mixed[p["player_id"]] == mixed[player["player_id"]])
-            for player in players if player["gender"] == "male"
-        }
+        if player["gender"] == "male"
+        and mixed[player["player_id"]] not in female_numbers
     ]
     response = client.post(
         "/api/registration/draw",
@@ -79,9 +82,12 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
 
 def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client)
+    add_players(client, males=4, females=4)
     players = client.get("/api/registration").json()["players"]
-    draws = {player["player_id"]: number for player, number in zip(players, [1, 2, 1, 2], strict=True)}
+    draws = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
+    }
     assert client.post(
         "/api/registration/draw",
         json={"mixed_draws": draws},
