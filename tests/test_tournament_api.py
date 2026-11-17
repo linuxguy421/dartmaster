@@ -56,6 +56,10 @@ def test_live_dashboard_exposes_four_boards_and_manual_enable(tmp_path, monkeypa
     assert len(status["boards"]) == 4
     assert all(board["status"] == "disabled" for board in status["boards"])
     assert status["scheduler"]["mode"] == "manual"
+    assert [match["match_id"] for match in status["bracket"]] == [
+        "G1", "G2", "G3", "CHAMPIONSHIP"
+    ]
+    assert all(match["status"] == "waiting" for match in status["bracket"])
 
     enabled = client.post(
         f"/api/tournaments/{tournament_id}/boards/2/enable"
