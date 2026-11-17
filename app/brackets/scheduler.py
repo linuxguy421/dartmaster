@@ -92,10 +92,12 @@ class BoardScheduler:
             for board_id in self.enabled_boards
             if board_id not in self._assignments
         ]
-        if not free_boards:
+        if not free_boards or any(
+            assignment.blocked_reason for assignment in self._assignments.values()
+        ):
             return self.assignments
 
-        ready = [
+        ready =
             match
             for match in runtime.ready_matches()
             if match.match_id not in occupied_match_ids
@@ -169,12 +171,21 @@ class BoardScheduler:
                 elif not (
                     match.match_id == "CHAMPIONSHIP"
                     and match.source_game_id == "GGF"
+                    and match.phase == ChampionshipPhase.RESET
                     and runtime.championship_phase == ChampionshipPhase.RESET
+                    and isinstance(blocked_reason, str)
+                    and bool(blocked_reason)
+                    and match.participants == runtime._participants("GF", strict=True)
                 ):
-                    raise ValueError("only a blocked championship reset may reserve a board")
+                    raise ValueError("only a validly reserved blocked championship reset may occupy a board")
                 scheduler._assignments[board_id] = BoardAssignment(
                     board_id, match, blocked_reason
                 )
+            if scheduler.mode == SchedulerMode.MANUAL and any(
+                board_id not in scheduler._enabled_boards
+                for board_id in scheduler._assignments
+            ):
+                raise ValueError("an assigned manual-mode board must be enabled")
             assigned_matches = [
                 item.match.match_id for item in scheduler._assignments.values()
             ]
