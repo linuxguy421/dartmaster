@@ -5,8 +5,8 @@ from typing import Any
 from app.brackets.loader import BracketDefinition
 from app.brackets.runtime import BracketRuntime
 from app.brackets.scheduler import BoardScheduler, SchedulerMode
-from app.state.store import TournamentStateStore
 from app.registration.roster import TournamentRoster
+from app.state.store import TournamentStateStore
 
 
 class TournamentSession:
@@ -44,7 +44,7 @@ class TournamentSession:
         if roster is not None:
             roster.validate_for_bracket(definition)
             if roster.runtime_entrants(definition) != entrants:
-                raise ValueError('Roster team assignments must match runtime entrants')
+                raise ValueError("Roster team assignments must match runtime entrants")
         runtime = BracketRuntime(definition, entrants)
         scheduler = BoardScheduler(board_count=board_count, mode=mode)
         session = cls(tournament_id, bracket_file, runtime, scheduler, store, roster)
