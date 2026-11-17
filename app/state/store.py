@@ -223,6 +223,43 @@ class TournamentStateStore:
                 raise
             raise TournamentStoreError(f"Could not restore tournament: {exc}") from exc
 
+    def unfinished(self) -> list[dict[str, Any]]:
+        """List resumable tournaments without exposing or modifying their snapshots."""
+        try:
+            with self._connection() as connection:
+                rows = connection.execute(
+                    """
+                    SELECT tournament_id, bracket_file, state_json, created_at, updated_at
+                    FROM tournaments
+                    ORDER BY updated_at DESC, created_at DESC
+                    """
+                ).fetchall()
+        except sqlite3.Error as exc:
+            raise TournamentStoreError(f"Could not list tournaments: {exc}") from exc
+
+        output = []
+        for row in rows:
+            try:
+                snapshot = json.loads(row["state_json"])
+                runtime = snapshot["runtime"]
+                if runtime.get("champion") is not None:
+                    continue
+                results = runtime.get("results", [])
+                entrants = snapshot.get("entrants", {})
+                output.append({
+                    "tournament_id": row["tournament_id"],
+                    "bracket_file": row["bracket_file"],
+                    "team_count": len(entrants),
+                    "completed_matches": len(results),
+                    "updated_at": row["updated_at"],
+                    "dashboard_url": f"/tournaments/{row['tournament_id']}",
+                })
+            except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:
+                raise TournamentStoreError(
+                    f"Could not read tournament listing entry {row['tournament_id']}: {exc}"
+                ) from exc
+        return output
+
     def events(self, tournament_id: str) -> list[dict[str, Any]]:
         try:
             with self._connect() as connection:
