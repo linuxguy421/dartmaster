@@ -28,4 +28,4 @@ Open http://127.0.0.1:8000.
 
 The initial foundation includes the FastAPI entrypoint, Python project configuration, and ordered JSON bracket loader. The next milestone is comprehensive validation and tests against every supplied bracket file, followed by the tournament progression engine.
 
-The application must not generate a replacement bracket topology or reorder the JSON-defined games.
+The application must not generate a replacement bracket topology or reorder the JSON-defined games. The `GF` and conditional `GGF` source nodes are presented and scheduled as one logical Championship Match; a required reset stays on the same board and is never queued as a separate match. See [Tournament match model](docs/tournament-model.md).
