@@ -225,4 +225,11 @@ def test_completed_tournaments_are_not_listed_as_unfinished(tmp_path, monkeypatc
     final = next(item for item in state["ready_matches"] if item["match_id"] == "G5")
     assert client.post(f"{base}/1/assign", json={"match_id": "G5"}).status_code == 200
     assert client.post(f"{base}/1/winner", json={"winner": final["participants"][0]}).status_code == 200
+    championship = client.get(f"/api/tournaments/{tournament_id}").json()["ready_matches"]
+    assert [item["match_id"] for item in championship] == ["CHAMPIONSHIP"]
+    assert client.post(f"{base}/1/assign", json={"match_id": "CHAMPIONSHIP"}).status_code == 200
+    final_match = client.get(f"/api/tournaments/{tournament_id}").json()["boards"][0]["match"]
+    assert client.post(
+        f"{base}/1/winner", json={"winner": final_match["participants"][0]}
+    ).status_code == 200
     assert client.get("/api/tournaments").json() == []
