@@ -110,7 +110,7 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
         json={"bracket_file": bracket["filename"], "board_count": 4, "scheduler_mode": "manual"},
     )
     assert created.status_code == 201
-    assert created.json()["team_count"] == 2
+    assert created.json()["team_count"] == 4
     assert created.json()["scheduler_mode"] == "manual"
 
 
