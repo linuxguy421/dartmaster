@@ -56,7 +56,7 @@ def test_rejects_duplicate_player_and_team_names():
     with pytest.raises(RegistrationError, match="Player ID already exists"):
         roster.register_player("p1", "Another Alex", Gender.MALE)
     with pytest.raises(RegistrationError, match="Team name already exists"):
-        roster.create_team("team-c", "team a", "p1", "p4")
+        roster.create_team("team-e", "team a", "p1", "p4")
 
 
 def test_assigns_unique_teams_to_exact_bracket_seeds():
