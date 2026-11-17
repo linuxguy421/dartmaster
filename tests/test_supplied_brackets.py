@@ -41,6 +41,7 @@ def test_known_legacy_reference_anomalies_are_reported():
     assert any("L-10" in message and "missing game 10" in message for message in nine_messages)
     assert any("W-G17" in message and "missing game G17" in message for message in nine_messages)
     assert any("instead of L-G10" in message for message in nine_messages)
+    assert any("instead of W-G13" in message for message in nine_messages)
     assert any("instead of W-G15" in message for message in nine_messages)
 
 
