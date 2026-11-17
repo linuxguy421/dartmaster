@@ -45,10 +45,10 @@ def test_rejects_invalid_team_members(male_id, female_id):
 
 def test_player_cannot_be_reused_across_teams():
     roster = registered_roster()
-    roster.register_player("p5", "Casey", Gender.FEMALE)
+    roster.register_player("p9", "Casey", Gender.FEMALE)
 
     with pytest.raises(RegistrationError, match="more than one team"):
-        roster.create_team("team-c", "Team C", "p1", "p5")
+        roster.create_team("team-e", "Team E", "p1", "p9")
 
 
 def test_rejects_duplicate_player_and_team_names():
