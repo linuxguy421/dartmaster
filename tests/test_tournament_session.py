@@ -86,6 +86,7 @@ def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_pa
         session.assign_match(1, match_id)
         session.complete_match(1, winner)
 
+    session.assign_match(3, "CHAMPIONSHIP")
     championship = session.scheduler.assignments[0]
     board_id = championship.board_id
     session.complete_match(board_id, "Team Four")
