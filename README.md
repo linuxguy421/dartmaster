@@ -5,7 +5,7 @@ A locally hosted Python web application for managing double-elimination darts to
 ## Design decisions
 
 - FastAPI backend with a browser-based operator and display interface.
-- Four dartboards can run matches concurrently.
+- Four dartboards can run matches concurrently, with manual board selection by default or automatic allocation.
 - Match results are winner-only; Dartmaster does not track dart scores.
 - Existing JSON bracket files in `data/` are authoritative. Their game insertion order and routing are preserved.
 - Bracket loading reports structural/reference anomalies without silently repairing source files.
@@ -26,7 +26,7 @@ Open http://127.0.0.1:8000.
 
 ## Current implementation
 
-The foundation includes the FastAPI entrypoint, ordered JSON bracket loader, read-only bracket audit CLI, and an in-memory progression engine. The engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
+The foundation includes the FastAPI entrypoint, ordered JSON bracket loader, read-only bracket audit CLI, an in-memory progression engine, and a four-board scheduler. The engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible). See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
 
 Run the audit with:
 
