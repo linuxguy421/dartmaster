@@ -156,3 +156,73 @@ def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypa
     assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
     assert 'id="bracket-select" disabled' in response.text
     assert "window.location.assign(result.dashboard_url)" in response.text
+
+
+def test_registration_starts_blank_and_unfinished_tournament_can_be_resumed(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=4, females=4)
+    players = client.get("/api/registration").json()["players"]
+    draws = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
+    }
+    assert client.post("/api/registration/draw", json={"mixed_draws": draws}).status_code == 200
+    teams = client.get("/api/registration").json()["teams"]
+    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
+    assert client.put(
+        "/api/registration/seeds",
+        json={"bracket_file": "4teamD.json", "assignments": assignments},
+    ).status_code == 200
+
+    created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"})
+    assert created.status_code == 201
+    tournament_id = created.json()["tournament_id"]
+
+    fresh_registration = client.get("/api/registration").json()
+    assert fresh_registration["players"] == []
+    assert fresh_registration["teams"] == []
+    assert fresh_registration["seed_assignments"] == {}
+
+    unfinished = client.get("/api/tournaments").json()
+    assert len(unfinished) == 1
+    assert unfinished[0]["tournament_id"] == tournament_id
+    assert unfinished[0]["dashboard_url"] == f"/tournaments/{tournament_id}"
+    assert client.get(unfinished[0]["dashboard_url"]).status_code == 200
+    assert client.get("/").status_code == 200
+    assert "Resume an unfinished tournament" in client.get("/").text
+
+
+def test_completed_tournaments_are_not_listed_as_unfinished(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=4, females=4)
+    players = client.get("/api/registration").json()["players"]
+    draws = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
+    }
+    client.post("/api/registration/draw", json={"mixed_draws": draws})
+    teams = client.get("/api/registration").json()["teams"]
+    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
+    client.put("/api/registration/seeds", json={"bracket_file": "4teamD.json", "assignments": assignments})
+    created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"}).json()
+    tournament_id = created["tournament_id"]
+    base = f"/api/tournaments/{tournament_id}/boards"
+
+    # Complete the 4-team bracket using explicit board assignments and winner declarations.
+    for match_id in ("G1", "G2"):
+        ready = client.get(f"/api/tournaments/{tournament_id}").json()["ready_matches"]
+        match = next(item for item in ready if item["match_id"] == match_id)
+        board = 1 if match_id == "G1" else 2
+        assert client.post(f"{base}/{board}/assign", json={"match_id": match_id}).status_code == 200
+        assert client.post(f"{base}/{board}/winner", json={"winner": match["participants"][0]}).status_code == 200
+    for match_id in ("G3", "G4"):
+        ready = client.get(f"/api/tournaments/{tournament_id}").json()["ready_matches"]
+        match = next(item for item in ready if item["match_id"] == match_id)
+        board = 1 if match_id == "G3" else 2
+        assert client.post(f"{base}/{board}/assign", json={"match_id": match_id}).status_code == 200
+        assert client.post(f"{base}/{board}/winner", json={"winner": match["participants"][0]}).status_code == 200
+    state = client.get(f"/api/tournaments/{tournament_id}").json()
+    final = next(item for item in state["ready_matches"] if item["match_id"] == "G5")
+    assert client.post(f"{base}/1/assign", json={"match_id": "G5"}).status_code == 200
+    assert client.post(f"{base}/1/winner", json={"winner": final["participants"][0]}).status_code == 200
+    assert client.get("/api/tournaments").json() == []
