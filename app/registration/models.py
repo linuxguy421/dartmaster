@@ -20,5 +20,5 @@ class Player:
 class Team:
     team_id: str
     name: str
-    male_player_id: str
-    female_player_id: str
+    player_one_id: str
+    player_two_id: str
