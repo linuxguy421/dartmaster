@@ -81,6 +81,16 @@ def test_rejects_odd_unmatched_count():
         )
 
 
+
+def test_second_group_must_draw_from_first_groups_numbers():
+    roster = roster_with_counts(3, 2)
+    with pytest.raises(RegistrationError, match="must match numbers already drawn"):
+        create_teams_from_draw(
+            roster,
+            {"m1": 1, "m2": 2, "m3": 3, "f1": 1, "f2": 4},
+            {"m2": 1, "m3": 1},
+        )
+
 def test_rejects_duplicate_numbers_within_gender():
     roster = roster_with_counts(2, 2)
     with pytest.raises(RegistrationError, match="unique among male"):
