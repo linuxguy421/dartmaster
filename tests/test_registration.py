@@ -90,10 +90,10 @@ def test_assigns_unique_teams_to_exact_bracket_seeds():
     definition = load_bracket(DATA_DIR / "4teamD.json")
 
     assert roster.runtime_entrants(definition) == {
-        "T1": "Team A",
-        "T2": "Team B",
-        "T3": "Team C",
-        "T4": "Team D",
+        "T1": "Alex & Jamie",
+        "T2": "Morgan & Taylor",
+        "T3": "Jordan & Riley",
+        "T4": "Cameron & Avery",
     }
     roster.validate_for_bracket(definition)
 
