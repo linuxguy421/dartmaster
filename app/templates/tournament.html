@@ -117,13 +117,17 @@ async function act(path,method='POST',body){
  try{const data=await api(path,{method,body:body?JSON.stringify(body):undefined});render(data);notify('Tournament state updated.');}
  catch(err){notify(err.message,true);}
 }
+$('ready-matches').addEventListener('click',async e=>{
+ const target=e.target;
+ if(!target.dataset.assign)return;
+ const matchId=target.dataset.assign;
+ const select=$('ready-matches').querySelector('[data-board-select="'+CSS.escape(matchId)+'"]');
+ if(!select||!select.value){notify('Select an available board.',true);return;}
+ await act('/api/tournaments/'+tournamentId+'/boards/'+select.value+'/assign','POST',{match_id:matchId});
+});
 $('boards').addEventListener('click',async e=>{
  const target=e.target;
- if(target.dataset.enable)await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.enable+'/enable');
- else if(target.dataset.disable){
-  if(target.closest('.board')?.querySelector('[data-winner]')){notify('This board has an active match. Complete it before disabling the board.',true);return;}
-  await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.disable+'/disable');
- }else if(target.dataset.winner){
+ if(target.dataset.winner){
   const winner=target.dataset.winner;
   if(!confirm('Record '+winner+' as the winner of this match?'))return;
   await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
