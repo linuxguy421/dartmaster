@@ -79,9 +79,9 @@ and is never copied into or rewritten by the state store.
 
 `TournamentStateStore` provides transactional snapshot writes and event appends.
 `TournamentSession` coordinates operator actions with persistence: creating a
-tournament, enabling/disabling boards, changing scheduler mode, assigning ready matches,
-and recording a match winner. A match completion and the resulting board reallocation
-are saved together as one state update. The default scheduler mode remains manual.
+tournament, assigning ready matches to boards, and recording a match winner. Match
+completion and board release are saved together as one state update. Newly unlocked
+matches remain unassigned until the operator chooses a board.
 
 The state schema is versioned. Future schema changes must use explicit migrations;
 do not silently reinterpret or discard an existing tournament snapshot.
