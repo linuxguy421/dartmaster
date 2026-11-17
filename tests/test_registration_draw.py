@@ -100,11 +100,11 @@ def test_draw_off_number_must_identify_exactly_two_players():
 
 
 def test_requires_draw_off_when_players_are_unmatched():
-    roster = roster_with_counts(3, 2)
+    roster = roster_with_counts(4, 2)
     with pytest.raises(RegistrationError, match="draw-off is required"):
         create_teams_from_draw(
             roster,
-            {"m1": 1, "m2": 2, "m3": 3, "f1": 1, "f2": 2},
+            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "f1": 1, "f2": 2},
         )
 
 
