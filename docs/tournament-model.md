@@ -83,3 +83,28 @@ are saved together as one state update. The default scheduler mode remains manua
 
 The state schema is versioned. Future schema changes must use explicit migrations;
 do not silently reinterpret or discard an existing tournament snapshot.
+
+
+## Player and team registration
+
+Registration is represented independently of the web layer in `app/registration/`.
+Each player has a stable player ID, display name, and a `Gender` value (`male` or
+`female`). A team has a stable team ID and name, and must reference two distinct
+registered players: one male player and one female player. A player may belong to
+only one team in a tournament. Team names are unique without regard to case.
+
+`TournamentRoster` owns the player pool, team definitions, and explicit seed-to-team
+assignments. A team can occupy only one seed, and a seed can have only one team. Before
+a tournament starts, the roster must contain exactly the seed assignments referenced
+by the selected bracket JSON; missing or unexpected seeds are rejected. The JSON
+bracket remains authoritative for game order and progression.
+
+The roster serializes to the tournament's SQLite snapshot alongside match and board
+state. Restore reconstructs players and teams through the same validation methods,
+then checks that seed assignments produce the exact team names used by the bracket
+runtime. A persisted roster that conflicts with the runtime entrants is rejected.
+
+The initial domain API is `register_player(...)`, `create_team(...)`,
+`assign_seed(...)`, `validate_for_bracket(...)`, and `runtime_entrants(...)`. It is
+intentionally independent of FastAPI so the same validation applies to future API,
+admin, and test entrypoints.
