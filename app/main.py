@@ -272,6 +272,79 @@ def tournament_session(tournament_id: str) -> TournamentSession:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+def bracket_payload(session: TournamentSession) -> list[dict]:
+    """Return one ordered operator-facing entry per logical bracket match."""
+    runtime = session.runtime
+    ready_by_game = {
+        match.source_game_id: match for match in runtime.ready_matches()
+    }
+    assignments = {
+        assignment.match.match_id: assignment
+        for assignment in session.scheduler.assignments
+    }
+    entries = []
+
+    for game_id in runtime.definition.game_order:
+        if game_id == "GGF":
+            continue
+
+        is_championship = game_id == "GF"
+        match_id = "CHAMPIONSHIP" if is_championship else game_id
+        source_game_id = (
+            "GGF"
+            if is_championship
+            and runtime.championship_phase.value == "reset"
+            else game_id
+        )
+        result = runtime.results.get(source_game_id)
+        ready = ready_by_game.get(source_game_id)
+        assignment = assignments.get(match_id)
+
+        if result is not None and is_championship:
+            # A completed GF may still be followed by its conditional reset.
+            status = "reset_pending"
+            participants = [result.winner, result.loser]
+            winner = result.winner
+            loser = result.loser
+        elif result is not None:
+            status = "completed"
+            participants = [result.winner, result.loser]
+            winner = result.winner
+            loser = result.loser
+        elif ready is not None:
+            participants = list(ready.participants)
+            status = "in_progress" if assignment else "ready"
+            winner = loser = None
+        else:
+            game = runtime.definition.games.get(game_id, {})
+            participants = (
+                list(game.get("teams", [])) if isinstance(game, dict) else []
+            )
+            status = "waiting"
+            winner = loser = None
+
+        if is_championship and runtime.championship_phase.value == "complete":
+            final_result = runtime.results.get("GGF") or runtime.results.get("GF")
+            if final_result is not None:
+                status = "completed"
+                participants = [final_result.winner, final_result.loser]
+                winner, loser = final_result.winner, final_result.loser
+
+        entries.append({
+            "match_id": match_id,
+            "source_game_id": source_game_id,
+            "label": "Championship Match" if is_championship else f"Match {game_id}",
+            "status": status,
+            "participants": participants,
+            "winner": winner,
+            "loser": loser,
+            "board_id": assignment.board_id if assignment else None,
+            "phase": assignment.match.phase.value if assignment and assignment.match.phase else None,
+        })
+
+    return entries
+
+
 def tournament_payload(session: TournamentSession) -> dict:
     assignments = {item.board_id: item for item in session.scheduler.assignments}
     boards = []
@@ -308,6 +381,7 @@ def tournament_payload(session: TournamentSession) -> dict:
             "enabled_boards": list(session.scheduler.enabled_boards),
         },
         "boards": boards,
+        "bracket": bracket_payload(session),
         "results": [
             {"game_id": result.game_id, "winner": result.winner, "loser": result.loser}
             for result in session.runtime.results.values()
