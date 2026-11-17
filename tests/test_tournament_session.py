@@ -131,7 +131,7 @@ def test_session_persists_and_restores_player_team_roster(tmp_path):
     roster.assign_seed("T4", "d")
 
     store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
-    session = TournamentSession.create(
+    TournamentSession.create(
         "registered-night",
         "data/4teamD.json",
         definition(),
