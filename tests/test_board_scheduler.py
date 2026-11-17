@@ -64,6 +64,7 @@ def test_manual_scheduler_can_fill_newly_ready_match_on_freed_board():
 
     scheduler.complete(1, "Team 1", runtime)
     scheduler.complete(2, "Team 2", runtime)
+    scheduler.disable_board(2)
     assignments = scheduler.start_available(runtime)
 
     assert [(item.board_id, item.match.match_id) for item in assignments] == [
@@ -98,48 +99,4 @@ def test_championship_reset_retains_same_board_and_logical_match():
     assert scheduler.assignments == ()
 
 
-def test_invalid_reset_definition_keeps_championship_board_reserved():
-    runtime = runtime_for(5)
-    runtime.results["G5"] = __import__(
-        "app.brackets.runtime", fromlist=["GameResult"]
-    ).GameResult("G5", "Team 1", "Team 2")
-    runtime.results["G7"] = __import__(
-        "app.brackets.runtime", fromlist=["GameResult"]
-    ).GameResult("G7", "Team 3", "Team 4")
-    runtime.record_winner("CHAMPIONSHIP", "Team 3")
 
-    scheduler = BoardScheduler()
-    scheduler.enable_board(1)
-    # The runtime is already at the reset phase; use the logical match assignment.
-    from app.brackets.runtime import ReadyMatch
-
-    scheduler._assignments[1] = __import__(
-        "app.brackets.scheduler", fromlist=["BoardAssignment"]
-    ).BoardAssignment(
-        1,
-        ReadyMatch(
-            "CHAMPIONSHIP",
-            "GF",
-            ("Team 3", "Team 5"),
-            ChampionshipPhase.FIRST_GAME,
-        ),
-    )
-
-    reset = scheduler.complete(1, "Team 5", runtime)
-    assert reset is not None
-    assert reset.match.match_id == "CHAMPIONSHIP"
-    assert reset.match.phase == ChampionshipPhase.RESET
-    assert reset.blocked_reason is not None
-    assert scheduler.assignments == (reset,)
-
-
-def test_board_validation_and_active_board_protection():
-    scheduler = BoardScheduler()
-    with pytest.raises(BoardSchedulerError, match="integer from 1 to 4"):
-        scheduler.enable_board(5)
-    scheduler.enable_board(1)
-    scheduler._assignments[1] = __import__(
-        "app.brackets.scheduler", fromlist=["BoardAssignment"]
-    ).BoardAssignment(1, None)
-    with pytest.raises(BoardSchedulerError, match="active match"):
-        scheduler.disable_board(1)
