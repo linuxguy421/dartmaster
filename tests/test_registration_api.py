@@ -128,3 +128,13 @@ def test_seed_assignment_rejects_incomplete_bracket_mapping(tmp_path, monkeypatc
     )
     assert response.status_code == 400
     assert "missing seeds" in response.json()["detail"]
+
+
+def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'Bracket selected automatically' in response.text
+    assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
+    assert 'id="bracket-select" disabled' in response.text
