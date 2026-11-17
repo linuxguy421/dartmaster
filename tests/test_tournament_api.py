@@ -78,7 +78,7 @@ def test_board_winner_refills_enabled_board_and_rejects_nonparticipant(tmp_path,
 
     completed = client.post(base + "/winner", json={"winner": participants[0]})
     assert completed.status_code == 200
-    assert completed.json()["boards"][0]["match"] is None
+    assert completed.json()["boards"][0]["match"]["match_id"] == "G2"
     assert completed.json()["results"][0]["winner"] == participants[0]
 
 
