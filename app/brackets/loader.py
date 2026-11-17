@@ -75,6 +75,25 @@ def _diagnose(games: dict[str, Any]) -> tuple[BracketDiagnostic, ...]:
                 diagnostics.append(
                     BracketDiagnostic(game_id, f"{route_name} target slot must be 0 or 1")
                 )
+            elif target is not None:
+                target_game = games.get(target)
+                target_slots = target_game.get("teams") if isinstance(target_game, dict) else None
+                outcome = "W" if route_name == "winner_advances_to" else "L"
+                expected_reference = f"{outcome}-{game_id}"
+                target_slot = route["slot"]
+                if (
+                    isinstance(target_slots, list)
+                    and len(target_slots) == 2
+                    and target_slots[target_slot] != expected_reference
+                ):
+                    diagnostics.append(
+                        BracketDiagnostic(
+                            game_id,
+                            f"{route_name} points to {target}[{target_slot}], "
+                            f"but that slot references {target_slots[target_slot]!r} "
+                            f"instead of {expected_reference}",
+                        )
+                    )
             elif target is None and not isinstance(route.get("result"), str):
                 diagnostics.append(
                     BracketDiagnostic(game_id, f"{route_name} must specify game or result")
