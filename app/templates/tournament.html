@@ -62,6 +62,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 const tournamentId=location.pathname.split('/').filter(Boolean).pop();
 const $=id=>document.getElementById(id);
 let current=null,refreshing=false;
+const selectedBoards=new Map();
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notify(message,error=false){const n=$('notice');n.textContent=message;n.className=error?'show error':'show';setTimeout(()=>n.className='',3500);}
 async function api(path,options={}){
@@ -89,7 +90,10 @@ function render(data){
  const recommendations=data.scheduler.recommended_boards;
  $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map((match,index)=>{
   const recommended=recommendations[index];
-  const options=data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===recommended?'selected':'')+'>Board '+board+(board===recommended?' · recommended':'')+'</option>').join('');
+  const saved=selectedBoards.get(match.match_id);
+  const selectedBoard=data.scheduler.free_boards.includes(saved)?saved:recommended;
+  if(saved!==undefined&&!data.scheduler.free_boards.includes(saved))selectedBoards.delete(match.match_id);
+  const options=data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===selectedBoard?'selected':'')+'>Board '+board+(board===recommended?' · recommended':'')+'</option>').join('');
   return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong><div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div>'+(recommended?'<div class="recommendation">Suggested board: '+recommended+'</div>':'')+'<div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>Assign</button></div></article>';
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
@@ -114,16 +118,21 @@ async function refresh(){
  finally{refreshing=false;}
 }
 async function act(path,method='POST',body){
- try{const data=await api(path,{method,body:body?JSON.stringify(body):undefined});render(data);notify('Tournament state updated.');}
- catch(err){notify(err.message,true);}
+ try{const data=await api(path,{method,body:body?JSON.stringify(body):undefined});render(data);notify('Tournament state updated.');return true;}
+ catch(err){notify(err.message,true);return false;}
 }
+$('ready-matches').addEventListener('change',e=>{
+ const select=e.target.closest('[data-board-select]');
+ if(select)selectedBoards.set(select.dataset.boardSelect,Number(select.value));
+});
 $('ready-matches').addEventListener('click',async e=>{
  const target=e.target;
  if(!target.dataset.assign)return;
  const matchId=target.dataset.assign;
  const select=$('ready-matches').querySelector('[data-board-select="'+CSS.escape(matchId)+'"]');
  if(!select||!select.value){notify('Select an available board.',true);return;}
- await act('/api/tournaments/'+tournamentId+'/boards/'+select.value+'/assign','POST',{match_id:matchId});
+ const assigned=await act('/api/tournaments/'+tournamentId+'/boards/'+select.value+'/assign','POST',{match_id:matchId});
+ if(assigned)selectedBoards.delete(matchId);
 });
 $('boards').addEventListener('click',async e=>{
  const target=e.target;
