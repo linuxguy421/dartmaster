@@ -91,10 +91,14 @@ def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_pa
         ("G4", "Team Four"),
         ("G5", "Team Four"),
     ]:
-        session.runtime.record_winner(match_id, winner)
-    session.scheduler.start_available(session.runtime)
-    board_id = session.scheduler.assignments[0].board_id
+        assignment = next(
+            item for item in session.scheduler.assignments
+            if item.match.match_id == match_id
+        )
+        session.complete_match(assignment.board_id, winner)
 
+    championship = session.scheduler.assignments[0]
+    board_id = championship.board_id
     session.complete_match(board_id, "Team Four")
     restored = TournamentSession.restore("finals-night", definition(), store)
 
