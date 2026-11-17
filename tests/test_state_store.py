@@ -39,7 +39,7 @@ def test_save_and_restore_preserves_results_board_assignments_and_manual_mode(tm
         event_payload={"team_count": 4},
     )
 
-    restored_runtime, restored_scheduler, bracket_file = store.restore(
+    restored_runtime, restored_scheduler, bracket_file, _ = store.restore(
         "league-night-2026-11-17", definition
     )
 
@@ -77,7 +77,7 @@ def test_restore_replays_results_and_preserves_championship_reset_board(tmp_path
         event_type="championship_reset_started",
     )
 
-    restored_runtime, restored_scheduler, _ = store.restore(
+    restored_runtime, restored_scheduler, _, _ = store.restore(
         "championship-night", definition
     )
 
