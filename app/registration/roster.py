@@ -12,7 +12,7 @@ class RegistrationError(ValueError):
 
 
 class TournamentRoster:
-    """Registration pool, mixed doubles teams, and bracket seed assignments."""
+    """Registration pool, two-player teams, and bracket seed assignments."""
 
     def __init__(self) -> None:
         self.players: dict[str, Player] = {}
@@ -43,8 +43,8 @@ class TournamentRoster:
         self,
         team_id: str,
         name: str,
-        male_player_id: str,
-        female_player_id: str,
+        player_one_id: str,
+        player_two_id: str,
     ) -> Team:
         team_id = team_id.strip()
         name = name.strip()
@@ -56,33 +56,26 @@ class TournamentRoster:
             raise RegistrationError(f"Team ID already exists: {team_id}")
         if any(team.name.casefold() == name.casefold() for team in self.teams.values()):
             raise RegistrationError(f"Team name already exists: {name}")
-        if male_player_id == female_player_id:
+        if player_one_id == player_two_id:
             raise RegistrationError("A team must contain two distinct players")
 
-        male = self.players.get(male_player_id)
-        female = self.players.get(female_player_id)
-        if male is None:
-            raise RegistrationError(f"Unknown male player: {male_player_id}")
-        if female is None:
-            raise RegistrationError(f"Unknown female player: {female_player_id}")
-        if male.gender != Gender.MALE:
-            raise RegistrationError(f"{male.display_name} is not registered as male")
-        if female.gender != Gender.FEMALE:
-            raise RegistrationError(f"{female.display_name} is not registered as female")
+        for player_id in (player_one_id, player_two_id):
+            if player_id not in self.players:
+                raise RegistrationError(f"Unknown player: {player_id}")
 
         assigned = {
             player_id
             for team in self.teams.values()
-            for player_id in (team.male_player_id, team.female_player_id)
+            for player_id in (team.player_one_id, team.player_two_id)
         }
-        reused = assigned.intersection({male_player_id, female_player_id})
+        reused = assigned.intersection({player_one_id, player_two_id})
         if reused:
             raise RegistrationError(
                 "A player cannot belong to more than one team: "
                 + ", ".join(sorted(reused))
             )
 
-        team = Team(team_id, name, male_player_id, female_player_id)
+        team = Team(team_id, name, player_one_id, player_two_id)
         self.teams[team_id] = team
         return team
 
@@ -145,8 +138,8 @@ class TournamentRoster:
                 {
                     "team_id": team.team_id,
                     "name": team.name,
-                    "male_player_id": team.male_player_id,
-                    "female_player_id": team.female_player_id,
+                    "player_one_id": team.player_one_id,
+                    "player_two_id": team.player_two_id,
                 }
                 for team in self.teams.values()
             ],
@@ -171,11 +164,12 @@ class TournamentRoster:
                     raw["player_id"], raw["display_name"], raw["gender"]
                 )
             for raw in teams:
+                # Accept the previous mixed-doubles snapshot shape while writing only
+                # the gender-neutral two-player shape going forward.
+                player_one_id = raw.get("player_one_id", raw.get("male_player_id"))
+                player_two_id = raw.get("player_two_id", raw.get("female_player_id"))
                 roster.create_team(
-                    raw["team_id"],
-                    raw["name"],
-                    raw["male_player_id"],
-                    raw["female_player_id"],
+                    raw["team_id"], raw["name"], player_one_id, player_two_id
                 )
             for seed, team_id in seeds.items():
                 roster.assign_seed(seed, team_id)
