@@ -6,6 +6,7 @@ from app.brackets.loader import BracketDefinition
 from app.brackets.runtime import BracketRuntime
 from app.brackets.scheduler import BoardScheduler, SchedulerMode
 from app.state.store import TournamentStateStore
+from app.registration.roster import TournamentRoster
 
 
 class TournamentSession:
@@ -18,12 +19,14 @@ class TournamentSession:
         runtime: BracketRuntime,
         scheduler: BoardScheduler,
         store: TournamentStateStore,
+        roster: TournamentRoster | None = None,
     ) -> None:
         self.tournament_id = tournament_id
         self.bracket_file = bracket_file
         self.runtime = runtime
         self.scheduler = scheduler
         self.store = store
+        self.roster = roster
 
     @classmethod
     def create(
@@ -36,10 +39,15 @@ class TournamentSession:
         *,
         board_count: int = 4,
         mode: SchedulerMode = SchedulerMode.MANUAL,
+        roster: TournamentRoster | None = None,
     ) -> TournamentSession:
+        if roster is not None:
+            roster.validate_for_bracket(definition)
+            if roster.runtime_entrants(definition) != entrants:
+                raise ValueError('Roster team assignments must match runtime entrants')
         runtime = BracketRuntime(definition, entrants)
         scheduler = BoardScheduler(board_count=board_count, mode=mode)
-        session = cls(tournament_id, bracket_file, runtime, scheduler, store)
+        session = cls(tournament_id, bracket_file, runtime, scheduler, store, roster)
         scheduler.start_available(runtime)
         session._save("tournament_created", {"entrant_count": len(entrants)})
         return session
@@ -51,8 +59,8 @@ class TournamentSession:
         definition: BracketDefinition,
         store: TournamentStateStore,
     ) -> TournamentSession:
-        runtime, scheduler, bracket_file = store.restore(tournament_id, definition)
-        return cls(tournament_id, bracket_file, runtime, scheduler, store)
+        runtime, scheduler, bracket_file, roster = store.restore(tournament_id, definition)
+        return cls(tournament_id, bracket_file, runtime, scheduler, store, roster)
 
     def _save(self, event_type: str, payload: dict[str, Any]) -> None:
         self.store.save(
@@ -62,10 +70,11 @@ class TournamentSession:
             self.scheduler,
             event_type=event_type,
             event_payload=payload,
+            roster=self.roster,
         )
 
     def _rollback(self) -> None:
-        self.runtime, self.scheduler, _ = self.store.restore(
+        self.runtime, self.scheduler, _, self.roster = self.store.restore(
             self.tournament_id, self.runtime.definition
         )
 
