@@ -40,6 +40,7 @@ class TournamentSession:
         runtime = BracketRuntime(definition, entrants)
         scheduler = BoardScheduler(board_count=board_count, mode=mode)
         session = cls(tournament_id, bracket_file, runtime, scheduler, store)
+        scheduler.start_available(runtime)
         session._save("tournament_created", {"entrant_count": len(entrants)})
         return session
 
