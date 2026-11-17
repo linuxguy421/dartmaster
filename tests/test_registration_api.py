@@ -107,11 +107,11 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
 
     created = client.post(
         "/api/tournaments",
-        json={"bracket_file": bracket["filename"], "board_count": 4, "scheduler_mode": "manual"},
+        json={"bracket_file": bracket["filename"]},
     )
     assert created.status_code == 201
     assert created.json()["team_count"] == 4
-    assert created.json()["scheduler_mode"] == "manual"
+    assert created.json()["board_count"] == 4
     assert created.json()["dashboard_url"] == f"/tournaments/{created.json()['tournament_id']}"
 
     tournament = client.get(created.json()["dashboard_url"]).status_code
