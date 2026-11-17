@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -34,8 +35,17 @@ class TournamentStateStore:
         connection.execute("PRAGMA busy_timeout = 5000")
         return connection
 
+    @contextmanager
+    def _connection(self):
+        connection = self._connect()
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
     def _initialize(self) -> None:
-        with self._connect() as connection:
+        with self._connection() as connection:
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS tournaments (
@@ -119,7 +129,7 @@ class TournamentStateStore:
         now = self._utc_now()
 
         try:
-            with self._connect() as connection:
+            with self._connection() as connection:
                 connection.execute(
                     """
                     INSERT INTO tournaments (
@@ -165,6 +175,8 @@ class TournamentStateStore:
             snapshot = json.loads(row["state_json"])
         except json.JSONDecodeError as exc:
             raise TournamentStoreError("Persisted tournament snapshot is invalid JSON") from exc
+        if not isinstance(snapshot, dict):
+            raise TournamentStoreError("Persisted tournament snapshot must be an object")
         if snapshot.get("schema_version") != SCHEMA_VERSION:
             raise TournamentStoreError("Snapshot schema version does not match database record")
         return snapshot
