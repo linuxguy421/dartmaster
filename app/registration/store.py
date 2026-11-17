@@ -77,3 +77,11 @@ class RegistrationDraftStore:
                 """,
                 (self.DRAFT_ID, roster_json, draw_json),
             )
+
+    def clear(self) -> None:
+        """Remove the active registration draft after it becomes a tournament."""
+        with closing(self._connect()) as connection, connection:
+            connection.execute(
+                "DELETE FROM registration_drafts WHERE draft_id = ?",
+                (self.DRAFT_ID,),
+            )
