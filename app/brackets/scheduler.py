@@ -97,7 +97,7 @@ class BoardScheduler:
         ):
             return self.assignments
 
-        ready =
+        ready = [
             match
             for match in runtime.ready_matches()
             if match.match_id not in occupied_match_ids
