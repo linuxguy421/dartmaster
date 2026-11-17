@@ -27,6 +27,30 @@ Open http://127.0.0.1:8000.
 By default, registration drafts and tournament state are stored in `data/dartmaster.sqlite3`.
 Set `DARTMASTER_DB_PATH` to use a different SQLite database location.
 
+
+## Docker Compose deployment
+
+Docker Compose runs Dartmaster as a single application container. The supplied bracket JSON files remain in the image under /app/data; only the SQLite database is stored in the persistent dartmaster-data named volume.
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+Open http://localhost:8000 (or the host port configured by DARTMASTER_PORT in .env). The container exposes a health check at /health.
+
+Useful operations:
+
+```bash
+docker compose logs -f dartmaster
+docker compose ps
+docker compose restart dartmaster
+docker compose up -d --build
+docker compose down
+```
+
+Stopping the stack with docker compose down preserves tournament and registration data. **Do not use docker compose down -v** unless you intentionally want to delete the dartmaster-data volume and all persisted data. Back up that volume before replacing the host or performing storage maintenance.
+
 ## Current implementation
 
 The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, four-board scheduler, SQLite-backed tournament session/state store, and player/team registration domain. The browser setup workflow is served at `/`. Starting a tournament opens its live four-board dashboard at `/tournaments/{tournament_id}`, with polling updates, manual board controls, scheduler mode changes, winner-only match completion, and a completed-match history:
