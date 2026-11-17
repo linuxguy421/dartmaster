@@ -117,10 +117,18 @@ def test_session_persists_and_restores_player_team_roster(tmp_path):
     roster.register_player("p2", "Jamie", Gender.FEMALE)
     roster.register_player("p3", "Morgan", Gender.MALE)
     roster.register_player("p4", "Taylor", Gender.FEMALE)
+    roster.register_player("p5", "Jordan", Gender.MALE)
+    roster.register_player("p6", "Riley", Gender.FEMALE)
+    roster.register_player("p7", "Cameron", Gender.MALE)
+    roster.register_player("p8", "Avery", Gender.FEMALE)
     roster.create_team("a", "Team One", "p1", "p2")
     roster.create_team("b", "Team Two", "p3", "p4")
+    roster.create_team("c", "Team Three", "p5", "p6")
+    roster.create_team("d", "Team Four", "p7", "p8")
     roster.assign_seed("T1", "a")
     roster.assign_seed("T2", "b")
+    roster.assign_seed("T3", "c")
+    roster.assign_seed("T4", "d")
 
     store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
     session = TournamentSession.create(
