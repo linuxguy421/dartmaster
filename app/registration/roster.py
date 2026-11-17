@@ -114,7 +114,12 @@ class TournamentRoster:
     def runtime_entrants(self, definition: BracketDefinition) -> dict[str, str]:
         self.validate_for_bracket(definition)
         return {
-            seed: self.teams[team_id].name
+            seed: " & ".join(
+                (
+                    self.players[self.teams[team_id].player_one_id].display_name,
+                    self.players[self.teams[team_id].player_two_id].display_name,
+                )
+            )
             for seed, team_id in self.seed_assignments.items()
         }
 
