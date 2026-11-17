@@ -428,6 +428,16 @@ def tournament_dashboard(tournament_id: str) -> str:
     return (ROOT / "app" / "templates" / "tournament.html").read_text(encoding="utf-8")
 
 
+@app.delete("/api/tournaments/{tournament_id}", status_code=204)
+def delete_tournament(tournament_id: str) -> None:
+    try:
+        tournament_store().delete(tournament_id)
+    except TournamentStoreError as exc:
+        if str(exc).startswith("Unknown tournament:"):
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.get("/api/tournaments/{tournament_id}")
 def get_tournament(tournament_id: str) -> dict:
     return tournament_payload(tournament_session(tournament_id))
