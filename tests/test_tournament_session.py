@@ -106,3 +106,32 @@ def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_pa
     assert len(restored.scheduler.assignments) == 1
     assert restored.scheduler.assignments[0].board_id == board_id
     assert restored.scheduler.assignments[0].match.source_game_id == "GGF"
+
+
+
+def test_session_persists_and_restores_player_team_roster(tmp_path):
+    from app.registration import Gender, TournamentRoster
+
+    roster = TournamentRoster()
+    roster.register_player("p1", "Alex", Gender.MALE)
+    roster.register_player("p2", "Jamie", Gender.FEMALE)
+    roster.register_player("p3", "Morgan", Gender.MALE)
+    roster.register_player("p4", "Taylor", Gender.FEMALE)
+    roster.create_team("a", "Team One", "p1", "p2")
+    roster.create_team("b", "Team Two", "p3", "p4")
+    roster.assign_seed("T1", "a")
+    roster.assign_seed("T2", "b")
+
+    store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
+    session = TournamentSession.create(
+        "registered-night",
+        "data/4teamD.json",
+        definition(),
+        roster.runtime_entrants(definition()),
+        store,
+        roster=roster,
+    )
+
+    restored = TournamentSession.restore("registered-night", definition(), store)
+    assert restored.roster is not None
+    assert restored.roster.to_dict() == roster.to_dict()
