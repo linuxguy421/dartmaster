@@ -248,6 +248,7 @@ def create_tournament(request: TournamentRequest) -> dict:
         )
     except (RegistrationError, BracketLoadError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    store.clear()
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
@@ -255,6 +256,14 @@ def create_tournament(request: TournamentRequest) -> dict:
         "board_count": 4,
         "dashboard_url": f"/tournaments/{session.tournament_id}",
     }
+
+
+@app.get("/api/tournaments")
+def list_unfinished_tournaments() -> list[dict]:
+    try:
+        return tournament_store().unfinished()
+    except TournamentStoreError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 def tournament_session(tournament_id: str) -> TournamentSession:
     store = tournament_store()
