@@ -110,6 +110,11 @@ def registration_payload(roster: TournamentRoster, draw_state=None) -> dict:
     }
 
 
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok"}
+
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard() -> str:
     return (ROOT / "app" / "templates" / "registration.html").read_text(encoding="utf-8")
