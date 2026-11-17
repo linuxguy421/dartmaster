@@ -25,22 +25,44 @@ def registered_roster() -> TournamentRoster:
     return roster
 
 
-def test_registers_players_and_creates_one_male_one_female_team():
+def test_registers_players_and_creates_two_player_team():
     roster = registered_roster()
     team = roster.teams["team-a"]
 
-    assert roster.players[team.male_player_id].gender == Gender.MALE
-    assert roster.players[team.female_player_id].gender == Gender.FEMALE
+    assert team.player_one_id == "p1"
+    assert team.player_two_id == "p2"
+    assert roster.players[team.player_one_id].gender == Gender.MALE
+    assert roster.players[team.player_two_id].gender == Gender.FEMALE
 
 
 @pytest.mark.parametrize(
-    ("male_id", "female_id"),
-    [("p2", "p1"), ("p1", "p1"), ("missing", "p2")],
+    ("first_id", "second_id"),
+    [("p1", "p1"), ("missing", "p2"), ("p1", "missing")],
 )
-def test_rejects_invalid_team_members(male_id, female_id):
+def test_rejects_invalid_team_members(first_id, second_id):
     roster = registered_roster()
     with pytest.raises(RegistrationError):
-        roster.create_team("bad", "Bad Team", male_id, female_id)
+        roster.create_team("bad", "Bad Team", first_id, second_id)
+
+
+@pytest.mark.parametrize(
+    ("first_gender", "second_gender"),
+    [
+        (Gender.MALE, Gender.MALE),
+        (Gender.FEMALE, Gender.FEMALE),
+    ],
+)
+def test_allows_same_gender_teams(first_gender, second_gender):
+    roster = TournamentRoster()
+    roster.register_player("first", "First Player", first_gender)
+    roster.register_player("second", "Second Player", second_gender)
+
+    team = roster.create_team("same-sex", "Same Gender Team", "first", "second")
+
+    assert team.player_one_id == "first"
+    assert team.player_two_id == "second"
+    assert roster.players[team.player_one_id].gender == first_gender
+    assert roster.players[team.player_two_id].gender == second_gender
 
 
 def test_player_cannot_be_reused_across_teams():
@@ -67,7 +89,12 @@ def test_assigns_unique_teams_to_exact_bracket_seeds():
     roster.assign_seed("T4", "team-d")
     definition = load_bracket(DATA_DIR / "4teamD.json")
 
-    assert roster.runtime_entrants(definition) == {"T1": "Team A", "T2": "Team B", "T3": "Team C", "T4": "Team D"}
+    assert roster.runtime_entrants(definition) == {
+        "T1": "Team A",
+        "T2": "Team B",
+        "T3": "Team C",
+        "T4": "Team D",
+    }
     roster.validate_for_bracket(definition)
 
 
@@ -89,3 +116,26 @@ def test_roster_round_trips_and_revalidates_constraints():
 
     assert restored.to_dict() == roster.to_dict()
     assert restored.team_for_seed("T1").name == "Team A"
+
+
+def test_loads_legacy_mixed_doubles_snapshot():
+    legacy = {
+        "players": [
+            {"player_id": "m", "display_name": "Male", "gender": "male"},
+            {"player_id": "f", "display_name": "Female", "gender": "female"},
+        ],
+        "teams": [
+            {
+                "team_id": "team",
+                "name": "Legacy Team",
+                "male_player_id": "m",
+                "female_player_id": "f",
+            }
+        ],
+        "seed_assignments": {"T1": "team"},
+    }
+
+    restored = TournamentRoster.from_dict(legacy)
+
+    assert restored.teams["team"].player_one_id == "m"
+    assert restored.teams["team"].player_two_id == "f"
