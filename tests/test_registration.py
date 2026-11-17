@@ -1,8 +1,8 @@
+from pathlib import Path
+
 import pytest
 
 from app.brackets.loader import load_bracket
-from pathlib import Path
-
 from app.registration import Gender, RegistrationError, TournamentRoster
 
 DATA_DIR = Path(__file__).parents[1] / "data"
