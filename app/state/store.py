@@ -260,6 +260,23 @@ class TournamentStateStore:
                 ) from exc
         return output
 
+    def delete(self, tournament_id: str) -> None:
+        """Permanently delete a tournament snapshot and its event history."""
+        try:
+            with self._connection() as connection:
+                connection.execute(
+                    "DELETE FROM tournament_events WHERE tournament_id = ?",
+                    (tournament_id,),
+                )
+                tournament = connection.execute(
+                    "DELETE FROM tournaments WHERE tournament_id = ?",
+                    (tournament_id,),
+                )
+                if tournament.rowcount == 0:
+                    raise TournamentStoreError(f"Unknown tournament: {tournament_id}")
+        except sqlite3.Error as exc:
+            raise TournamentStoreError(f"Could not delete tournament: {exc}") from exc
+
     def events(self, tournament_id: str) -> list[dict[str, Any]]:
         try:
             with self._connect() as connection:
