@@ -10,7 +10,7 @@ from app.state.store import TournamentStateStore
 
 
 class TournamentSession:
-    """Coordinates bracket progression, board allocation, and durable state."""
+    """Coordinates bracket progression, explicit board assignment, and persistence."""
 
     def __init__(
         self,
@@ -46,9 +46,8 @@ class TournamentSession:
             if roster.runtime_entrants(definition) != entrants:
                 raise ValueError("Roster team assignments must match runtime entrants")
         runtime = BracketRuntime(definition, entrants)
-        scheduler = BoardScheduler(board_count=board_count, mode=mode)
+        scheduler = BoardScheduler(board_count=4)
         session = cls(tournament_id, bracket_file, runtime, scheduler, store, roster)
-        scheduler.start_available(runtime)
         session._save("tournament_created", {"entrant_count": len(entrants)})
         return session
 
@@ -95,33 +94,17 @@ class TournamentSession:
             for assignment in self.scheduler.assignments
         ]
 
-    def enable_board(self, board_id: int) -> None:
-        self.scheduler.enable_board(board_id)
-        self.scheduler.start_available(self.runtime)
+    def assign_match(self, board_id: int, match_id: str) -> None:
+        assignment = self.scheduler.assign(board_id, match_id, self.runtime)
         self._save_or_rollback(
-            "board_enabled",
-            {"board_id": board_id, "assignments": self._assignment_summary()},
+            "match_assigned",
+            {
+                "board_id": board_id,
+                "match_id": assignment.match.match_id,
+                "source_game_id": assignment.match.source_game_id,
+                "assignments": self._assignment_summary(),
+            },
         )
-
-    def disable_board(self, board_id: int) -> None:
-        self.scheduler.disable_board(board_id)
-        self._save_or_rollback("board_disabled", {"board_id": board_id})
-
-    def set_scheduler_mode(self, mode: SchedulerMode) -> None:
-        self.scheduler.set_mode(mode)
-        self.scheduler.start_available(self.runtime)
-        self._save_or_rollback(
-            "scheduler_mode_changed",
-            {"mode": self.scheduler.mode.value, "assignments": self._assignment_summary()},
-        )
-
-    def start_available(self) -> None:
-        before = self.scheduler.snapshot()
-        self.scheduler.start_available(self.runtime)
-        if self.scheduler.snapshot() != before:
-            self._save_or_rollback(
-                "matches_assigned", {"assignments": self._assignment_summary()}
-            )
 
     def complete_match(self, board_id: int, winner: str) -> None:
         assignment = next(
@@ -134,7 +117,6 @@ class TournamentSession:
         match_id = assignment.match.match_id
         source_game_id = assignment.match.source_game_id
         self.scheduler.complete(board_id, winner, self.runtime)
-        self.scheduler.start_available(self.runtime)
         self._save_or_rollback(
             "match_completed",
             {
