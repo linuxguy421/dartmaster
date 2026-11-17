@@ -2,7 +2,6 @@ from pathlib import Path
 
 from app.brackets.loader import load_bracket
 from app.brackets.runtime import ChampionshipPhase
-from app.brackets.scheduler import SchedulerMode
 from app.state.session import TournamentSession
 from app.state.store import TournamentStateStore
 
@@ -22,7 +21,7 @@ def entrants():
     }
 
 
-def test_new_session_defaults_to_manual_and_persists_operator_board_selection(tmp_path):
+def test_new_session_keeps_all_boards_available_and_persists_operator_assignment(tmp_path):
     store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
     session = TournamentSession.create(
         "friday-night",
@@ -32,46 +31,40 @@ def test_new_session_defaults_to_manual_and_persists_operator_board_selection(tm
         store,
     )
 
-    assert session.scheduler.mode == SchedulerMode.MANUAL
-    assert session.scheduler.enabled_boards == ()
+    assert session.scheduler.enabled_boards == (1, 2, 3, 4)
     assert session.scheduler.assignments == ()
 
-    session.enable_board(3)
+    session.assign_match(3, "G1")
     assert [(item.board_id, item.match.match_id) for item in session.scheduler.assignments] == [
         (3, "G1")
     ]
 
     restored = TournamentSession.restore("friday-night", definition(), store)
-    assert restored.scheduler.enabled_boards == (3,)
+    assert restored.scheduler.enabled_boards == (1, 2, 3, 4)
     assert restored.scheduler.assignments[0].match.match_id == "G1"
 
 
-def test_session_persists_match_results_and_refills_boards_in_auto_mode(tmp_path):
+def test_session_completion_does_not_auto_assign_next_ready_match(tmp_path):
     store = TournamentStateStore(tmp_path / "dartmaster.sqlite3")
     session = TournamentSession.create(
-        "auto-night",
+        "operator-night",
         "data/4teamD.json",
         definition(),
         entrants(),
         store,
-        mode=SchedulerMode.AUTO,
     )
-    assert [item.match.match_id for item in session.scheduler.assignments] == ["G1", "G2"]
+    session.assign_match(1, "G1")
+    session.assign_match(3, "G2")
 
     session.complete_match(1, "Team One")
-    assert session.runtime.results["G1"].winner == "Team One"
+    session.complete_match(3, "Team Two")
 
-    session.complete_match(2, "Team Two")
-    assert session.scheduler.assignments[0].match.match_id == "G3"
-
-    restored = TournamentSession.restore("auto-night", definition(), store)
+    assert session.scheduler.assignments == ()
+    assert [match.match_id for match in session.scheduler.ready_matches(session.runtime)] == ["G3"]
+    restored = TournamentSession.restore("operator-night", definition(), store)
     assert restored.runtime.results["G1"].winner == "Team One"
     assert restored.runtime.results["G2"].winner == "Team Two"
-    assert restored.scheduler.assignments[0].match.match_id == "G3"
-    assert [event["event_type"] for event in store.events("auto-night")][-2:] == [
-        "match_completed",
-        "match_completed",
-    ]
+    assert restored.scheduler.assignments == ()
 
 
 def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_path):
@@ -82,7 +75,6 @@ def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_pa
         definition(),
         entrants(),
         store,
-        mode=SchedulerMode.AUTO,
     )
     for match_id, winner in [
         ("G1", "Team One"),
@@ -91,11 +83,8 @@ def test_session_keeps_championship_reset_on_original_board_after_restore(tmp_pa
         ("G4", "Team Four"),
         ("G5", "Team Four"),
     ]:
-        assignment = next(
-            item for item in session.scheduler.assignments
-            if item.match.match_id == match_id
-        )
-        session.complete_match(assignment.board_id, winner)
+        session.assign_match(1, match_id)
+        session.complete_match(1, winner)
 
     championship = session.scheduler.assignments[0]
     board_id = championship.board_id
