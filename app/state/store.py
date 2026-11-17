@@ -158,7 +158,7 @@ class TournamentStateStore:
 
     def load(self, tournament_id: str) -> dict[str, Any]:
         try:
-            with self._connect() as connection:
+            with self._connection() as connection:
                 row = connection.execute(
                     "SELECT state_json, schema_version FROM tournaments WHERE tournament_id = ?",
                     (tournament_id,),
