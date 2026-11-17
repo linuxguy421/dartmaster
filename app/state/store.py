@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import sqlite3
-
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,7 +10,6 @@ from typing import Any
 from app.brackets.loader import BracketDefinition
 from app.brackets.runtime import BracketRuntime, BracketRuntimeError
 from app.brackets.scheduler import BoardScheduler, BoardSchedulerError
-
 
 SCHEMA_VERSION = 1
 
