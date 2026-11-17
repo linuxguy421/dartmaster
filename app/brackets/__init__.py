@@ -14,13 +14,13 @@ from app.brackets.scheduler import (
 )
 
 __all__ = [
+    "BoardAssignment",
+    "BoardScheduler",
+    "BoardSchedulerError",
     "BracketDefinition",
     "BracketDiagnostic",
     "BracketRuntime",
     "BracketRuntimeError",
-    "BoardAssignment",
-    "BoardScheduler",
-    "BoardSchedulerError",
     "ChampionshipPhase",
     "GameResult",
     "ReadyMatch",
