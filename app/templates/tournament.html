@@ -28,7 +28,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.actions button{flex:1;min-width:120px}
 .blocked-reason{color:var(--bad);font-size:13px}
-.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.bracket{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.bracket h2{font-size:17px;margin:0 0 10px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
@@ -57,6 +57,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <article class="board disabled">Loading board status…</article>
   <article class="board disabled">Loading board status…</article>
  </section>
+ <section class="bracket"><h2>Bracket progress</h2><div id="bracket" class="bracket-list"><p class="status">Loading bracket…</p></div></section>
  <section class="results"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
 </main>
 <div id="notice" role="status" aria-live="polite"></div>
@@ -93,6 +94,18 @@ function render(data){
  $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.scheduler.board_count+' configured boards · '+esc(data.scheduler.mode)+' scheduling';
  $('boards').innerHTML=data.boards.map(boardMarkup).join('');
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
+ $('bracket').innerHTML=data.bracket.map(match=>{
+  const names=match.participants.map(esc);
+  const detail=match.status==='waiting'
+   ? names.join(' vs ')
+   : names.join(' vs ');
+  const outcome=match.status==='completed'
+   ? '<div class="detail winner">Winner: '+esc(match.winner)+'</div>'
+   : match.status==='reset_pending'
+    ? '<div class="detail">First game complete · conditional reset pending</div>'
+    : '<div class="detail">'+esc(match.status.replace('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
+  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong><div class="detail">'+detail+'</div>'+outcome+'</article>';
+ }).join('');
  $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
 }
 async function refresh(){
