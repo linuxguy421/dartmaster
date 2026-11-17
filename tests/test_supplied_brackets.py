@@ -38,7 +38,7 @@ def test_known_legacy_reference_anomalies_are_reported():
 
     assert any("W-G8" in message and "missing game G8" in message for message in five_messages)
     assert any("L-G8" in message and "missing game G8" in message for message in five_messages)
-    assert any("L-10" in message and "missing game 10" in message for message in nine_messages)
+    assert any("L-10" in message and "Unrecognized slot reference" in message for message in nine_messages)
     assert any("W-G17" in message and "missing game G17" in message for message in nine_messages)
 
 
