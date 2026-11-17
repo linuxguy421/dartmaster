@@ -209,6 +209,14 @@ class BracketRuntime:
                 self.championship_phase = ChampionshipPhase.COMPLETE
                 self._record_terminal_route("GF", "winner_advances_to", winner)
                 self._record_terminal_route("GF", "loser_drops_to", loser)
+                second_place_route = self.definition.games.get("GGF", {}).get(
+                    "loser_drops_to", {}
+                )
+                if (
+                    isinstance(second_place_route, dict)
+                    and second_place_route.get("rank") == "2nd"
+                ):
+                    self.placements["2nd"] = loser
             else:
                 self.championship_phase = ChampionshipPhase.RESET
         elif game_id == "GGF":
