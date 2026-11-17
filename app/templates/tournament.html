@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dartmaster · Live tournament</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+header{padding:20px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+h1{font-size:25px;margin:0;letter-spacing:.04em}header p{color:var(--muted);margin:3px 0 0}
+a{color:var(--accent)}main{max-width:1280px;margin:auto;padding:24px 20px 70px}
+.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;border-radius:7px;padding:9px 12px}
+select{background:#111923;color:var(--text);border:1px solid var(--line)}
+button{background:var(--accent);color:#1c2025;border:0;font-weight:700;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.summary{color:var(--muted)}.summary strong{color:var(--text)}
+.boards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.board{min-height:260px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:12px}
+.board.unavailable,.board.disabled{opacity:.42}.board.in_progress{border-color:#8c6b35;background:#211f1a}.board.blocked{border-color:var(--bad)}
+.board-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.board-head h2{font-size:20px;margin:0}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);text-transform:uppercase}
+.status{color:var(--muted)}.match-id{font-size:12px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.teams{display:grid;gap:8px;margin:2px 0}.team{background:#111923;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:17px;font-weight:650}
+.vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.actions button{flex:1;min-width:120px}
+.blocked-reason{color:var(--bad);font-size:13px}
+.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
+#notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
+#notice.error{color:var(--bad)}#notice.show{display:block}
+.complete{padding:16px;border:1px solid var(--good);border-radius:9px;color:var(--good);margin-bottom:16px}
+@media(max-width:720px){.boards{grid-template-columns:1fr}.board{min-height:220px}header{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header>
+ <div><h1>DARTMASTER</h1><p>Live tournament control</p></div>
+ <div><a href="/">Registration / setup</a></div>
+</header>
+<main>
+ <div class="toolbar">
+  <div class="summary" id="summary">Loading tournament…</div>
+  <div class="controls">
+   <label for="mode">Scheduler</label>
+   <select id="mode"><option value="manual">Manual</option><option value="auto">Auto</option></select>
+   <button id="refresh" class="secondary">Refresh</button>
+  </div>
+ </div>
+ <div id="champion"></div>
+ <section class="boards" id="boards" aria-label="Four dartboards">
+  <article class="board disabled">Loading board status…</article>
+  <article class="board disabled">Loading board status…</article>
+  <article class="board disabled">Loading board status…</article>
+  <article class="board disabled">Loading board status…</article>
+ </section>
+ <section class="results"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
+</main>
+<div id="notice" role="status" aria-live="polite"></div>
+<script>
+const tournamentId=location.pathname.split('/').filter(Boolean).pop();
+const $=id=>document.getElementById(id);
+let current=null,refreshing=false;
+function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function notify(message,error=false){const n=$('notice');n.textContent=message;n.className=error?'show error':'show';setTimeout(()=>n.className='',3500);}
+async function api(path,options={}){
+ const response=await fetch(path,{headers:{'Content-Type':'application/json'},...options});
+ if(!response.ok){let message='Request failed';try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
+ return response.json();
+}
+function boardMarkup(board){
+ const match=board.match;
+ const statusText={in_progress:'Match in progress',blocked:'Championship reset blocked',available:'Enabled · waiting for match',disabled:'Disabled',unavailable:'Not configured'}[board.status];
+ let body='<div class="status">'+statusText+'</div>';
+ if(match){
+  body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' · Conditional reset':'')+'</div>'+
+   '<div class="teams"><div class="team">'+esc(match.participants[0])+'</div><div class="vs">versus</div><div class="team">'+esc(match.participants[1])+'</div></div>'+
+   (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'')+
+   '<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'"> '+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>';
+ }else if(board.configured&&current.scheduler.mode==='manual'){
+  body='<div class="status">'+statusText+'</div><div class="actions">'+(board.enabled?'<button class="secondary" data-disable="'+board.board_id+'">Disable board</button>':'<button data-enable="'+board.board_id+'">Enable board</button>')+'</div>';
+ }else{
+  body='<div class="status">'+statusText+'</div>';
+ }
+ if(match&&current.scheduler.mode==='manual'){
+  body+='<div class="actions"><button class="secondary" data-disable="'+board.board_id+'">Disable after match</button></div>';
+ }
+ return '<article class="board '+board.status+'"><div class="board-head"><h2>Board '+board.board_id+'</h2><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
+}
+function render(data){
+ current=data;
+ $('mode').value=data.scheduler.mode;
+ $('mode').disabled=data.complete;
+ $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.scheduler.board_count+' configured boards · '+esc(data.scheduler.mode)+' scheduling';
+ $('boards').innerHTML=data.boards.map(boardMarkup).join('');
+ $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
+ $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
+}
+async function refresh(){
+ if(refreshing)return;refreshing=true;
+ try{render(await api('/api/tournaments/'+encodeURIComponent(tournamentId)));}
+ catch(err){notify(err.message,true)}
+ finally{refreshing=false;}
+}
+async function act(path,method='POST',body){
+ try{const data=await api(path,{method,body:body?JSON.stringify(body):undefined});render(data);notify('Tournament state updated.');}
+ catch(err){notify(err.message,true);}
+}
+$('boards').addEventListener('click',async e=>{
+ const target=e.target;
+ if(target.dataset.enable)await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.enable+'/enable');
+ else if(target.dataset.disable){
+  if(target.closest('.board')?.querySelector('[data-winner]')){notify('This board has an active match. Complete it before disabling the board.',true);return;}
+  await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.disable+'/disable');
+ }else if(target.dataset.winner){
+  const winner=target.dataset.winner;
+  if(!confirm('Record '+winner+' as the winner of this match?'))return;
+  await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
+ }
+});
+$('mode').addEventListener('change',async()=>{
+ const mode=$('mode').value;
+ if(mode==='auto'&&!confirm('Switch to automatic scheduling? All configured boards become eligible.')){ $('mode').value=current.scheduler.mode;return;}
+ if(mode==='manual'&&!confirm('Switch to manual scheduling? You will need to enable boards individually.')){$('mode').value=current.scheduler.mode;return;}
+ await act('/api/tournaments/'+tournamentId+'/scheduler','PUT',{mode});
+});
+$('refresh').addEventListener('click',refresh);
+refresh();
+setInterval(refresh,5000);
+</script>
+</body></html>
