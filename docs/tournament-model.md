@@ -92,11 +92,31 @@ Each player has a stable player ID, display name, and a registered gender value
 same-gender and mixed-gender teams are both valid. A player may belong to only one
 team in a tournament. Team names are unique without regard to case.
 
+The registration draw follows a two-stage process:
+
+1. The larger gender group draws first. If the groups are equal, females draw first.
+2. The other group draws next. Players who draw the same number across the two groups
+   are paired into mixed teams.
+3. Every player left unmatched redraws. Each draw-off number must be drawn by exactly
+   two unmatched players; those two become a same-gender team. This supports multiple
+   surplus teams, not just a single remaining pair.
+
+Draw numbers must be positive integers and unique within each gender group during the
+mixed draw. Draw-off numbers identify pairs and therefore must occur exactly twice.
+The total number of unmatched players must be even; an odd surplus cannot be converted
+into complete two-player teams and is rejected before any teams are created. A draw
+with an unmatched surplus must include the draw-off results.
+
+The implemented `create_teams_from_draw(...)` operation accepts the recorded number
+draws, validates the complete pairing before mutating the roster, and returns a
+`DrawResult` containing the first gender to draw, draw order, mixed teams, and
+draw-off teams. Team creation remains deterministic from the recorded numbers, so the
+operator can review and audit the resulting pairings.
+
 Registered gender is retained as player information, but this version does not assign
 playing order, conduct a coin flip, or model first/second-player roles. The tournament
 rule that biological females play first can be applied when turn-order support is
-introduced; it does not affect registration, team eligibility, bracket seeding, or
-match scheduling in this version.
+introduced; it does not affect team eligibility, bracket seeding, or match scheduling.
 
 `TournamentRoster` owns the player pool, team definitions, and explicit seed-to-team
 assignments. A team can occupy only one seed, and a seed can have only one team. Before
@@ -110,6 +130,6 @@ then checks that seed assignments produce the exact team names used by the brack
 runtime. A persisted roster that conflicts with the runtime entrants is rejected.
 
 The initial domain API is `register_player(...)`, `create_team(...)`,
-`assign_seed(...)`, `validate_for_bracket(...)`, and `runtime_entrants(...)`.
-It is intentionally independent of FastAPI so the same validation applies to future API,
-admin, and test entrypoints.
+`create_teams_from_draw(...)`, `assign_seed(...)`, `validate_for_bracket(...)`,
+and `runtime_entrants(...)`. It is intentionally independent of FastAPI so the same
+validation applies to future API, admin, and test entrypoints.
