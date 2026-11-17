@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from app.brackets.loader import BracketLoadError, available_brackets, load_bracket
-from app.brackets.scheduler import BoardSchedulerError, SchedulerMode
+from app.brackets.scheduler import BoardSchedulerError
 from app.registration import (
     Gender,
     RegistrationError,
@@ -48,8 +48,6 @@ class SeedRequest(BaseModel):
 
 class TournamentRequest(BaseModel):
     bracket_file: str
-    board_count: int = Field(default=4, ge=1, le=4)
-    scheduler_mode: SchedulerMode = SchedulerMode.MANUAL
 
 
 def database_path() -> str:
@@ -245,8 +243,7 @@ def create_tournament(request: TournamentRequest) -> dict:
             definition,
             entrants,
             tournament_store(),
-            board_count=request.board_count,
-            mode=request.scheduler_mode,
+            board_count=4,
             roster=roster,
         )
     except (RegistrationError, BracketLoadError, ValueError) as exc:
@@ -255,7 +252,7 @@ def create_tournament(request: TournamentRequest) -> dict:
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
         "team_count": len(entrants),
-        "scheduler_mode": session.scheduler.mode.value,
+        "board_count": 4,
         "dashboard_url": f"/tournaments/{session.tournament_id}",
     }
 
@@ -350,19 +347,15 @@ def tournament_payload(session: TournamentSession) -> dict:
     boards = []
     for board_id in range(1, 5):
         assignment = assignments.get(board_id)
-        configured = board_id <= session.scheduler.board_count
-        enabled = board_id in session.scheduler.enabled_boards
         match = assignment.match if assignment else None
         boards.append({
             "board_id": board_id,
-            "configured": configured,
-            "enabled": enabled,
+            "configured": True,
+            "enabled": True,
             "status": (
                 "blocked" if assignment and assignment.blocked_reason
                 else "in_progress" if assignment
-                else "available" if configured and enabled
-                else "disabled" if configured
-                else "unavailable"
+                else "available"
             ),
             "match": ({
                 "match_id": match.match_id,
@@ -393,10 +386,19 @@ def tournament_payload(session: TournamentSession) -> dict:
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
         "scheduler": {
-            "mode": session.scheduler.mode.value,
-            "board_count": session.scheduler.board_count,
-            "enabled_boards": list(session.scheduler.enabled_boards),
+            "board_count": 4,
+            "free_boards": list(session.scheduler.free_boards),
+            "recommended_boards": list(session.scheduler.recommended_boards(session.runtime)),
         },
+        "ready_matches": [
+            {
+                "match_id": match.match_id,
+                "source_game_id": match.source_game_id,
+                "participants": list(match.participants),
+                "phase": match.phase.value if match.phase else None,
+            }
+            for match in session.scheduler.ready_matches(session.runtime)
+        ],
         "boards": boards,
         "bracket": bracket_payload(session),
         "results": display_results,
@@ -419,35 +421,17 @@ def get_tournament(tournament_id: str) -> dict:
     return tournament_payload(tournament_session(tournament_id))
 
 
-@app.post("/api/tournaments/{tournament_id}/boards/{board_id}/enable")
-def enable_board(tournament_id: str, board_id: int) -> dict:
+class AssignMatchRequest(BaseModel):
+    match_id: str = Field(min_length=1, max_length=80)
+
+
+@app.post("/api/tournaments/{tournament_id}/boards/{board_id}/assign")
+def assign_match_to_board(
+    tournament_id: str, board_id: int, request: AssignMatchRequest
+) -> dict:
     session = tournament_session(tournament_id)
     try:
-        session.enable_board(board_id)
-    except (BoardSchedulerError, ValueError) as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return tournament_payload(session)
-
-
-@app.post("/api/tournaments/{tournament_id}/boards/{board_id}/disable")
-def disable_board(tournament_id: str, board_id: int) -> dict:
-    session = tournament_session(tournament_id)
-    try:
-        session.disable_board(board_id)
-    except (BoardSchedulerError, ValueError) as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return tournament_payload(session)
-
-
-class SchedulerModeRequest(BaseModel):
-    mode: SchedulerMode
-
-
-@app.put("/api/tournaments/{tournament_id}/scheduler")
-def change_scheduler_mode(tournament_id: str, request: SchedulerModeRequest) -> dict:
-    session = tournament_session(tournament_id)
-    try:
-        session.set_scheduler_mode(request.mode)
+        session.assign_match(board_id, request.match_id)
     except (BoardSchedulerError, ValueError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return tournament_payload(session)
