@@ -85,9 +85,6 @@ function boardMarkup(board){
  }else{
   body='<div class="status">'+statusText+'</div>';
  }
- if(match&&current.scheduler.mode==='manual'){
-  body+='<div class="actions"><button class="secondary" data-disable="'+board.board_id+'">Disable after match</button></div>';
- }
  return '<article class="board '+board.status+'"><div class="board-head"><h2>Board '+board.board_id+'</h2><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
 }
 function render(data){
