@@ -93,6 +93,14 @@ def create_teams_from_draw(
         gender: {numbers[player_id]: player_id for player_id in player_ids}
         for gender, player_ids in by_gender.items()
     }
+    first_numbers = set(player_for_number[first_gender])
+    second_numbers = set(player_for_number[second_gender])
+    if not second_numbers.issubset(first_numbers):
+        raise RegistrationError(
+            f"{second_gender.value.title()} draw numbers must match numbers "
+            f"already drawn by {first_gender.value} players"
+        )
+
     shared_numbers = (
         set(player_for_number[Gender.MALE])
         & set(player_for_number[Gender.FEMALE])
