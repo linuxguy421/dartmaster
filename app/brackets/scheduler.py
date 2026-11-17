@@ -13,6 +13,8 @@ from app.brackets.runtime import (
 
 
 class SchedulerMode(StrEnum):
+    """Legacy snapshot value; new tournaments always use operator assignment."""
+
     MANUAL = "manual"
     AUTO = "auto"
 
@@ -29,91 +31,84 @@ class BoardAssignment:
 
 
 class BoardScheduler:
-    """Assign ready bracket matches to operator-enabled boards.
+    """Four always-available boards with explicit operator match assignment."""
 
-    Manual mode starts with no boards enabled; the operator explicitly enables
-    the boards that should be in service. Auto mode makes every configured
-    board eligible. Match priority always follows the bracket runtime's order.
-    """
+    BOARD_COUNT = 4
+    RECOMMENDATION_ORDER = (1, 3, 2, 4)
 
     def __init__(
         self,
         board_count: int = 4,
         mode: SchedulerMode = SchedulerMode.MANUAL,
     ) -> None:
-        if board_count < 1:
-            raise BoardSchedulerError("board_count must be at least 1")
-        self.board_count = board_count
-        self.mode = SchedulerMode(mode)
-        self._enabled_boards: set[int] = set()
+        if board_count < 1 or board_count > self.BOARD_COUNT:
+            raise BoardSchedulerError("Dartmaster always provides exactly 4 boards")
+        self.board_count = self.BOARD_COUNT
+        self.mode = SchedulerMode.MANUAL
         self._assignments: dict[int, BoardAssignment] = {}
 
     @property
     def enabled_boards(self) -> tuple[int, ...]:
-        if self.mode == SchedulerMode.AUTO:
-            return tuple(range(1, self.board_count + 1))
-        return tuple(sorted(self._enabled_boards))
+        """All physical boards are always available for operator assignment."""
+        return (1, 2, 3, 4)
 
     @property
     def assignments(self) -> tuple[BoardAssignment, ...]:
         return tuple(self._assignments[key] for key in sorted(self._assignments))
 
-    def set_mode(self, mode: SchedulerMode) -> None:
-        self.mode = SchedulerMode(mode)
-        if self.mode == SchedulerMode.AUTO:
-            self._enabled_boards.clear()
-        else:
-            # Active assignments remain in service when switching from auto.
-            self._enabled_boards = set(self._assignments)
-
-    def enable_board(self, board_id: int) -> None:
-        self._validate_board(board_id)
-        if self.mode == SchedulerMode.MANUAL:
-            self._enabled_boards.add(board_id)
-
-    def disable_board(self, board_id: int) -> None:
-        self._validate_board(board_id)
-        if board_id in self._assignments:
-            raise BoardSchedulerError(
-                f"Board {board_id} has an active match and cannot be disabled"
-            )
-        self._enabled_boards.discard(board_id)
+    @property
+    def free_boards(self) -> tuple[int, ...]:
+        return tuple(board for board in range(1, 5) if board not in self._assignments)
 
     def _validate_board(self, board_id: int) -> None:
-        if not isinstance(board_id, int) or not 1 <= board_id <= self.board_count:
+        if not isinstance(board_id, int) or isinstance(board_id, bool) or not 1 <= board_id <= 4:
+            raise BoardSchedulerError("Board must be an integer from 1 to 4")
+
+    def ready_matches(self, runtime: BracketRuntime) -> tuple[ReadyMatch, ...]:
+        assigned = {item.match.match_id for item in self._assignments.values()}
+        return tuple(
+            match for match in runtime.ready_matches()
+            if match.match_id not in assigned
+        )
+
+    def recommended_boards(self, runtime: BracketRuntime) -> tuple[int, ...]:
+        """Suggest a spread-out set of free boards; never assign matches."""
+        count = min(len(self.ready_matches(runtime)), len(self.free_boards))
+        if not count:
+            return ()
+        free = set(self.free_boards)
+        if count == 2:
+            for pair in ((1, 3), (2, 4)):
+                if set(pair).issubset(free):
+                    return pair
+        return tuple(board for board in self.RECOMMENDATION_ORDER if board in free)[:count]
+
+    def assign(self, board_id: int, match_id: str, runtime: BracketRuntime) -> BoardAssignment:
+        self._validate_board(board_id)
+        if board_id in self._assignments:
+            raise BoardSchedulerError(f"Board {board_id} already has an active match")
+        match = next(
+            (candidate for candidate in self.ready_matches(runtime)
+             if candidate.match_id == match_id),
+            None,
+        )
+        if match is None:
             raise BoardSchedulerError(
-                f"Board must be an integer from 1 to {self.board_count}"
+                f"Match {match_id!r} is not ready or is already assigned"
             )
+        assignment = BoardAssignment(board_id, match)
+        self._assignments[board_id] = assignment
+        return assignment
 
     def start_available(self, runtime: BracketRuntime) -> tuple[BoardAssignment, ...]:
-        """Fill enabled, idle boards using the earliest ready unassigned matches."""
-        occupied_match_ids = {
-            assignment.match.match_id for assignment in self._assignments.values()
-        }
-        free_boards = [
-            board_id
-            for board_id in self.enabled_boards
-            if board_id not in self._assignments
-        ]
-        if not free_boards or any(
-            assignment.blocked_reason for assignment in self._assignments.values()
-        ):
-            return self.assignments
-
-        ready = [
-            match
-            for match in runtime.ready_matches()
-            if match.match_id not in occupied_match_ids
-        ]
-        for board_id, match in zip(free_boards, ready):
-            self._assignments[board_id] = BoardAssignment(board_id, match)
+        """Compatibility no-op: ready matches are never assigned automatically."""
         return self.assignments
 
     def snapshot(self) -> dict[str, Any]:
         return {
-            "board_count": self.board_count,
-            "mode": self.mode.value,
-            "enabled_boards": sorted(self._enabled_boards),
+            "board_count": 4,
+            "mode": SchedulerMode.MANUAL.value,
+            "enabled_boards": [1, 2, 3, 4],
             "assignments": [
                 {
                     "board_id": item.board_id,
@@ -134,17 +129,8 @@ class BoardScheduler:
         cls, snapshot: dict[str, Any], runtime: BracketRuntime
     ) -> BoardScheduler:
         try:
-            scheduler = cls(
-                board_count=int(snapshot["board_count"]),
-                mode=SchedulerMode(snapshot["mode"]),
-            )
-            enabled = snapshot["enabled_boards"]
-            if not isinstance(enabled, list):
-                raise TypeError("enabled_boards must be a list")
-            for board_id in enabled:
-                scheduler._validate_board(board_id)
-                scheduler._enabled_boards.add(board_id)
-
+            # Older snapshots may have configured fewer boards or auto mode.
+            scheduler = cls()
             assignments = snapshot["assignments"]
             if not isinstance(assignments, list):
                 raise TypeError("assignments must be a list")
@@ -184,18 +170,9 @@ class BoardScheduler:
                 scheduler._assignments[board_id] = BoardAssignment(
                     board_id, match, blocked_reason
                 )
-            if scheduler.mode == SchedulerMode.MANUAL and any(
-                board_id not in scheduler._enabled_boards
-                for board_id in scheduler._assignments
-            ):
-                raise ValueError("an assigned manual-mode board must be enabled")
-            assigned_matches = [
-                item.match.match_id for item in scheduler._assignments.values()
-            ]
+            assigned_matches = [item.match.match_id for item in scheduler._assignments.values()]
             if len(assigned_matches) != len(set(assigned_matches)):
                 raise ValueError("a logical match cannot be assigned to multiple boards")
-            if scheduler.mode == SchedulerMode.AUTO and scheduler._enabled_boards:
-                raise ValueError("auto mode cannot persist manual board selections")
             return scheduler
         except (KeyError, TypeError, ValueError) as exc:
             raise BoardSchedulerError(f"Invalid scheduler snapshot: {exc}") from exc
@@ -203,28 +180,24 @@ class BoardScheduler:
     def complete(
         self, board_id: int, winner: str, runtime: BracketRuntime
     ) -> BoardAssignment | None:
-        """Record a board's winner; retain championship board for a reset."""
+        """Record a winner; retain the board only for the conditional reset."""
         self._validate_board(board_id)
         assignment = self._assignments.get(board_id)
         if assignment is None:
             raise BoardSchedulerError(f"Board {board_id} has no assigned match")
 
         runtime.record_winner(assignment.match.match_id, winner)
-
         if (
             assignment.match.is_championship
             and runtime.championship_phase == ChampionshipPhase.RESET
         ):
             try:
                 reset_match = next(
-                    match
-                    for match in runtime.ready_matches()
+                    match for match in runtime.ready_matches()
                     if match.match_id == "CHAMPIONSHIP"
                 )
                 updated = BoardAssignment(board_id, reset_match)
             except (BracketRuntimeError, StopIteration) as exc:
-                # Keep the board reserved even when the source reset definition
-                # is malformed; never let another match take this championship's board.
                 updated = replace(
                     assignment,
                     match=replace(
