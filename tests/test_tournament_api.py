@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app import main
 
 
-def setup_tournament(tmp_path, monkeypatch, mode="manual", board_count=4):
+def setup_tournament(tmp_path, monkeypatch):
     monkeypatch.setenv("DARTMASTER_DB_PATH", str(tmp_path / "dartmaster.sqlite3"))
     client = TestClient(main.app)
     for gender in ("male", "female"):
@@ -32,81 +32,74 @@ def setup_tournament(tmp_path, monkeypatch, mode="manual", board_count=4):
         json={"bracket_file": "4teamD.json", "assignments": assignments},
     ).status_code == 200
     created = client.post(
-        "/api/tournaments",
-        json={
-            "bracket_file": "4teamD.json",
-            "board_count": board_count,
-            "scheduler_mode": mode,
-        },
+        "/api/tournaments", json={"bracket_file": "4teamD.json"}
     )
     assert created.status_code == 201
     return client, created.json()
 
 
-def test_live_dashboard_exposes_four_boards_and_manual_enable(tmp_path, monkeypatch):
+def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path, monkeypatch):
     client, tournament = setup_tournament(tmp_path, monkeypatch)
     tournament_id = tournament["tournament_id"]
 
     assert tournament["dashboard_url"] == f"/tournaments/{tournament_id}"
     page = client.get(tournament["dashboard_url"])
     assert page.status_code == 200
-    assert "Live tournament control" in page.text
+    assert "Ready to play" in page.text
+    assert "data-assign" in page.text
 
     status = client.get(f"/api/tournaments/{tournament_id}").json()
     assert len(status["boards"]) == 4
-    assert all(board["status"] == "disabled" for board in status["boards"])
-    assert status["scheduler"]["mode"] == "manual"
+    assert all(board["status"] == "available" for board in status["boards"])
+    assert all(board["enabled"] for board in status["boards"])
+    assert status["scheduler"]["free_boards"] == [1, 2, 3, 4]
+    assert status["scheduler"]["recommended_boards"] == [1, 3]
+    assert [match["match_id"] for match in status["ready_matches"]] == ["G1", "G2"]
+    assert all(board["match"] is None for board in status["boards"])
     assert [match["match_id"] for match in status["bracket"]] == [
         "G1", "G2", "G3", "G4", "G5", "CHAMPIONSHIP"
     ]
-    assert [match["status"] for match in status["bracket"]] == [
-        "ready", "ready", "waiting", "waiting", "waiting", "waiting"
-    ]
-
-    enabled = client.post(
-        f"/api/tournaments/{tournament_id}/boards/2/enable"
-    )
-    assert enabled.status_code == 200
-    assert enabled.json()["boards"][1]["match"]["match_id"] == "G1"
-    assert enabled.json()["boards"][1]["status"] == "in_progress"
 
 
-def test_board_winner_refills_enabled_board_and_rejects_nonparticipant(tmp_path, monkeypatch):
+def test_operator_assigns_ready_matches_and_completion_does_not_auto_assign(tmp_path, monkeypatch):
     client, tournament = setup_tournament(tmp_path, monkeypatch)
     tournament_id = tournament["tournament_id"]
-    base = f"/api/tournaments/{tournament_id}/boards/1"
-    client.post(base + "/enable")
-    state = client.get(f"/api/tournaments/{tournament_id}").json()
-    participants = state["boards"][0]["match"]["participants"]
+    base = f"/api/tournaments/{tournament_id}/boards"
 
-    invalid = client.post(base + "/winner", json={"winner": "Not a team"})
+    assigned = client.post(base + "/3/assign", json={"match_id": "G2"})
+    assert assigned.status_code == 200
+    assert assigned.json()["boards"][2]["match"]["match_id"] == "G2"
+
+    assigned = client.post(base + "/1/assign", json={"match_id": "G1"})
+    assert assigned.status_code == 200
+    participants = assigned.json()["boards"][0]["match"]["participants"]
+
+    invalid = client.post(base + "/1/winner", json={"winner": "Not a team"})
     assert invalid.status_code == 409
 
-    completed = client.post(base + "/winner", json={"winner": participants[0]})
+    completed = client.post(base + "/1/winner", json={"winner": participants[0]})
     assert completed.status_code == 200
-    assert completed.json()["boards"][0]["match"]["match_id"] == "G2"
-    assert completed.json()["results"][0]["winner"] == participants[0]
+    assert completed.json()["boards"][0]["match"] is None
+    assert completed.json()["boards"][2]["match"]["match_id"] == "G2"
+
+    second = completed.json()["boards"][2]["match"]["participants"]
+    completed = client.post(base + "/3/winner", json={"winner": second[0]})
+    assert completed.status_code == 200
+    assert completed.json()["boards"][2]["match"] is None
+    assert [match["match_id"] for match in completed.json()["ready_matches"]] == ["G3"]
+    assert completed.json()["scheduler"]["recommended_boards"] == [1, 3]
 
 
-def test_auto_mode_fills_all_ready_matches_and_can_switch_to_manual(tmp_path, monkeypatch):
-    client, tournament = setup_tournament(
-        tmp_path, monkeypatch, mode="auto", board_count=2
-    )
-    tournament_id = tournament["tournament_id"]
-    status = client.get(f"/api/tournaments/{tournament_id}").json()
-    assert [board["match"]["match_id"] for board in status["boards"][:2]] == [
-        "G1", "G2"
-    ]
-    assert status["boards"][2]["status"] == "unavailable"
+def test_assignment_rejects_unready_or_duplicate_board_matches(tmp_path, monkeypatch):
+    client, tournament = setup_tournament(tmp_path, monkeypatch)
+    base = f"/api/tournaments/{tournament['tournament_id']}/boards"
 
-    changed = client.put(
-        f"/api/tournaments/{tournament_id}/scheduler",
-        json={"mode": "manual"},
-    )
-    assert changed.status_code == 200
-    assert changed.json()["scheduler"]["mode"] == "manual"
-    assert changed.json()["scheduler"]["enabled_boards"] == [1, 2]
+    not_ready = client.post(base + "/1/assign", json={"match_id": "G3"})
+    assert not_ready.status_code == 409
 
+    client.post(base + "/1/assign", json={"match_id": "G1"})
+    occupied = client.post(base + "/1/assign", json={"match_id": "G2"})
+    assert occupied.status_code == 409
 
 
 def test_health_endpoint():
