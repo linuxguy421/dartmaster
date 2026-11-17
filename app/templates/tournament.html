@@ -28,7 +28,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.actions button{flex:1;min-width:120px}
 .blocked-reason{color:var(--bad);font-size:13px}
-.bracket{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.bracket h2{font-size:17px;margin:0 0 10px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.ready-queue{margin:0 0 18px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.ready-queue h2{font-size:17px;margin:0 0 8px}.ready-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.ready-match{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.ready-match strong{display:block;margin-bottom:6px}.ready-match .detail{color:var(--muted);font-size:13px;margin-bottom:10px}.ready-match .assign-row{display:flex;gap:8px;align-items:center}.ready-match select{min-width:0;flex:1}.recommendation{color:var(--good);font-size:12px;margin-bottom:7px}.bracket{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.bracket h2{font-size:17px;margin:0 0 10px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
@@ -44,13 +44,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <main>
  <div class="toolbar">
   <div class="summary" id="summary">Loading tournament…</div>
-  <div class="controls">
-   <label for="mode">Scheduler</label>
-   <select id="mode"><option value="manual">Manual</option><option value="auto">Auto</option></select>
-   <button id="refresh" class="secondary">Refresh</button>
-  </div>
+  <div class="controls"><button id="refresh" class="secondary">Refresh</button></div>
  </div>
  <div id="champion"></div>
+ <section class="ready-queue"><h2>Ready to play</h2><div id="ready-matches" class="ready-list"><p class="status">Loading ready matches…</p></div></section>
  <section class="boards" id="boards" aria-label="Four dartboards">
   <article class="board disabled">Loading board status…</article>
   <article class="board disabled">Loading board status…</article>
@@ -74,14 +71,12 @@ async function api(path,options={}){
 }
 function boardMarkup(board){
  const match=board.match;
- const statusText={in_progress:'Match in progress',blocked:'Championship reset blocked',available:'Enabled · waiting for match',disabled:'Disabled',unavailable:'Not configured'}[board.status];
+ const statusText={in_progress:'Match in progress',blocked:'Championship reset blocked',available:'Available · waiting for assignment'}[board.status];
  let body='<div class="status">'+statusText+'</div>';
  if(match){
   body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' · Conditional reset':'')+'</div>'+
    '<div class="teams"><div class="team">'+esc(match.participants[0])+'</div><div class="vs">versus</div><div class="team">'+esc(match.participants[1])+'</div></div>'+
    (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'">'+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>');
- }else if(board.configured&&current.scheduler.mode==='manual'){
-  body='<div class="status">'+statusText+'</div><div class="actions">'+(board.enabled?'<button class="secondary" data-disable="'+board.board_id+'">Disable board</button>':'<button data-enable="'+board.board_id+'">Enable board</button>')+'</div>';
  }else{
   body='<div class="status">'+statusText+'</div>';
  }
@@ -89,10 +84,14 @@ function boardMarkup(board){
 }
 function render(data){
  current=data;
- $('mode').value=data.scheduler.mode;
- $('mode').disabled=data.complete;
- $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.scheduler.board_count+' configured boards · '+esc(data.scheduler.mode)+' scheduling';
+ $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
  $('boards').innerHTML=data.boards.map(boardMarkup).join('');
+ const recommendations=data.scheduler.recommended_boards;
+ $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map((match,index)=>{
+  const recommended=recommendations[index];
+  const options=data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===recommended?'selected':'')+'>Board '+board+(board===recommended?' · recommended':'')+'</option>').join('');
+  return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong><div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div>'+(recommended?'<div class="recommendation">Suggested board: '+recommended+'</div>':'')+'<div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>Assign</button></div></article>';
+ }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
  $('bracket').innerHTML=data.bracket.map(match=>{
   const names=match.participants.map(esc);
@@ -129,12 +128,6 @@ $('boards').addEventListener('click',async e=>{
   if(!confirm('Record '+winner+' as the winner of this match?'))return;
   await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
  }
-});
-$('mode').addEventListener('change',async()=>{
- const mode=$('mode').value;
- if(mode==='auto'&&!confirm('Switch to automatic scheduling? All configured boards become eligible.')){ $('mode').value=current.scheduler.mode;return;}
- if(mode==='manual'&&!confirm('Switch to manual scheduling? You will need to enable boards individually.')){$('mode').value=current.scheduler.mode;return;}
- await act('/api/tournaments/'+tournamentId+'/scheduler','PUT',{mode});
 });
 $('refresh').addEventListener('click',refresh);
 refresh();
