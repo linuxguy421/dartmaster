@@ -42,19 +42,21 @@ its reset phase retains its current board assignment. The scheduler must never s
 the reset as a second concurrent match or allow another match to take that board between
 the first game and the reset.
 
-The scheduler supports two operating modes:
+All four physical boards are always available. The scheduler never assigns a match
+automatically: the operator selects a bracket-ready match and an available board.
+A match is eligible only when the bracket runtime has resolved both participants
+from the JSON-defined seed and winner/loser references. Completing a match releases
+its board and returns newly unlocked matches to the ready queue for operator selection.
 
-- **Manual (default):** no boards are enabled initially. The operator explicitly enables
-  the boards that will be in service. Ready matches are then assigned to those enabled
-  boards in JSON-defined priority order; unused boards remain idle.
-- **Auto:** all configured boards are eligible, and the scheduler fills idle boards
-  with the earliest eligible matches. It never schedules a match before both teams
-  resolve, and it does not exceed the configured board count.
+The dashboard provides a recommendation based on the current number of ready matches
+and free boards. When two matches can run concurrently, it prefers the separated pairs
+1/3 or 2/4; this is advisory only, and the operator may choose any free board. The
+scheduler does not impose a board rotation or restrict the operator's selection.
 
-Changing from auto to manual returns control of board selection to the operator; the
-operator must enable the desired boards. An active board cannot be disabled until its
-match is complete. Mode affects board availability only, not bracket order or match
-eligibility.
+A championship match that enters its conditional reset remains on its original board.
+The reset is not offered as a separate ready-queue item. A malformed reset leaves the
+championship board reserved with a visible blocking reason rather than freeing it or
+silently changing the bracket participants.
 
 The implementation is in `app/brackets/scheduler.py`. It is independent of the web
 interface and persistence layer. A malformed conditional reset leaves the championship
@@ -66,7 +68,7 @@ freeing the board or silently changing the bracket participants.
 The first persistence layer uses SQLite and stores a versioned tournament snapshot plus
 an append-only operator event history. The snapshot contains the selected bracket file,
 seed-to-team assignments, ordered match results, placements, championship phase,
-champion, scheduler mode, operator-enabled boards, and current board assignments.
+champion, current board assignments, and the fixed four-board availability state.
 
 Match results are replayed through the bracket runtime when a tournament is restored.
 The stored loser, placements, championship phase, and champion are checked against the
