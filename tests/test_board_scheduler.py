@@ -100,3 +100,23 @@ def test_championship_reset_retains_same_board_and_logical_match():
 
 
 
+def test_board_ids_are_validated_and_active_boards_cannot_be_disabled():
+    scheduler = BoardScheduler()
+    with pytest.raises(BoardSchedulerError, match="integer from 1 to 4"):
+        scheduler.enable_board(5)
+
+    scheduler.enable_board(1)
+    scheduler.start_available(runtime_for())
+    with pytest.raises(BoardSchedulerError, match="active match"):
+        scheduler.disable_board(1)
+
+
+def test_auto_mode_can_be_switched_back_to_manual_board_selection():
+    scheduler = BoardScheduler(mode=SchedulerMode.AUTO)
+
+    assert scheduler.enabled_boards == (1, 2, 3, 4)
+    scheduler.set_mode(SchedulerMode.MANUAL)
+
+    assert scheduler.enabled_boards == ()
+    scheduler.enable_board(3)
+    assert scheduler.enabled_boards == (3,)
