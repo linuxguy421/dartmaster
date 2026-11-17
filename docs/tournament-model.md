@@ -19,10 +19,17 @@ Dartmaster presents and manages them as one logical **Championship Match**:
 5. The reset uses the source bracket's `GGF` definition for its winner/loser outcomes.
    When it completes, the championship match is complete.
 
-The engine should expose one logical match identity and a phase/state indicating whether
-the first game is pending, the reset is pending, or the championship is complete. The
-source game IDs remain available for routing, diagnostics, and audit history, but the
-operator UI must not show `GF` and `GGF` as separate matches.
+The bracket runtime exposes one logical match identity (`CHAMPIONSHIP`) and a phase
+indicating whether the first game is pending, the reset is pending, or the championship
+is complete. The source game IDs remain available for routing, diagnostics, and audit
+history, but the operator UI must not show `GF` and `GGF` as separate matches.
+
+The initial progression engine is implemented in `app/brackets/runtime.py`. It resolves
+`Tn`, `W-Gn`, and `L-Gn` references, returns ready matches in JSON insertion order,
+validates winner submissions, and records terminal placements. Calling
+`record_winner("CHAMPIONSHIP", team)` records either phase; callers never submit
+`GGF` as a separate match. If the source reset references cannot resolve, the runtime
+raises a bracket error rather than silently substituting participants.
 
 This is a domain-modeling rule, not permission to rewrite the JSON definitions. Preserve
 their exact game order and routing. If a bracket's `GGF` participants or routes are
