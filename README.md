@@ -24,9 +24,22 @@ uvicorn app.main:app --reload
 
 Open http://127.0.0.1:8000.
 
+By default, registration drafts and tournament state are stored in `data/dartmaster.sqlite3`.
+Set `DARTMASTER_DB_PATH` to use a different SQLite database location.
+
 ## Current implementation
 
-The foundation includes the FastAPI entrypoint, ordered JSON bracket loader, read-only bracket audit CLI, an in-memory progression engine, a four-board scheduler, a SQLite-backed tournament session/state store, and a player/team registration domain. Players have stable IDs, display names, and a male/female registration value. Teams are mixed doubles (one male and one female player), and a player cannot be assigned to multiple teams. Teams map explicitly to the selected bracket's seed slots; the complete roster is stored in the tournament snapshot and revalidated when restored. The engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible). Use `TournamentSession.create(...)` to start a persisted tournament and `TournamentSession.restore(...)` to recover it after restart. Operator actions and match results are snapshotted transactionally alongside an append-only event history. See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
+The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, four-board scheduler, SQLite-backed tournament session/state store, and player/team registration domain. The browser setup workflow is served at `/`:
+
+1. Register players with a display name and gender.
+2. Record the larger group's number draw first (females draw first when group sizes are equal), then the other group's matching numbers.
+3. Record a draw-off number for every unmatched player; each draw-off number must occur exactly twice to identify a partner.
+4. Review the generated mixed and same-gender teams.
+5. Assign each team to a seed in the selected JSON bracket and start the tournament.
+
+The registration draft, recorded draw numbers, teams, and seed assignments persist in SQLite. Starting a tournament snapshots the validated roster alongside bracket progression and scheduler state. The tournament engine resolves entrant and winner/loser references, returns ready matches in source insertion order, validates winner submissions, and models `GF`/`GGF` as one logical Championship Match. The scheduler defaults to manual mode (the operator enables boards) and also supports auto mode (all configured boards are eligible).
+
+Use `TournamentSession.create(...)` to create a persisted tournament and `TournamentSession.restore(...)` to recover it after restart. Operator actions and match results are snapshotted transactionally alongside an append-only event history. See [Tournament match model](docs/tournament-model.md) and [Bracket audit](docs/bracket-audit.md).
 
 Run the audit with:
 
