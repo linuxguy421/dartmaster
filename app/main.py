@@ -251,23 +251,6 @@ def create_tournament(request: TournamentRequest) -> dict:
         )
     except (RegistrationError, BracketLoadError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    display_results = [
-        {"game_id": result.game_id, "winner": result.winner, "loser": result.loser}
-        for result in session.runtime.results.values()
-        if result.game_id not in {"GF", "GGF"}
-    ]
-    if session.runtime.champion is not None:
-        final_result = (
-            session.runtime.results.get("GGF")
-            or session.runtime.results.get("GF")
-        )
-        if final_result is not None:
-            display_results.append({
-                "game_id": "CHAMPIONSHIP",
-                "winner": final_result.winner,
-                "loser": final_result.loser,
-            })
-
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
@@ -389,6 +372,23 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "blocked_reason": assignment.blocked_reason,
             } if match else None),
         })
+    display_results = [
+        {"game_id": result.game_id, "winner": result.winner, "loser": result.loser}
+        for result in session.runtime.results.values()
+        if result.game_id not in {"GF", "GGF"}
+    ]
+    if session.runtime.champion is not None:
+        final_result = (
+            session.runtime.results.get("GGF")
+            or session.runtime.results.get("GF")
+        )
+        if final_result is not None:
+            display_results.append({
+                "game_id": "CHAMPIONSHIP",
+                "winner": final_result.winner,
+                "loser": final_result.loser,
+            })
+
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
