@@ -47,6 +47,9 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert page.status_code == 200
     assert "Ready to play" in page.text
     assert "data-assign" in page.text
+    assert "const selectedBoards=new Map()" in page.text
+    assert "selectedBoards.set(select.dataset.boardSelect,Number(select.value))" in page.text
+    assert "data.scheduler.free_boards.includes(saved)?saved:recommended" in page.text
 
     status = client.get(f"/api/tournaments/{tournament_id}").json()
     assert len(status["boards"]) == 4
