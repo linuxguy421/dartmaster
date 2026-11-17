@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Mapping
+from collections.abc import Mapping
 
 from app.brackets.loader import BracketDefinition
 
