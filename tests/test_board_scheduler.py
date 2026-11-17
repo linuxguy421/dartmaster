@@ -64,7 +64,7 @@ def test_completed_match_frees_board_without_auto_assigning_next_ready_match():
     scheduler.complete(3, "Team 2", runtime)
 
     assert scheduler.assignments == ()
-    assert [match.match_id for match in scheduler.ready_matches(runtime)] == ["G3"]
+    assert [match.match_id for match in scheduler.ready_matches(runtime)] == ["G3", "G4"]
     assert scheduler.recommended_boards(runtime) == (1,)
     assert scheduler.start_available(runtime) == ()
 
