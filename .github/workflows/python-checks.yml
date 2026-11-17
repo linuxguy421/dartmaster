@@ -26,3 +26,7 @@ jobs:
         run: python -m pytest
       - name: Check style
         run: ruff check app tests
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+      - name: Build Docker image
+        run: docker build --tag dartmaster:ci .
