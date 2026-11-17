@@ -10,6 +10,7 @@ from typing import Any
 from app.brackets.loader import BracketDefinition
 from app.brackets.runtime import BracketRuntime, BracketRuntimeError
 from app.brackets.scheduler import BoardScheduler, BoardSchedulerError
+from app.registration.roster import RegistrationError, TournamentRoster
 
 SCHEMA_VERSION = 1
 
@@ -84,11 +85,13 @@ class TournamentStateStore:
         bracket_file: str,
         runtime: BracketRuntime,
         scheduler: BoardScheduler,
+        roster: TournamentRoster | None = None,
     ) -> dict[str, Any]:
         return {
             "schema_version": SCHEMA_VERSION,
             "bracket_file": bracket_file,
             "entrants": dict(runtime.entrants),
+            "registration": roster.to_dict() if roster is not None else None,
             "runtime": {
                 "results": [
                     {
@@ -114,6 +117,7 @@ class TournamentStateStore:
         *,
         event_type: str,
         event_payload: dict[str, Any] | None = None,
+        roster: TournamentRoster | None = None,
     ) -> None:
         if not tournament_id.strip():
             raise TournamentStoreError("tournament_id cannot be empty")
@@ -122,7 +126,7 @@ class TournamentStateStore:
         if not event_type.strip():
             raise TournamentStoreError("event_type cannot be empty")
 
-        snapshot = self._snapshot(bracket_file, runtime, scheduler)
+        snapshot = self._snapshot(bracket_file, runtime, scheduler, roster)
         state_json = json.dumps(snapshot, separators=(",", ":"), sort_keys=True)
         payload_json = json.dumps(event_payload or {}, separators=(",", ":"), sort_keys=True)
         now = self._utc_now()
@@ -182,7 +186,7 @@ class TournamentStateStore:
 
     def restore(
         self, tournament_id: str, definition: BracketDefinition
-    ) -> tuple[BracketRuntime, BoardScheduler, str]:
+    ) -> tuple[BracketRuntime, BoardScheduler, str, TournamentRoster | None]:
         snapshot = self.load(tournament_id)
         try:
             runtime_data = snapshot["runtime"]
@@ -204,11 +208,17 @@ class TournamentStateStore:
                 raise TournamentStoreError("Persisted champion does not match replayed results")
 
             scheduler = BoardScheduler.from_snapshot(snapshot["scheduler"], runtime)
+            registration_data = snapshot.get("registration")
+            roster = TournamentRoster.from_dict(registration_data) if registration_data is not None else None
+            if roster is not None:
+                roster.validate_for_bracket(definition)
+                if roster.runtime_entrants(definition) != runtime.entrants:
+                    raise TournamentStoreError("Persisted roster does not match bracket entrants")
             bracket_file = snapshot["bracket_file"]
             if not isinstance(bracket_file, str) or not bracket_file:
                 raise TournamentStoreError("Persisted bracket_file is invalid")
-            return runtime, scheduler, bracket_file
-        except (KeyError, TypeError, ValueError, BracketRuntimeError, BoardSchedulerError) as exc:
+            return runtime, scheduler, bracket_file, roster
+        except (KeyError, TypeError, ValueError, BracketRuntimeError, BoardSchedulerError, RegistrationError) as exc:
             if isinstance(exc, TournamentStoreError):
                 raise
             raise TournamentStoreError(f"Could not restore tournament: {exc}") from exc
