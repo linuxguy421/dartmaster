@@ -99,4 +99,4 @@ def test_auto_mode_fills_all_ready_matches_and_can_switch_to_manual(tmp_path, mo
     )
     assert changed.status_code == 200
     assert changed.json()["scheduler"]["mode"] == "manual"
-    assert changed.json()["scheduler"]["enabled_boards"] == []
+    assert changed.json()["scheduler"]["enabled_boards"] == [1, 2]
