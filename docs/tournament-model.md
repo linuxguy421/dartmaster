@@ -84,14 +84,19 @@ are saved together as one state update. The default scheduler mode remains manua
 The state schema is versioned. Future schema changes must use explicit migrations;
 do not silently reinterpret or discard an existing tournament snapshot.
 
-
 ## Player and team registration
 
 Registration is represented independently of the web layer in `app/registration/`.
-Each player has a stable player ID, display name, and a `Gender` value (`male` or
-`female`). A team has a stable team ID and name, and must reference two distinct
-registered players: one male player and one female player. A player may belong to
-only one team in a tournament. Team names are unique without regard to case.
+Each player has a stable player ID, display name, and a registered gender value
+(`male` or `female`). A team contains exactly two distinct registered players;
+same-gender and mixed-gender teams are both valid. A player may belong to only one
+team in a tournament. Team names are unique without regard to case.
+
+Registered gender is retained as player information, but this version does not assign
+playing order, conduct a coin flip, or model first/second-player roles. The tournament
+rule that biological females play first can be applied when turn-order support is
+introduced; it does not affect registration, team eligibility, bracket seeding, or
+match scheduling in this version.
 
 `TournamentRoster` owns the player pool, team definitions, and explicit seed-to-team
 assignments. A team can occupy only one seed, and a seed can have only one team. Before
@@ -105,6 +110,6 @@ then checks that seed assignments produce the exact team names used by the brack
 runtime. A persisted roster that conflicts with the runtime entrants is rejected.
 
 The initial domain API is `register_player(...)`, `create_team(...)`,
-`assign_seed(...)`, `validate_for_bracket(...)`, and `runtime_entrants(...)`. It is
-intentionally independent of FastAPI so the same validation applies to future API,
+`assign_seed(...)`, `validate_for_bracket(...)`, and `runtime_entrants(...)`.
+It is intentionally independent of FastAPI so the same validation applies to future API,
 admin, and test entrypoints.
