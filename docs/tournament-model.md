@@ -60,3 +60,26 @@ The implementation is in `app/brackets/scheduler.py`. It is independent of the w
 interface and persistence layer. A malformed conditional reset leaves the championship
 assignment reserved on its original board with a visible blocking reason rather than
 freeing the board or silently changing the bracket participants.
+
+## Durable tournament state
+
+The first persistence layer uses SQLite and stores a versioned tournament snapshot plus
+an append-only operator event history. The snapshot contains the selected bracket file,
+seed-to-team assignments, ordered match results, placements, championship phase,
+champion, scheduler mode, operator-enabled boards, and current board assignments.
+
+Match results are replayed through the bracket runtime when a tournament is restored.
+The stored loser, placements, championship phase, and champion are checked against the
+replayed bracket state; the snapshot is rejected if those values disagree. Board
+assignments are also checked against the restored runtime before they are accepted.
+The source bracket JSON remains external and authoritative; it is loaded by the caller
+and is never copied into or rewritten by the state store.
+
+`TournamentStateStore` provides transactional snapshot writes and event appends.
+`TournamentSession` coordinates operator actions with persistence: creating a
+tournament, enabling/disabling boards, changing scheduler mode, assigning ready matches,
+and recording a match winner. A match completion and the resulting board reallocation
+are saved together as one state update. The default scheduler mode remains manual.
+
+The state schema is versioned. Future schema changes must use explicit migrations;
+do not silently reinterpret or discard an existing tournament snapshot.
