@@ -112,8 +112,10 @@ class BoardScheduler:
 
         runtime.record_winner(assignment.match.match_id, winner)
 
-        if assignment.match.is_championship:
-            if runtime.championship_phase == ChampionshipPhase.RESET:
+        if (
+            assignment.match.is_championship
+            and runtime.championship_phase == ChampionshipPhase.RESET
+        ):
                 try:
                     reset_match = next(
                         match
