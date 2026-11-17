@@ -7,6 +7,7 @@ from app.brackets.runtime import (
     BracketRuntime,
     BracketRuntimeError,
     ChampionshipPhase,
+    GameResult,
 )
 
 DATA_DIR = Path(__file__).parents[1] / "data"
@@ -94,3 +95,18 @@ def test_winner_must_be_one_of_the_resolved_participants():
 
     with pytest.raises(BracketRuntimeError, match="not a participant"):
         runtime.record_winner("G1", "Not Playing")
+
+
+
+def test_malformed_five_team_reset_is_reported_not_repaired():
+    definition = load_bracket(DATA_DIR / "5teamD.json")
+    entrants = {f"T{seed}": f"Team {seed}" for seed in range(1, 6)}
+    runtime = BracketRuntime(definition, entrants)
+
+    # Seed upstream results to isolate the conditional-reset reference check.
+    runtime.results["G5"] = GameResult("G5", "Team 1", "Team 2")
+    runtime.results["G7"] = GameResult("G7", "Team 3", "Team 4")
+    runtime.record_winner("CHAMPIONSHIP", "Team 4")
+
+    with pytest.raises(BracketRuntimeError, match="W-G8 cannot resolve"):
+        runtime.ready_matches()
