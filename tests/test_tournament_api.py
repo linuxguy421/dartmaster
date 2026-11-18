@@ -22,15 +22,8 @@ def setup_tournament(tmp_path, monkeypatch):
     assert client.post(
         "/api/registration/draw", json={"mixed_draws": draws}
     ).status_code == 200
-    teams = client.get("/api/registration").json()["teams"]
-    assignments = {
-        f"T{index + 1}": team["team_id"]
-        for index, team in enumerate(teams)
-    }
-    assert client.put(
-        "/api/registration/seeds",
-        json={"bracket_file": "4teamD.json", "assignments": assignments},
-    ).status_code == 200
+    registration = client.get("/api/registration").json()
+    assert set(registration["seed_assignments"]) == {"T1", "T2", "T3", "T4"}
     created = client.post(
         "/api/tournaments", json={"bracket_file": "4teamD.json"}
     )
