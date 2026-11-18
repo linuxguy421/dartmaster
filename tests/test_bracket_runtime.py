@@ -7,7 +7,6 @@ from app.brackets.runtime import (
     BracketRuntime,
     BracketRuntimeError,
     ChampionshipPhase,
-    GameResult,
 )
 
 DATA_DIR = Path(__file__).parents[1] / "data"
