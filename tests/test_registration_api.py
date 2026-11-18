@@ -71,6 +71,33 @@ def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     assert reloaded["draw"]["mixed_draws"] == draws
 
 
+def test_exactly_two_unmatched_players_automatically_become_partners(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=6, females=4)
+    players = client.get("/api/registration").json()["players"]
+    mixed = {
+        player["player_id"]: number
+        for player, number in zip(
+            players, [4, 2, 1, 3, 6, 5, 1, 4, 2, 3], strict=True
+        )
+    }
+
+    response = client.post(
+        "/api/registration/draw",
+        json={"mixed_draws": mixed},
+    )
+
+    assert response.status_code == 200
+    teams = response.json()["teams"]
+    assert len(teams) == 5
+    unmatched_team = next(
+        team for team in teams
+        if {team["player_one"], team["player_two"]} == {"Male 5", "Male 6"}
+    )
+    assert unmatched_team["player_one"] != unmatched_team["player_two"]
+    assert len(response.json()["draw"]["draw_off_team_ids"]) == 1
+
+
 def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
     add_players(client, males=4, females=2)
