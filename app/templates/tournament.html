@@ -39,7 +39,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <body>
 <header>
  <div><h1>DARTMASTER</h1><p>Live tournament control</p></div>
- <div><a href="/">Registration / setup</a></div>
+ <div class="controls"><button id="open-bracket" class="secondary" type="button">Open bracket ↗</button><a href="/">Registration / setup</a></div>
 </header>
 <main>
  <div class="toolbar">
@@ -142,6 +142,7 @@ $('boards').addEventListener('click',async e=>{
   await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
  }
 });
+$('open-bracket').addEventListener('click',()=>window.open('/tournaments/'+encodeURIComponent(tournamentId)+'/bracket','_blank','noopener'));
 $('refresh').addEventListener('click',refresh);
 refresh();
 setInterval(refresh,5000);
