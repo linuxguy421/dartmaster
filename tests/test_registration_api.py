@@ -210,7 +210,7 @@ def test_teams_receive_automatic_seeds_in_original_draw_order(tmp_path, monkeypa
         ("Male 4", "Female 4"),
         ("Male 1", "Female 2"),
     ]
-    assert set((seeded_teams[4]["player_one"], seeded_teams[4]["player_two"])) == {
+    assert {seeded_teams[4]["player_one"], seeded_teams[4]["player_two"]} == {
         "Male 5", "Male 6"
     }
 
