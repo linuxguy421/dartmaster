@@ -48,7 +48,7 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
 
     status = client.get(f"/api/tournaments/{tournament_id}").json()
     assert status["payouts"] == {"currency": "USD", "prizes": {"1": 18, "2": 12, "3": 10}}
-    assert next(match for match in status["bracket"] if match["match_id"] == "G5")["placement_label"] == "3rd / 4th Place Match"
+    assert next(match for match in status["bracket"] if match["match_id"] == "G5")["placement_label"] == "3rd Place"
     assert next(match for match in status["bracket"] if match["match_id"] == "CHAMPIONSHIP")["placement_label"] == "1st / 2nd Place Match"
     assert len(status["boards"]) == 4
     assert all(board["status"] == "available" for board in status["boards"])
