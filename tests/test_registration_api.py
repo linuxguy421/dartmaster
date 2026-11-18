@@ -45,16 +45,30 @@ def test_draw_rejects_odd_number_of_registered_players(tmp_path, monkeypatch):
     assert registration["draw"] is None
 
 
+def test_draw_rejects_fewer_than_six_players(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=2, females=2)
+    players = client.get("/api/registration").json()["players"]
+    response = client.post(
+        "/api/registration/draw",
+        json={"mixed_draws": {player["player_id"]: index + 1 for index, player in enumerate(players)}},
+    )
+    assert response.status_code == 400
+    assert "At least 6 players" in response.json()["detail"]
+
+
 def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client)
+    add_players(client, males=4, females=2)
 
     players = client.get("/api/registration").json()["players"]
     draws = {
         players[0]["player_id"]: 1,
         players[1]["player_id"]: 2,
-        players[2]["player_id"]: 1,
-        players[3]["player_id"]: 2,
+        players[2]["player_id"]: 3,
+        players[3]["player_id"]: 4,
+        players[4]["player_id"]: 1,
+        players[5]["player_id"]: 2,
     }
     response = client.post(
         "/api/registration/draw",
@@ -62,12 +76,12 @@ def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     )
 
     assert response.status_code == 200
-    assert len(response.json()["teams"]) == 2
+    assert len(response.json()["teams"]) == 3
     assert response.json()["draw"]["first_gender"] == "female"
 
     reloaded = client.get("/api/registration").json()
     assert len(reloaded["players"]) == 4
-    assert len(reloaded["teams"]) == 2
+    assert len(reloaded["teams"]) == 3
     assert reloaded["draw"]["mixed_draws"] == draws
 
 
