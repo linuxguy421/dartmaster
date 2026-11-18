@@ -49,11 +49,11 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;
 </section>
 <section id="draw-section">
   <h2>2. Number draw</h2>
-  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams; all unmatched players redraw to determine their partners.</p>
+  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If exactly two players are unmatched, they automatically become partners; four or more unmatched players draw again.</p>
   <div id="draw-order" class="notice"></div>
   <div id="draw-inputs" class="grid"></div>
   <div id="draw-off-area" class="hidden">
-    <h3>Draw-off</h3><p class="hint">Each unmatched player draws again. Enter the new number; each number must appear exactly twice.</p>
+    <h3>Draw-off</h3><p class="hint">If exactly two players are unmatched, they automatically become partners. With four or more unmatched players, each draws again; every new number must appear exactly twice.</p>
     <div id="draw-off-inputs" class="grid"></div>
   </div>
   <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
@@ -102,7 +102,7 @@ function render(){
  $('teams-section').classList.toggle('hidden',!state.teams.length);
  $('seeds-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
- $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Draw-off team')+'</span></div>').join('');
+ $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span></div>').join('');
  if(!state.teams.length&&hasBoth&&evenPlayerCount)renderDrawInputs();
  if(state.teams.length)renderSeeds();
 }
@@ -126,7 +126,7 @@ function previewDrawOff(){
  state.players.filter(p=>p.gender===first).forEach(p=>{if(numbersByGender[second].has(values[p.player_id]))matchedIds.add(p.player_id)});
  state.players.filter(p=>p.gender===second).forEach(p=>{if(numbersByGender[first].has(values[p.player_id]))matchedIds.add(p.player_id)});
  drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
- if(drawOffIds.length===0){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
+ if(drawOffIds.length<=2){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
  $('draw-off-area').classList.remove('hidden');
  $('draw-off-inputs').innerHTML=drawOffIds.map(id=>{const p=state.players.find(x=>x.player_id===id);return '<label class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">'+p.gender+'</span><input type="number" min="1" step="1" required data-off="'+id+'" aria-label="Draw-off number for '+escapeHtml(p.display_name)+'"></label>'}).join('');
 }
