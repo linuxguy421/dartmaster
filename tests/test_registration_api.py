@@ -142,17 +142,9 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
         json={"mixed_draws": draws},
     ).status_code == 200
 
-    teams = client.get("/api/registration").json()["teams"]
-    bracket = next(
-        item for item in client.get("/api/brackets").json()
-        if item["filename"] == "4teamD.json"
-    )
-    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
-    seeded = client.put(
-        "/api/registration/seeds",
-        json={"bracket_file": bracket["filename"], "assignments": assignments},
-    )
-    assert seeded.status_code == 200
+    registration = client.get("/api/registration").json()
+    teams = registration["teams"]
+    assert set(registration["seed_assignments"]) == {"T1", "T2", "T3", "T4"}
 
     created = client.post(
         "/api/tournaments",
@@ -180,20 +172,33 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
     assert all("Team " not in entrant for entrant in actual_entrants)
 
 
-def test_seed_assignment_rejects_incomplete_bracket_mapping(tmp_path, monkeypatch):
+def test_teams_receive_automatic_seeds_in_original_draw_order(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client)
+    add_players(client, males=6, females=4)
     players = client.get("/api/registration").json()["players"]
-    draws = {player["player_id"]: number for player, number in zip(players, [1, 2, 1, 2], strict=True)}
-    client.post("/api/registration/draw", json={"mixed_draws": draws})
-    teams = client.get("/api/registration").json()["teams"]
+    draws = {
+        player["player_id"]: number
+        for player, number in zip(players, [4, 2, 1, 3, 6, 5, 1, 4, 2, 3], strict=True)
+    }
+    response = client.post("/api/registration/draw", json={"mixed_draws": draws})
+    assert response.status_code == 200
 
-    response = client.put(
-        "/api/registration/seeds",
-        json={"bracket_file": "4teamD.json", "assignments": {"T1": teams[0]["team_id"]}},
-    )
-    assert response.status_code == 400
-    assert "missing seeds" in response.json()["detail"]
+    registration = response.json()
+    seeds = registration["seed_assignments"]
+    assert set(seeds) == {"T1", "T2", "T3", "T4", "T5"}
+    team_by_id = {team["team_id"]: team for team in registration["teams"]}
+    seeded_teams = [
+        team_by_id[seeds[f"T{index}"]] for index in range(1, 6)
+    ]
+    assert [(team["player_one"], team["player_two"]) for team in seeded_teams[:4]] == [
+        ("Male 3", "Female 1"),
+        ("Male 2", "Female 3"),
+        ("Male 1", "Female 2"),
+        ("Male 4", "Female 4"),
+    ]
+    assert set((seeded_teams[4]["player_one"], seeded_teams[4]["player_two"])) == {
+        "Male 5", "Male 6"
+    }
 
 
 def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypatch):
@@ -216,12 +221,8 @@ def test_registration_starts_blank_and_unfinished_tournament_can_be_resumed(tmp_
         for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
     }
     assert client.post("/api/registration/draw", json={"mixed_draws": draws}).status_code == 200
-    teams = client.get("/api/registration").json()["teams"]
-    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
-    assert client.put(
-        "/api/registration/seeds",
-        json={"bracket_file": "4teamD.json", "assignments": assignments},
-    ).status_code == 200
+    registration = client.get("/api/registration").json()
+    assert len(registration["seed_assignments"]) == 4
 
     created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"})
     assert created.status_code == 201
@@ -293,9 +294,8 @@ def test_unfinished_tournament_can_be_permanently_deleted(tmp_path, monkeypatch)
         for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
     }
     assert client.post("/api/registration/draw", json={"mixed_draws": draws}).status_code == 200
-    teams = client.get("/api/registration").json()["teams"]
-    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
-    assert client.put("/api/registration/seeds", json={"bracket_file": "4teamD.json", "assignments": assignments}).status_code == 200
+    registration = client.get("/api/registration").json()
+    assert len(registration["seed_assignments"]) == 4
     created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"})
     assert created.status_code == 201
     tournament_id = created.json()["tournament_id"]
