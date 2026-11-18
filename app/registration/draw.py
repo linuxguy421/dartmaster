@@ -54,8 +54,9 @@ def create_teams_from_draw(
 
     Each player draws one positive number in the mixed draw. Numbers must be unique
     within each gender group; a male and female with the same number form a mixed
-    team. Every unmatched player then draws again, and each draw-off number must
-    occur exactly twice to define one same-gender team.
+    team. If exactly two players are unmatched, they automatically form a team.
+    Four or more unmatched players draw again; each draw-off number must occur
+    exactly twice to define one same-gender team.
     """
     if roster.teams:
         raise RegistrationError("Draw pairing requires a roster with no existing teams")
@@ -121,13 +122,19 @@ def create_teams_from_draw(
     }
 
     draw_off_numbers: dict[str, int] = {}
-    if unmatched:
+    if len(unmatched) == 2:
+        if draw_off_draws:
+            raise RegistrationError(
+                "No draw-off is needed when exactly two players are unmatched"
+            )
+        draw_off_pairs = [tuple(sorted(unmatched))]
+    elif unmatched:
         if len(unmatched) % 2:
             raise RegistrationError(
                 "The number of unmatched players must be even to form teams"
             )
         if draw_off_draws is None:
-            raise RegistrationError("A draw-off is required for all unmatched players")
+            raise RegistrationError("A draw-off is required for four or more unmatched players")
         draw_off_numbers = _validate_numbers(
             draw_off_draws, unmatched, "Draw-off"
         )
