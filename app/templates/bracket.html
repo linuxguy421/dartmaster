@@ -19,6 +19,7 @@ main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summ
 .slot{padding:6px 8px;border-radius:5px;background:#202b39;display:flex;justify-content:space-between;gap:8px;min-width:0}
 .slot.winner{color:var(--good);font-weight:700}.slot span{overflow-wrap:anywhere}.slot small{color:var(--muted);white-space:nowrap}
 .match-foot{font-size:11px;color:var(--muted);margin-top:auto}.match-foot strong{color:var(--good)}
+.placement{color:var(--accent);font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
 .championship .rounds{justify-content:flex-start}.championship .round{flex-basis:300px}
 #notice{color:var(--muted);font-size:12px}
 @media(max-width:600px){header{align-items:flex-start}main{padding:14px}.lane{padding:11px}}
@@ -59,6 +60,7 @@ function matchCard(match){
  return '<article class="match '+esc(match.status)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
   '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?'<small>WINNER</small>':'')+'</div>'+
   '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?'<small>WINNER</small>':'')+'</div>'+
+  (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
   '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div></article>';
 }
 function render(data){
