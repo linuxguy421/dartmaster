@@ -86,14 +86,14 @@ async function api(url,options={}){const response=await fetch(url,{headers:{'Con
 function counts(){return {male:state.players.filter(p=>p.gender==='male').length,female:state.players.filter(p=>p.gender==='female').length};}
 function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
- const c=counts(),hasBoth=c.male>0&&c.female>0;
+ const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=6;
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
  $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
  $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
- $('draw-button').disabled=!evenPlayerCount||!hasBoth;
- if(!state.teams.length&&hasBoth&&!evenPlayerCount){
-  $('draw-order').textContent='An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
+ $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
+ if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet)){
+  $('draw-order').textContent=!minimumPlayersMet?'At least 6 players are required to form the minimum 3 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
   $('draw-inputs').innerHTML='';
   $('draw-off-area').classList.add('hidden');
   $('draw-off-inputs').innerHTML='';
@@ -103,7 +103,7 @@ function render(){
  $('seeds-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
  $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>').join('');
- if(!state.teams.length&&hasBoth&&evenPlayerCount)renderDrawInputs();
+ if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
  if(state.teams.length)renderSeeds();
 }
 function drawGroupMarkup(players, attribute, label){
