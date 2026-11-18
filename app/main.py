@@ -365,6 +365,12 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
                 winner, loser = final_result.winner, final_result.loser
 
         game_definition = runtime.definition.games.get(game_id, {})
+        placement = game_definition.get("placement_match", {})
+        placement_label = (
+            f"{placement['winner']} / {placement['loser']} Place Match"
+            if isinstance(placement, dict) and placement.get("winner") and placement.get("loser")
+            else None
+        )
         bracket_type = (
             "championship"
             if is_championship
@@ -387,6 +393,7 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             "match_id": match_id,
             "source_game_id": source_game_id,
             "label": "Championship Match" if is_championship else f"Match {game_id}",
+            "placement_label": placement_label,
             "status": status,
             "participants": participants,
             "winner": winner,
@@ -420,6 +427,7 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "source_game_id": match.source_game_id,
                 "participants": list(match.participants),
                 "phase": match.phase.value if match.phase else None,
+                "placement_label": next((entry["placement_label"] for entry in bracket_payload(session) if entry["match_id"] == match.match_id), None),
                 "blocked_reason": assignment.blocked_reason,
             } if match else None),
         })
@@ -443,6 +451,10 @@ def tournament_payload(session: TournamentSession) -> dict:
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
+        "payouts": {
+            "currency": session.runtime.definition.currency,
+            "prizes": dict(session.runtime.definition.prizes),
+        },
         "scheduler": {
             "board_count": 4,
             "free_boards": list(session.scheduler.free_boards),
@@ -454,6 +466,7 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "source_game_id": match.source_game_id,
                 "participants": list(match.participants),
                 "phase": match.phase.value if match.phase else None,
+                "placement_label": next((entry["placement_label"] for entry in bracket_payload(session) if entry["match_id"] == match.match_id), None),
             }
             for match in session.scheduler.ready_matches(session.runtime)
         ],
