@@ -178,6 +178,11 @@ def remove_player(player_id: str) -> None:
 def draw_teams(request: DrawRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
+    if len(roster.players) % 2:
+        raise HTTPException(
+            status_code=400,
+            detail="An even number of players is required to form two-player teams.",
+        )
     if len(roster.players) < 6:
         raise HTTPException(
             status_code=400,
