@@ -33,6 +33,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
 .complete{padding:16px;border:1px solid var(--good);border-radius:9px;color:var(--good);margin-bottom:16px}
+.placement{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin:3px 0}
+.payouts{margin:0 0 18px;padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.payouts h2{font-size:14px;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.payout-list{display:flex;gap:18px;flex-wrap:wrap}.payout-item{font-weight:700}.payout-item span{color:var(--muted);font-weight:500;margin-right:5px}
 @media(max-width:720px){.board{min-height:220px}header{align-items:flex-start}}
 </style>
 </head>
@@ -47,6 +51,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <div class="controls"><button id="refresh" class="secondary">Refresh</button></div>
  </div>
  <div id="champion"></div>
+ <section class="payouts" id="payouts" aria-label="Tournament payouts"><h2>Prize payouts</h2><div class="payout-list" id="payout-list"></div></section>
  <section class="ready-queue"><h2>Ready to play</h2><div id="ready-matches" class="ready-list"><p class="status">Loading ready matches…</p></div></section>
  <section class="boards" id="boards" aria-label="Four dartboards">
   <article class="board disabled">Loading board status…</article>
@@ -76,6 +81,7 @@ function boardMarkup(board){
  let body='<div class="status">'+statusText+'</div>';
  if(match){
   body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' · Conditional reset':'')+'</div>'+
+   (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
    '<div class="teams"><div class="team">'+esc(match.participants[0])+'</div><div class="vs">versus</div><div class="team">'+esc(match.participants[1])+'</div></div>'+
    (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'">'+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>');
  }else{
@@ -94,9 +100,13 @@ function render(data){
   const selectedBoard=data.scheduler.free_boards.includes(saved)?saved:recommended;
   if(saved!==undefined&&!data.scheduler.free_boards.includes(saved))selectedBoards.delete(match.match_id);
   const options=data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===selectedBoard?'selected':'')+'>Board '+board+(board===recommended?' · recommended':'')+'</option>').join('');
-  return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong><div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div>'+(recommended?'<div class="recommendation">Suggested board: '+recommended+'</div>':'')+'<div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>Assign</button></div></article>';
+  return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div>'+(recommended?'<div class="recommendation">Suggested board: '+recommended+'</div>':'')+'<div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>Assign</button></div></article>';
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
+ const payoutEntries=Object.entries(data.payouts?.prizes||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+ const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
+ $('payout-list').innerHTML=payoutEntries.map(([place,amount])=>'<div class="payout-item"><span>'+esc(place)+(place==='1'?'st':place==='2'?'nd':place==='3'?'rd':'th')+' place</span>'+formatter.format(amount)+'</div>').join('');
+ $('payouts').hidden=!payoutEntries.length;
  $('bracket').innerHTML=data.bracket.map(match=>{
   const names=match.participants.map(esc);
   const detail=match.status==='waiting'
@@ -107,7 +117,7 @@ function render(data){
    : match.status==='reset_pending'
     ? '<div class="detail">First game complete · conditional reset pending</div>'
     : '<div class="detail">'+esc(match.status.replace('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
-  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong><div class="detail">'+detail+'</div>'+outcome+'</article>';
+  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+detail+'</div>'+outcome+'</article>';
  }).join('');
  $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
 }
