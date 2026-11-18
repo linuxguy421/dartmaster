@@ -367,9 +367,17 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         game_definition = runtime.definition.games.get(game_id, {})
         placement = game_definition.get("placement_match", {})
         placement_label = (
-            f"{placement['winner']} / {placement['loser']} Place Match"
-            if isinstance(placement, dict) and placement.get("winner") and placement.get("loser")
-            else None
+            f"{placement['winner']} Place"
+            if isinstance(placement, dict)
+            and placement.get("winner")
+            and placement.get("loser") == "4th"
+            else (
+                f"{placement['winner']} / {placement['loser']} Place"
+                if isinstance(placement, dict)
+                and placement.get("winner")
+                and placement.get("loser")
+                else None
+            )
         )
         bracket_type = (
             "championship"
