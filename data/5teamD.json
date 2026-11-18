@@ -134,8 +134,8 @@
     },
     "GGF": {
       "teams": [
-        "W-G8",
-        "L-G8"
+        "W-GF",
+        "L-GF"
       ],
       "winner_advances_to": {
         "result": "CHAMPION"
