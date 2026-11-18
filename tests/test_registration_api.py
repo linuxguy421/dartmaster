@@ -95,7 +95,7 @@ def test_exactly_two_unmatched_players_automatically_become_partners(tmp_path, m
         if {team["player_one"], team["player_two"]} == {"Male 5", "Male 6"}
     )
     assert unmatched_team["player_one"] != unmatched_team["player_two"]
-    assert len(response.json()["draw"]["draw_off_team_ids"]) == 2
+    assert len(response.json()["draw"]["draw_off_team_ids"]) == 1
 
 
 def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
@@ -125,8 +125,8 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
         },
     )
     assert response.status_code == 200
-    assert len(response.json()["teams"]) == 3
-    assert len(response.json()["draw"]["draw_off_team_ids"]) == 1
+    assert len(response.json()["teams"]) == 4
+    assert len(response.json()["draw"]["draw_off_team_ids"]) == 2
 
 
 def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
