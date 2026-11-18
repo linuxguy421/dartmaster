@@ -20,9 +20,7 @@ def test_larger_male_group_draws_first_and_surplus_redraws():
         "f1": 1, "f2": 2, "f3": 3, "f4": 4,
     }
 
-    result = create_teams_from_draw(
-        roster, mixed_draws, {"m5": 1, "m6": 1}
-    )
+    result = create_teams_from_draw(roster, mixed_draws)
 
     assert result.first_gender == Gender.MALE
     assert result.draw_order == (Gender.MALE, Gender.FEMALE)
@@ -38,7 +36,6 @@ def test_larger_female_group_draws_first():
     result = create_teams_from_draw(
         roster,
         {"m1": 1, "m2": 2, "f1": 1, "f2": 2, "f3": 3, "f4": 4},
-        {"f3": 1, "f4": 1},
     )
 
     assert result.first_gender == Gender.FEMALE
@@ -71,24 +68,23 @@ def test_four_unmatched_players_redraw_into_two_teams():
     assert len(result.draw_off_teams) == 2
 
 
-def test_rejects_odd_unmatched_count():
+def test_rejects_odd_total_player_count():
     roster = roster_with_counts(3, 2)
-    with pytest.raises(RegistrationError, match="must be even"):
+    with pytest.raises(RegistrationError, match="even number of players"):
         create_teams_from_draw(
             roster,
             {"m1": 1, "m2": 2, "m3": 3, "f1": 1, "f2": 2},
-            {"m3": 1},
         )
 
 
 
 def test_second_group_must_draw_from_first_groups_numbers():
-    roster = roster_with_counts(3, 2)
+    roster = roster_with_counts(4, 2)
     with pytest.raises(RegistrationError, match="must match numbers already drawn"):
         create_teams_from_draw(
             roster,
-            {"m1": 1, "m2": 2, "m3": 3, "f1": 1, "f2": 4},
-            {"m2": 1, "m3": 1},
+            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "f1": 1, "f2": 5},
+            {"m2": 1, "m3": 1, "m4": 1},
         )
 
 def test_rejects_duplicate_numbers_within_gender():
@@ -100,30 +96,33 @@ def test_rejects_duplicate_numbers_within_gender():
 
 
 def test_draw_off_number_must_identify_exactly_two_players():
-    roster = roster_with_counts(4, 2)
+    roster = roster_with_counts(6, 2)
     with pytest.raises(RegistrationError, match="exactly two"):
         create_teams_from_draw(
             roster,
-            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "f1": 1, "f2": 2},
-            {"m3": 1, "m4": 2},
+            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
+             "f1": 1, "f2": 2},
+            {"m3": 1, "m4": 2, "m5": 3, "m6": 4},
         )
 
 
 def test_requires_draw_off_when_players_are_unmatched():
-    roster = roster_with_counts(4, 2)
+    roster = roster_with_counts(6, 2)
     with pytest.raises(RegistrationError, match="draw-off is required"):
         create_teams_from_draw(
             roster,
-            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "f1": 1, "f2": 2},
+            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
+             "f1": 1, "f2": 2},
         )
 
 
 def test_draw_does_not_mutate_roster_when_draw_validation_fails():
-    roster = roster_with_counts(4, 2)
+    roster = roster_with_counts(6, 2)
     with pytest.raises(RegistrationError):
         create_teams_from_draw(
             roster,
-            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "f1": 1, "f2": 2},
-            {"m3": 1, "m4": 2},
+            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
+             "f1": 1, "f2": 2},
+            {"m3": 1, "m4": 2, "m5": 3, "m6": 4},
         )
     assert roster.teams == {}
