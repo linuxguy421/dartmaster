@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dartmaster · Tournament setup</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+header{padding:24px clamp(18px,4vw,56px);border-bottom:1px solid var(--line);background:#141c27}
+header h1{margin:0;font-size:26px;letter-spacing:.04em}header p{margin:4px 0 0;color:var(--muted)}
+main{max-width:1120px;margin:0 auto;padding:28px 20px 64px;display:grid;gap:20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+h2{font-size:19px;margin:0 0 14px}h3{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+p.hint,.muted{color:var(--muted);margin:4px 0 12px}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+label{display:grid;gap:5px;color:var(--muted);font-size:13px;flex:1;min-width:150px}
+input,select{width:100%;padding:10px 11px;border-radius:7px;border:1px solid var(--line);background:#111923;color:var(--text);font:inherit}
+input[type=number]{max-width:110px}
+button{border:0;border-radius:7px;padding:10px 15px;background:var(--accent);color:#1c2025;font-weight:700;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+button.danger{background:#633b40;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.small{font-size:12px;color:var(--muted)}.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--panel2);color:var(--muted);font-size:12px}
+.notice{padding:11px 13px;border-radius:8px;background:var(--panel2);margin:12px 0}.error{color:var(--bad)}.success{color:var(--good)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.draw-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}.draw-group{min-width:0;padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}.draw-group h3{margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}.draw-group.female h3{color:#e7a4c2}.draw-group.male h3{color:#8eb9e8}.draw-group .grid{grid-template-columns:1fr}.draw-card{padding:12px;background:#151e29;border:1px solid var(--line);border-radius:8px}
+.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.team{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}
+.hidden{display:none!important}#status{position:sticky;bottom:12px;max-width:1120px;margin:0 auto;padding:0 20px;pointer-events:none}#status span{display:block;padding:10px 14px;background:#263446;border:1px solid var(--line);border-radius:8px;pointer-events:auto}
+@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:600px){section{padding:15px}header{padding:18px}th,td{padding:7px 4px}}
+</style>
+</head>
+<body>
+<header><h1>DARTMASTER</h1><p>Tournament registration and setup</p></header>
+<main>
+<section id="resume-section" class="hidden">
+  <h2>Resume an unfinished tournament</h2>
+  <p class="hint">Open a saved tournament to continue its bracket and board assignments.</p>
+  <div id="unfinished-tournaments"></div>
+</section>
+<section>
+  <h2>1. Register players</h2>
+  <p class="hint">Register each player once. The draw pairs players into two-person teams.</p>
+  <form id="player-form" class="row">
+    <label>Player name<input id="player-name" maxlength="80" required placeholder="Full name"></label>
+    <label>Gender<select id="player-gender"><option value="female">Female</option><option value="male">Male</option></select></label>
+    <button>Add player</button>
+  </form>
+  <div id="player-summary" class="muted"></div>
+  <div id="players"></div>
+</section>
+<section id="draw-section">
+  <h2>2. Number draw</h2>
+  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If exactly two players are unmatched, they automatically become partners; four or more unmatched players draw again.</p>
+  <div id="draw-order" class="notice"></div>
+  <div id="draw-inputs" class="draw-columns"></div>
+  <div id="draw-off-area" class="hidden">
+    <h3>Draw-off</h3><p class="hint">If exactly two players are unmatched, they automatically become partners. With four or more unmatched players, each draws again; every new number must appear exactly twice.</p>
+    <div id="draw-off-inputs" class="draw-columns"></div>
+  </div>
+  <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
+</section>
+<section id="teams-section" class="hidden">
+  <h2>3. Review teams</h2>
+  <p class="hint">Confirm the pairings. Bracket seeds are assigned automatically from the original draw numbers.</p>
+  <div id="teams" class="team-list"></div>
+</section>
+<section id="seeds-section" class="hidden">
+  <h2>4. Bracket seeding</h2>
+  <div class="row">
+    <label>Bracket selected automatically<select id="bracket-select" disabled></select></label>
+    <p class="hint">All four boards are always available. The operator assigns each bracket-ready match to a board.</p>
+  </div>
+  <p class="hint">Teams are ordered by their original draw number. If two unmatched players become partners, their team uses the lower of their two original numbers. The JSON bracket determines match order and routing.</p>
+  <div id="seed-inputs" class="grid"></div>
+  <div class="row" style="margin-top:14px"><button id="start-tournament" disabled>Start tournament</button></div>
+  <div id="tournament-result" class="notice hidden"></div>
+</section>
+</main>
+<div id="status" aria-live="polite"></div>
+<script>
+const $=id=>document.getElementById(id);
+let state={players:[],teams:[],seed_assignments:{},draw:null},brackets=[];
+let drawOffIds=[];
+function notify(message,error=false){$('status').innerHTML='<span class="'+(error?'error':'')+'">'+escapeHtml(message)+'</span>'; }
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function api(url,options={}){const response=await fetch(url,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});if(!response.ok){let detail='Request failed';try{detail=(await response.json()).detail||detail}catch{}throw new Error(detail)}return response.status===204?null:response.json();}
+function counts(){return {male:state.players.filter(p=>p.gender==='male').length,female:state.players.filter(p=>p.gender==='female').length};}
+function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
+function render(){
+ const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=6;
+ $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
+ $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
+ $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
+ const evenPlayerCount=state.players.length%2===0;
+ $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
+ if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet)){
+  $('draw-order').textContent=!minimumPlayersMet?'At least 6 players are required to form the minimum 3 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
+  $('draw-inputs').innerHTML='';
+  $('draw-off-area').classList.add('hidden');
+  $('draw-off-inputs').innerHTML='';
+  drawOffIds=[];
+ }
+ $('teams-section').classList.toggle('hidden',!state.teams.length);
+ $('seeds-section').classList.toggle('hidden',!state.teams.length);
+ $('reset-draw').classList.toggle('hidden',!state.teams.length);
+ $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>').join('');
+ if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
+ if(state.teams.length)renderSeeds();
+}
+function drawGroupMarkup(players, attribute, label){
+ return ['female','male'].map(gender=>{
+  const group=players.filter(p=>p.gender===gender);
+  const cards=group.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+'<input type="number" min="1" step="1" required '+attribute+'="'+p.player_id+'" aria-label="'+label+' for '+escapeHtml(p.display_name)+'"></label>').join('');
+  return '<div class="draw-group '+gender+'"><h3>'+(gender==='female'?'Females':'Males')+' <span class="pill">'+group.length+'</span></h3><div class="grid">'+(cards||'<p class="muted">No players</p>')+'</div></div>';
+ }).join('');
+}
+function renderDrawInputs(){
+ const order=firstGender(),other=order==='male'?'female':'male';
+ $('draw-order').textContent='Draw order: '+(order==='female'?'females':'males')+' first, then '+(other==='female'?'females':'males')+'. Enter each player’s number in their group.';
+ $('draw-inputs').innerHTML=drawGroupMarkup(state.players,'data-mixed','Initial draw number');
+ $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];
+ $('draw-inputs').querySelectorAll('input').forEach(input=>input.addEventListener('input',previewDrawOff));
+}
+function previewDrawOff(){
+ const values={};let valid=true;
+ $('draw-inputs').querySelectorAll('input').forEach(input=>{if(!input.value){valid=false;return;}values[input.dataset.mixed]=Number(input.value)});
+ if(!valid){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];return;}
+ const numbersByGender={male:new Set(),female:new Set()};
+ state.players.forEach(p=>numbersByGender[p.gender].add(values[p.player_id]));
+ const first=firstGender(),second=first==='male'?'female':'male';
+ const unmatched=state.players.filter(p=>!numbersByGender[second].has(values[p.player_id])||p.gender===first&&!numbersByGender[second].has(values[p.player_id]));
+ const matchedIds=new Set();
+ state.players.filter(p=>p.gender===first).forEach(p=>{if(numbersByGender[second].has(values[p.player_id]))matchedIds.add(p.player_id)});
+ state.players.filter(p=>p.gender===second).forEach(p=>{if(numbersByGender[first].has(values[p.player_id]))matchedIds.add(p.player_id)});
+ drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
+ if(drawOffIds.length<=2){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
+ $('draw-off-area').classList.remove('hidden');
+ const unmatchedPlayers=state.players.filter(p=>drawOffIds.includes(p.player_id));
+ $('draw-off-inputs').innerHTML=drawGroupMarkup(unmatchedPlayers,'data-off','Draw-off number');
+}
+$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:$('player-name').value,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+$('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
+$('draw-button').addEventListener('click',async()=>{try{
+ const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
+ const off={};if(drawOffIds.length){$('draw-off-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a draw-off number for every unmatched player.');off[i.dataset.off]=Number(i.value)});}
+ const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed,draw_off_draws:off})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
+}catch(err){notify(err.message,true)}});
+$('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
+function renderSeeds(){
+ const bracket=brackets.find(b=>b.team_count===state.teams.length);
+ $('bracket-select').value=bracket?.filename||'';
+ if(!bracket){
+  $('seed-inputs').innerHTML='<p class="error">No bracket definition is available for '+state.teams.length+' teams. Add the matching JSON bracket before continuing.</p>';
+  $('start-tournament').disabled=true;
+  return;
+ }
+ const assignments=state.seed_assignments||{};
+ $('seed-inputs').innerHTML=Array.from({length:bracket.team_count},(_,i)=>{
+  const seed='T'+(i+1),teamId=assignments[seed],team=state.teams.find(item=>item.team_id===teamId);
+  return '<div class="team"><strong>Seed '+seed+'</strong><div>'+(team?escapeHtml(team.player_one)+' + '+escapeHtml(team.player_two):'<span class="error">No team assigned</span>')+'</div></div>';
+ }).join('');
+ $('start-tournament').disabled=Object.keys(assignments).length!==bracket.team_count;
+}
+$('start-tournament').addEventListener('click',async()=>{const button=$('start-tournament');button.disabled=true;try{const result=await api('/api/tournaments',{method:'POST',body:JSON.stringify({bracket_file:$('bracket-select').value})});if(!result.dashboard_url||!result.dashboard_url.startsWith('/tournaments/'))throw new Error('Tournament was created, but the dashboard URL was missing or invalid.');$('tournament-result').classList.remove('hidden');$('tournament-result').innerHTML='<strong class="success">Tournament created</strong><br> ID: '+escapeHtml(result.tournament_id)+'<br> '+result.team_count+' teams · four boards available';notify('Tournament created. Opening dashboard…');window.location.assign(result.dashboard_url);}catch(err){notify(err.message,true);button.disabled=false}});
+async function refresh(){state=await api('/api/registration');render();}
+$('unfinished-tournaments').addEventListener('click',async event=>{
+ const id=event.target.dataset.deleteTournament;
+ if(!id)return;
+ if(!confirm('Permanently delete this tournament and all of its saved match/event history? This cannot be undone.'))return;
+ try{await api('/api/tournaments/'+encodeURIComponent(id),{method:'DELETE'});await loadUnfinishedTournaments();notify('Tournament permanently deleted.');}
+ catch(error){notify(error.message,true);}
+});
+async function loadUnfinishedTournaments(){
+ const tournaments=await api('/api/tournaments');
+ $('resume-section').classList.toggle('hidden',tournaments.length===0);
+ $('unfinished-tournaments').innerHTML=tournaments.length?'<div class="team-list">'+tournaments.map(t=>'<div class="team"><strong>'+escapeHtml(t.bracket_file.replace('.json',''))+'</strong><div class="muted">'+t.team_count+' teams · '+t.completed_matches+' matches completed</div><div class="row" style="margin-top:10px"><a href="'+escapeHtml(t.dashboard_url)+'"><button type="button">Resume tournament</button></a><button type="button" class="danger secondary" data-delete-tournament="'+escapeHtml(t.tournament_id)+'">Delete</button></div></div>').join('')+'</div>':'<p class="muted">No unfinished tournaments.</p>';
+}
+async function init(){try{brackets=await api('/api/brackets');$('bracket-select').innerHTML=brackets.map(b=>'<option value="'+b.filename+'">'+escapeHtml(b.name)+' ('+b.team_count+' teams)'+(b.diagnostics.length?' · bracket warnings':'')+'</option>').join('');await refresh();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
+init();
+</script>
+</body></html>

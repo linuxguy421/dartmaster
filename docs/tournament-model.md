@@ -1,0 +1,137 @@
+# Tournament match model
+
+## Championship final and conditional reset
+
+The bracket JSON files may define the championship final as two game nodes, conventionally
+`GF` and `GGF`. Those nodes are implementation details of the bracket topology; they
+must not become two independently scheduled tournament matches.
+
+Dartmaster presents and manages them as one logical **Championship Match**:
+
+1. The championship match is assigned to one board and remains assigned there through
+   any conditional reset.
+2. The first game uses the bracket's `GF` definition and its existing participant and
+   routing references.
+3. If the upper-bracket finalist wins, the championship is complete. The reset is skipped.
+4. If the lower-bracket finalist wins, both finalists have one loss, so the conditional
+   reset is activated. The same two teams play the reset on the same board, without
+   releasing the board or creating a second queue entry.
+5. The reset uses the source bracket's `GGF` definition for its winner/loser outcomes.
+   When it completes, the championship match is complete.
+
+The bracket runtime exposes one logical match identity (`CHAMPIONSHIP`) and a phase
+indicating whether the first game is pending, the reset is pending, or the championship
+is complete. The source game IDs remain available for routing, diagnostics, and audit
+history, but the operator UI must not show `GF` and `GGF` as separate matches.
+
+The initial progression engine is implemented in `app/brackets/runtime.py`. It resolves
+`Tn`, `W-Gn`, and `L-Gn` references, returns ready matches in JSON insertion order,
+validates winner submissions, and records terminal placements. Calling
+`record_winner("CHAMPIONSHIP", team)` records either phase; callers never submit
+`GGF` as a separate match. If the source reset references cannot resolve, the runtime
+raises a bracket error rather than silently substituting participants.
+
+This is a domain-modeling rule, not permission to rewrite the JSON definitions. Preserve
+their exact game order and routing. If a bracket's `GGF` participants or routes are
+malformed or inconsistent, report the anomaly and do not silently repair it.
+
+## Board scheduling
+
+A logical match occupies at most one board at a time. A championship match that enters
+its reset phase retains its current board assignment. The scheduler must never schedule
+the reset as a second concurrent match or allow another match to take that board between
+the first game and the reset.
+
+All four physical boards are always available. The scheduler never assigns a match
+automatically: the operator selects a bracket-ready match and an available board.
+A match is eligible only when the bracket runtime has resolved both participants
+from the JSON-defined seed and winner/loser references. Completing a match releases
+its board and returns newly unlocked matches to the ready queue for operator selection.
+
+The dashboard provides a recommendation based on the current number of ready matches
+and free boards. When two matches can run concurrently, it prefers the separated pairs
+1/3 or 2/4; this is advisory only, and the operator may choose any free board. The
+scheduler does not impose a board rotation or restrict the operator's selection.
+
+A championship match that enters its conditional reset remains on its original board.
+The reset is not offered as a separate ready-queue item. A malformed reset leaves the
+championship board reserved with a visible blocking reason rather than freeing it or
+silently changing the bracket participants.
+
+The implementation is in `app/brackets/scheduler.py`. It is independent of the web
+interface and persistence layer. A malformed conditional reset leaves the championship
+assignment reserved on its original board with a visible blocking reason rather than
+freeing the board or silently changing the bracket participants.
+
+## Durable tournament state
+
+The first persistence layer uses SQLite and stores a versioned tournament snapshot plus
+an append-only operator event history. The snapshot contains the selected bracket file,
+seed-to-team assignments, ordered match results, placements, championship phase,
+champion, current board assignments, and the fixed four-board availability state.
+
+Match results are replayed through the bracket runtime when a tournament is restored.
+The stored loser, placements, championship phase, and champion are checked against the
+replayed bracket state; the snapshot is rejected if those values disagree. Board
+assignments are also checked against the restored runtime before they are accepted.
+The source bracket JSON remains external and authoritative; it is loaded by the caller
+and is never copied into or rewritten by the state store.
+
+`TournamentStateStore` provides transactional snapshot writes and event appends.
+`TournamentSession` coordinates operator actions with persistence: creating a
+tournament, assigning ready matches to boards, and recording a match winner. Match
+completion and board release are saved together as one state update. Newly unlocked
+matches remain unassigned until the operator chooses a board.
+
+The state schema is versioned. Future schema changes must use explicit migrations;
+do not silently reinterpret or discard an existing tournament snapshot.
+
+## Player and team registration
+
+Registration is represented independently of the web layer in `app/registration/`.
+Each player has a stable player ID, display name, and a registered gender value
+(`male` or `female`). A team contains exactly two distinct registered players;
+same-gender and mixed-gender teams are both valid. A player may belong to only one
+team in a tournament. Team names are unique without regard to case.
+
+The registration draw follows a two-stage process:
+
+1. The larger gender group draws first. If the groups are equal, females draw first.
+2. The other group draws next. Players who draw the same number across the two groups
+   are paired into mixed teams.
+3. Every player left unmatched redraws. Each draw-off number must be drawn by exactly
+   two unmatched players; those two become a same-gender team. This supports multiple
+   surplus teams, not just a single remaining pair.
+
+Draw numbers must be positive integers and unique within each gender group during the
+mixed draw. Draw-off numbers identify pairs and therefore must occur exactly twice.
+The total number of unmatched players must be even; an odd surplus cannot be converted
+into complete two-player teams and is rejected before any teams are created. A draw
+with an unmatched surplus must include the draw-off results.
+
+The implemented `create_teams_from_draw(...)` operation accepts the recorded number
+draws, validates the complete pairing before mutating the roster, and returns a
+`DrawResult` containing the first gender to draw, draw order, mixed teams, and
+draw-off teams. Team creation remains deterministic from the recorded numbers, so the
+operator can review and audit the resulting pairings.
+
+Registered gender is retained as player information, but this version does not assign
+playing order, conduct a coin flip, or model first/second-player roles. The tournament
+rule that biological females play first can be applied when turn-order support is
+introduced; it does not affect team eligibility, bracket seeding, or match scheduling.
+
+`TournamentRoster` owns the player pool, team definitions, and explicit seed-to-team
+assignments. A team can occupy only one seed, and a seed can have only one team. Before
+a tournament starts, the roster must contain exactly the seed assignments referenced
+by the selected bracket JSON; missing or unexpected seeds are rejected. The JSON
+bracket remains authoritative for game order and progression.
+
+The roster serializes to the tournament's SQLite snapshot alongside match and board
+state. Restore reconstructs players and teams through the same validation methods,
+then checks that seed assignments produce the exact team names used by the bracket
+runtime. A persisted roster that conflicts with the runtime entrants is rejected.
+
+The initial domain API is `register_player(...)`, `create_team(...)`,
+`create_teams_from_draw(...)`, `assign_seed(...)`, `validate_for_bracket(...)`,
+and `runtime_entrants(...)`. It is intentionally independent of FastAPI so the same
+validation applies to future API, admin, and test entrypoints.

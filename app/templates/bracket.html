@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dartmaster · Tournament bracket</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;padding:16px 24px;border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:var(--muted)}a{color:var(--accent)}
+main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summary strong{color:var(--text)}
+.lane{margin:0 0 24px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
+.lane h2{font-size:17px;margin:0 0 12px}.rounds{display:flex;gap:14px;overflow-x:auto;align-items:stretch;padding:2px 2px 12px}
+.round{flex:0 0 240px;display:flex;flex-direction:column;gap:10px}.round h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 2px}
+.match{background:#151e29;border:1px solid var(--line);border-radius:8px;padding:10px;min-height:106px;display:flex;flex-direction:column;gap:6px}
+.match.in_progress{border-color:var(--accent)}.match.completed{border-color:#426b58}.match.reset_pending{border-color:#8c6b35}.match.waiting{opacity:.68}
+.match-head{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px}.status{font-size:11px;text-transform:uppercase;color:var(--muted)}
+.slot{padding:6px 8px;border-radius:5px;background:#202b39;display:flex;justify-content:space-between;gap:8px;min-width:0}
+.slot.winner{color:var(--good);font-weight:700}.slot span{overflow-wrap:anywhere}.slot small{color:var(--muted);white-space:nowrap}
+.match-foot{font-size:11px;color:var(--muted);margin-top:auto}.match-foot strong{color:var(--good)}
+.championship .rounds{justify-content:flex-start}.championship .round{flex-basis:300px}
+#notice{color:var(--muted);font-size:12px}
+@media(max-width:600px){header{align-items:flex-start}main{padding:14px}.lane{padding:11px}}
+</style>
+</head>
+<body>
+<header>
+ <div><h1>DARTMASTER · BRACKET</h1><p id="tournament-name">Loading tournament…</p></div>
+ <div><a id="back-link" href="#">Return to tournament controls</a></div>
+</header>
+<main>
+ <div class="summary" id="summary">Loading bracket…</div>
+ <section class="lane"><h2>Winners bracket</h2><div class="rounds" id="winners"></div></section>
+ <section class="lane"><h2>Losers bracket</h2><div class="rounds" id="losers"></div></section>
+ <section class="lane championship"><h2>Championship</h2><div class="rounds" id="championship"></div></section>
+ <div id="notice">This display refreshes automatically every five seconds.</div>
+</main>
+<script>
+const tournamentId=location.pathname.split('/').filter(Boolean).at(-2);
+const $=id=>document.getElementById(id);
+const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('back-link').href='/tournaments/'+encodeURIComponent(tournamentId);
+function participantName(value){
+ if(/^T[1-9][0-9]*$/.test(value))return 'Seed '+value.slice(1);
+ const ref=value.match(/^([WL])-(.+)$/);
+ if(ref)return (ref[1]==='W'?'Winner':'Loser')+' of '+ref[2];
+ return value;
+}
+function matchCard(match){
+ const participants=match.participants||[];
+ const first=participants[0]??'TBD',second=participants[1]??'TBD';
+ const winner=match.winner;
+ const statusLabel=match.status.replaceAll('_',' ');
+ const detail=match.status==='in_progress'?'On Board '+match.board_id:
+  match.status==='reset_pending'?'Conditional reset may be required':
+  match.status==='ready'?'Ready to be assigned':
+  match.status==='completed'?'Match complete':statusLabel;
+ return '<article class="match '+esc(match.status)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
+  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?'<small>WINNER</small>':'')+'</div>'+
+  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?'<small>WINNER</small>':'')+'</div>'+
+  '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div></article>';
+}
+function render(data){
+ $('tournament-name').textContent=data.bracket_file+' · '+(data.complete?'Tournament complete':'Live tournament');
+ $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
+ for(const [type,target] of [['winners','winners'],['losers','losers'],['championship','championship']]){
+  const matches=data.bracket.filter(m=>m.bracket_type===type);
+  const groups=new Map();
+  for(const match of matches){const key=match.round??0;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(match);}
+  const rounds=[...groups.entries()].sort((a,b)=>a[0]-b[0]);
+  $(target).innerHTML=rounds.length?rounds.map(([round,items],index)=>'<div class="round"><h3>'+(type==='championship'?'Final': 'Round '+(index+1))+'</h3>'+items.map(matchCard).join('')+'</div>').join(''):'<p class="status">No matches in this bracket.</p>';
+ }
+}
+async function refresh(){
+ try{const response=await fetch('/api/tournaments/'+encodeURIComponent(tournamentId));if(!response.ok)throw new Error('Tournament unavailable');render(await response.json());}
+ catch(error){$('summary').textContent=error.message;}
+}
+refresh();setInterval(refresh,5000);
+</script>
+</body>
+</html>
