@@ -23,6 +23,28 @@ def add_players(client, males=2, females=2):
         assert response.status_code == 201
 
 
+def test_draw_rejects_odd_number_of_registered_players(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=2, females=1)
+    players = client.get("/api/registration").json()["players"]
+
+    response = client.post(
+        "/api/registration/draw",
+        json={
+            "mixed_draws": {
+                player["player_id"]: index + 1
+                for index, player in enumerate(players)
+            }
+        },
+    )
+
+    assert response.status_code == 400
+    assert "even number of players" in response.json()["detail"]
+    registration = client.get("/api/registration").json()
+    assert registration["teams"] == []
+    assert registration["draw"] is None
+
+
 def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
     add_players(client)
