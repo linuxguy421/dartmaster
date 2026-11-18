@@ -294,6 +294,7 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         for assignment in session.scheduler.assignments
     }
     entries = []
+    game_rounds = {}
 
     for game_id in runtime.definition.game_order:
         if game_id == "GGF":
@@ -341,6 +342,25 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
                 participants = [final_result.winner, final_result.loser]
                 winner, loser = final_result.winner, final_result.loser
 
+        game_definition = runtime.definition.games.get(game_id, {})
+        bracket_type = (
+            "championship"
+            if is_championship
+            else "winners"
+            if str(game_definition.get("is_winnerbracket", "")).lower() == "true"
+            else "losers"
+        )
+        dependencies = [
+            reference[2:]
+            for reference in game_definition.get("teams", [])
+            if isinstance(reference, str)
+            and re.fullmatch(r"[WL]-.+", reference)
+        ]
+        round_number = (
+            max((game_rounds.get(dependency, 0) for dependency in dependencies), default=-1) + 1
+        )
+        game_rounds[game_id] = round_number
+
         entries.append({
             "match_id": match_id,
             "source_game_id": source_game_id,
@@ -351,6 +371,8 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             "loser": loser,
             "board_id": assignment.board_id if assignment else None,
             "phase": assignment.match.phase.value if assignment and assignment.match.phase else None,
+            "bracket_type": bracket_type,
+            "round": round_number,
         })
 
     return entries
@@ -428,6 +450,11 @@ def tournament_payload(session: TournamentSession) -> dict:
 def tournament_dashboard(tournament_id: str) -> str:
     tournament_session(tournament_id)
     return (ROOT / "app" / "templates" / "tournament.html").read_text(encoding="utf-8")
+
+@app.get("/tournaments/{tournament_id}/bracket", response_class=HTMLResponse)
+def tournament_bracket_view(tournament_id: str) -> str:
+    tournament_session(tournament_id)
+    return (ROOT / "app" / "templates" / "bracket.html").read_text(encoding="utf-8")
 
 
 @app.delete("/api/tournaments/{tournament_id}", status_code=204)
