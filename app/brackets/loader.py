@@ -22,6 +22,7 @@ class BracketDefinition:
 
     tournament_name: str
     prizes: dict[str, int]
+    currency: str
     games: dict[str, dict[str, Any]]
     source_path: Path
     diagnostics: tuple[BracketDiagnostic, ...]
@@ -126,6 +127,7 @@ def load_bracket(path: str | Path) -> BracketDefinition:
     return BracketDefinition(
         tournament_name=str(payload.get("tournament_name", source.stem)),
         prizes={str(place): int(amount) for place, amount in prizes.items()},
+        currency=str(payload.get("currency", "USD")),
         games=games,
         source_path=source,
         diagnostics=_diagnose(games),
