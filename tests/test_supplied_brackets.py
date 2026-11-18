@@ -27,6 +27,14 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
     assert len(bracket.games) == game_count
     assert bracket.game_order[0] == "G1"
     assert bracket.game_order[-2:] == ("GF", "GGF")
+    assert bracket.currency == "USD"
+    assert bracket.games["GF"]["placement_match"] == {"winner": "1st", "loser": "2nd"}
+    assert bracket.games["GGF"]["placement_match"] == {"winner": "1st", "loser": "2nd"}
+    third_place = [
+        game for game in bracket.games.values()
+        if game.get("placement_match") == {"winner": "3rd", "loser": "4th"}
+    ]
+    assert len(third_place) == 1
 
 
 def test_known_legacy_reference_anomalies_are_reported():
