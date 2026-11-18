@@ -329,9 +329,31 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             winner = loser = None
         else:
             game = runtime.definition.games.get(game_id, {})
-            participants = (
+            references = (
                 list(game.get("teams", [])) if isinstance(game, dict) else []
             )
+            participants = []
+            for reference in references:
+                if not isinstance(reference, str):
+                    participants.append("TBD")
+                    continue
+                if reference in runtime.entrants:
+                    participants.append(runtime.entrants[reference])
+                    continue
+                route_match = re.fullmatch(r"([WL])-(.+)", reference)
+                if route_match:
+                    prior_result = runtime.results.get(route_match.group(2))
+                    if prior_result is not None:
+                        participants.append(
+                            prior_result.winner
+                            if route_match.group(1) == "W"
+                            else prior_result.loser
+                        )
+                    else:
+                        outcome = "Winner" if route_match.group(1) == "W" else "Loser"
+                        participants.append(f"{outcome} of {route_match.group(2)}")
+                else:
+                    participants.append(reference)
             status = "waiting"
             winner = loser = None
 
