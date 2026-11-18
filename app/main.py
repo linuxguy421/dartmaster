@@ -178,6 +178,11 @@ def remove_player(player_id: str) -> None:
 def draw_teams(request: DrawRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
+    if len(roster.players) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 6 players are required (3 teams minimum).",
+        )
     try:
         result = create_teams_from_draw(
             roster,
@@ -223,6 +228,11 @@ def reset_draw() -> dict:
 def create_tournament(request: TournamentRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
+    if len(roster.players) < 6 or len(roster.teams) < 3:
+        raise HTTPException(
+            status_code=400,
+            detail="At least 6 players (3 teams) are required to start a tournament.",
+        )
     try:
         definition = load_bracket(bracket_path(request.bracket_file))
         entrants = roster.runtime_entrants(definition)
