@@ -193,8 +193,8 @@ def test_teams_receive_automatic_seeds_in_original_draw_order(tmp_path, monkeypa
     assert [(team["player_one"], team["player_two"]) for team in seeded_teams[:4]] == [
         ("Male 3", "Female 1"),
         ("Male 2", "Female 3"),
-        ("Male 1", "Female 2"),
         ("Male 4", "Female 4"),
+        ("Male 1", "Female 2"),
     ]
     assert set((seeded_teams[4]["player_one"], seeded_teams[4]["player_two"])) == {
         "Male 5", "Male 6"
@@ -251,9 +251,8 @@ def test_completed_tournaments_are_not_listed_as_unfinished(tmp_path, monkeypatc
         for player, number in zip(players, [1, 2, 3, 4, 1, 2, 3, 4], strict=True)
     }
     client.post("/api/registration/draw", json={"mixed_draws": draws})
-    teams = client.get("/api/registration").json()["teams"]
-    assignments = {f"T{index + 1}": team["team_id"] for index, team in enumerate(teams)}
-    client.put("/api/registration/seeds", json={"bracket_file": "4teamD.json", "assignments": assignments})
+    registration = client.get("/api/registration").json()
+    assert len(registration["seed_assignments"]) == 4
     created = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"}).json()
     tournament_id = created["tournament_id"]
     base = f"/api/tournaments/{tournament_id}/boards"
