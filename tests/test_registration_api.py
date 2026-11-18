@@ -95,16 +95,16 @@ def test_exactly_two_unmatched_players_automatically_become_partners(tmp_path, m
         if {team["player_one"], team["player_two"]} == {"Male 5", "Male 6"}
     )
     assert unmatched_team["player_one"] != unmatched_team["player_two"]
-    assert len(response.json()["draw"]["draw_off_team_ids"]) == 1
+    assert len(response.json()["draw"]["draw_off_team_ids"]) == 2
 
 
 def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client, males=4, females=2)
+    add_players(client, males=6, females=2)
     players = client.get("/api/registration").json()["players"]
     mixed = {
         player["player_id"]: number
-        for player, number in zip(players, [1, 2, 3, 4, 1, 2], strict=True)
+        for player, number in zip(players, [1, 2, 3, 4, 5, 6, 1, 2], strict=True)
     }
     female_numbers = {
         mixed[player["player_id"]]
@@ -121,7 +121,7 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
         "/api/registration/draw",
         json={
             "mixed_draws": mixed,
-            "draw_off_draws": {unmatched[0]: 9, unmatched[1]: 9},
+            "draw_off_draws": {unmatched[0]: 9, unmatched[1]: 9, unmatched[2]: 10, unmatched[3]: 10},
         },
     )
     assert response.status_code == 200
