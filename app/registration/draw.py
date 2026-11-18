@@ -59,6 +59,10 @@ def create_teams_from_draw(
     """
     if roster.teams:
         raise RegistrationError("Draw pairing requires a roster with no existing teams")
+    if len(roster.players) % 2:
+        raise RegistrationError(
+            "An even number of players is required to form two-player teams"
+        )
 
     by_gender = {
         gender: {
