@@ -72,8 +72,16 @@ function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 function notify(message,error=false){const n=$('notice');n.textContent=message;n.className=error?'show error':'show';setTimeout(()=>n.className='',3500);}
 async function api(path,options={}){
  const response=await fetch(path,{headers:{'Content-Type':'application/json'},...options});
- if(!response.ok){let message='Request failed';try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
- return response.json();
+ const responseText=await response.text();
+ let payload=null;
+ try{payload=responseText?JSON.parse(responseText):null}catch{}
+ if(!response.ok){
+  const detail=payload?.detail;
+  const message=detail||('HTTP '+response.status+(responseText?' · '+responseText.slice(0,240):' · Empty response'));
+  throw new Error(message);
+ }
+ if(!payload&&responseText)throw new Error('Invalid server response · '+responseText.slice(0,240));
+ return payload;
 }
 function boardMarkup(board){
  const match=board.match;
