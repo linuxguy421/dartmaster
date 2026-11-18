@@ -80,7 +80,7 @@ def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     assert response.json()["draw"]["first_gender"] == "male"
 
     reloaded = client.get("/api/registration").json()
-    assert len(reloaded["players"]) == 4
+    assert len(reloaded["players"]) == 6
     assert len(reloaded["teams"]) == 3
     assert reloaded["draw"]["mixed_draws"] == draws
 
