@@ -41,11 +41,6 @@ class DrawRequest(BaseModel):
     draw_off_draws: dict[str, int] = Field(default_factory=dict)
 
 
-class SeedRequest(BaseModel):
-    bracket_file: str
-    assignments: dict[str, str]
-
-
 class TournamentRequest(BaseModel):
     bracket_file: str
 
@@ -189,6 +184,16 @@ def draw_teams(request: DrawRequest) -> dict:
             request.mixed_draws,
             request.draw_off_draws or None,
         )
+        ordered_teams = sorted(
+            roster.teams.values(),
+            key=lambda team: min(
+                request.mixed_draws[team.player_one_id],
+                request.mixed_draws[team.player_two_id],
+            ),
+        )
+        for index, team in enumerate(ordered_teams, start=1):
+            roster.assign_seed(f"T{index}", team.team_id)
+
         draw_state = {
             "first_gender": result.first_gender.value,
             "draw_order": [gender.value for gender in result.draw_order],
@@ -196,6 +201,7 @@ def draw_teams(request: DrawRequest) -> dict:
             "draw_off_draws": request.draw_off_draws,
             "mixed_team_ids": [team.team_id for team in result.mixed_teams],
             "draw_off_team_ids": [team.team_id for team in result.draw_off_teams],
+            "team_draw_order": [team.team_id for team in ordered_teams],
         }
         store.save(roster, draw_state)
     except RegistrationError as exc:
@@ -211,25 +217,6 @@ def reset_draw() -> dict:
     roster.seed_assignments.clear()
     store.save(roster, None)
     return registration_payload(roster)
-
-
-@app.put("/api/registration/seeds")
-def assign_seeds(request: SeedRequest) -> dict:
-    store = registration_store()
-    roster, draw_state = store.load()
-    if not roster.teams:
-        raise HTTPException(status_code=409, detail="Draw teams before assigning seeds")
-    try:
-        definition = load_bracket(bracket_path(request.bracket_file))
-        candidate = TournamentRoster.from_dict(roster.to_dict())
-        candidate.seed_assignments.clear()
-        for seed, team_id in request.assignments.items():
-            candidate.assign_seed(seed, team_id)
-        candidate.validate_for_bracket(definition)
-        store.save(candidate, draw_state)
-    except (RegistrationError, BracketLoadError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return registration_payload(candidate, draw_state)
 
 
 @app.post("/api/tournaments", status_code=201)
