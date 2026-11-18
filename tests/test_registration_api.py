@@ -148,7 +148,7 @@ def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
 
     created = client.post(
         "/api/tournaments",
-        json={"bracket_file": bracket["filename"]},
+        json={"bracket_file": "4teamD.json"},
     )
     assert created.status_code == 201
     assert created.json()["team_count"] == 4
