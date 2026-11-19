@@ -80,6 +80,7 @@ function drawConnectors(data){
  svg.setAttribute('width',width);svg.setAttribute('height',height);svg.setAttribute('viewBox','0 0 '+width+' '+height);svg.innerHTML='';
  const cards=new Map();
  board.querySelectorAll('[data-game]').forEach(card=>cards.set(card.dataset.game,card));
+ const championshipCard=cards.get('GF')||cards.get('GGF');if(championshipCard){cards.set('GF',championshipCard);cards.set('GGF',championshipCard);}
  const ns='http://www.w3.org/2000/svg';
  for(const match of data.bracket){
   const source=cards.get(match.source_game_id);if(!source)continue;
