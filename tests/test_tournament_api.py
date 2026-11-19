@@ -48,7 +48,9 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert "data-assign" in page.text
     assert "const selectedBoards=new Map()" in page.text
     assert "selectedBoards.set(select.dataset.boardSelect,Number(select.value))" in page.text
-    assert "data.scheduler.free_boards.includes(saved)?saved:recommended" in page.text
+    assert "Choose a board" in page.text
+    assert "Suggested board" not in page.text
+    assert "recommended_boards" not in page.text
 
     status = client.get(f"/api/tournaments/{tournament_id}").json()
     assert status["payouts"] == {
@@ -65,7 +67,7 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert all(board["status"] == "available" for board in status["boards"])
     assert all(board["enabled"] for board in status["boards"])
     assert status["scheduler"]["free_boards"] == [1, 2, 3, 4]
-    assert status["scheduler"]["recommended_boards"] == [1, 3]
+    assert "recommended_boards" not in status["scheduler"]
     assert [match["match_id"] for match in status["ready_matches"]] == ["G1", "G2"]
     assert all(board["match"] is None for board in status["boards"])
     assert [match["match_id"] for match in status["bracket"]] == [
@@ -102,7 +104,7 @@ def test_operator_assigns_ready_matches_and_completion_does_not_auto_assign(tmp_
     assert completed.status_code == 200
     assert completed.json()["boards"][2]["match"] is None
     assert [match["match_id"] for match in completed.json()["ready_matches"]] == ["G3", "G4"]
-    assert completed.json()["scheduler"]["recommended_boards"] == [1, 3]
+    assert "recommended_boards" not in completed.json()["scheduler"]
 
 
 def test_assignment_rejects_unready_or_duplicate_board_matches(tmp_path, monkeypatch):
