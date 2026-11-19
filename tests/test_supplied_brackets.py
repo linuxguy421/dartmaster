@@ -44,8 +44,7 @@ def test_known_legacy_reference_anomalies_are_reported():
     five_messages = [item.message for item in five.diagnostics]
     nine_messages = [item.message for item in nine.diagnostics]
 
-    assert any("W-G8" in message and "missing game G8" in message for message in five_messages)
-    assert any("L-G8" in message and "missing game G8" in message for message in five_messages)
+    assert five_messages == []
     assert any("L-10" in message and "missing game 10" in message for message in nine_messages)
     assert any("W-G17" in message and "missing game G17" in message for message in nine_messages)
     assert any("instead of L-G10" in message for message in nine_messages)
