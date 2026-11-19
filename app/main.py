@@ -410,6 +410,8 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             "phase": assignment.match.phase.value if assignment and assignment.match.phase else None,
             "bracket_type": bracket_type,
             "round": round_number,
+            "winner_advances_to": dict(game_definition.get("winner_advances_to", {})),
+            "loser_drops_to": dict(game_definition.get("loser_drops_to", {})),
         })
 
     return entries
