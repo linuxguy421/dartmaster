@@ -125,7 +125,12 @@ function render(data){
    ? names.join(' vs ')
    : names.join(' vs ');
   const outcome=match.status==='completed'
-   ? '<div class="detail winner">Winner: '+esc(match.winner)+'</div>'
+   ? '<div class="detail winner">Winner: '+esc(match.winner)+'</div>'+
+     (match.placement_payouts?['winner','loser'].map(role=>{
+       const place=match.placement_payouts[role+'_place'];
+       const total=Number(payoutTable[place]||0);
+       return total>0?'<div class="detail">'+(role==='winner'?'Winner':'Runner-up')+' · '+esc(place)+' place · '+formatter.format(total/2)+' per player</div>':'';
+      }).join(''):'')
    : match.status==='reset_pending'
     ? '<div class="detail">First game complete · conditional reset pending</div>'
     : '<div class="detail">'+esc(match.status.replace('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
