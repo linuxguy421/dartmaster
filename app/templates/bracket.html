@@ -69,9 +69,8 @@ function matchCard(match){
   return '<small>'+(role==='winner'?'WINNER':esc(place.toUpperCase()))+' · '+formatter.format(amount)+' total payout</small>';
  };
  return '<article class="match '+esc(match.status)+'" data-game="'+esc(match.source_game_id)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
-  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?outcomeLabel('winner'):'')+'</div>'+
-  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?outcomeLabel('winner'):'')+'</div>'+
-  (match.status==='completed'&&match.placement_payouts?'<div class="match-foot">'+(outcomeLabel('loser').replace('<small>','').replace('</small>',''))+'</div>':'')+
+  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?outcomeLabel('winner'):match.status==='completed'?outcomeLabel('loser'):'')+'</div>'+
+  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?outcomeLabel('winner'):match.status==='completed'?outcomeLabel('loser'):'')+'</div>'+
   (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
   '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div>'+routeNotes(match)+'</article>';
 }
