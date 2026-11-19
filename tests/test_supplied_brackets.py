@@ -80,3 +80,5 @@ def test_supplied_bracket_has_spreadsheet_side_pot_payouts(team_count, expected)
 
     assert bracket.prizes_with_side_pot == expected[0]
     assert bracket.side_pot_amount == expected[1]
+    assert bracket.side_pot_contribution_per_player == 1
+    assert bracket.side_pot_amount == team_count * 2
