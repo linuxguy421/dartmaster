@@ -307,5 +307,6 @@
     "2": 22,
     "3": 16
   },
-  "side_pot_amount": 20
+  "side_pot_amount": 20,
+  "side_pot_contribution_per_player": 1
 }
