@@ -80,24 +80,43 @@ function drawConnectors(data){
  svg.setAttribute('width',width);svg.setAttribute('height',height);svg.setAttribute('viewBox','0 0 '+width+' '+height);svg.innerHTML='';
  const cards=new Map();
  board.querySelectorAll('[data-game]').forEach(card=>cards.set(card.dataset.game,card));
- const championshipCard=cards.get('GF')||cards.get('GGF');if(championshipCard){cards.set('GF',championshipCard);cards.set('GGF',championshipCard);}
+ const championshipCard=cards.get('GF')||cards.get('GGF');
+ if(championshipCard){cards.set('GF',championshipCard);cards.set('GGF',championshipCard);}
  const ns='http://www.w3.org/2000/svg';
+ const edges=[];
  for(const match of data.bracket){
   const source=cards.get(match.source_game_id);if(!source)continue;
   for(const [kind,route] of [['winner',match.winner_advances_to],['loser',match.loser_drops_to]]){
    if(!route?.game)continue;
-   const target=cards.get(route.game);if(!target)continue;
+   const target=cards.get(route.game);if(!target||target===source)continue;
    const slots=target.querySelectorAll('.slot');
    const targetSlot=slots[Number(route.slot)||0];if(!targetSlot)continue;
    const a=source.getBoundingClientRect(),b=targetSlot.getBoundingClientRect();
-   const x1=a.right-rect.left+board.scrollLeft,y1=a.top+a.height/2-rect.top+board.scrollTop;
-   const x2=b.left-rect.left+board.scrollLeft,y2=b.top+b.height/2-rect.top+board.scrollTop;
-   const bend=Math.max(24,(x2-x1)*.45),path=document.createElementNS(ns,'path');
-   path.setAttribute('d','M '+x1+' '+y1+' C '+(x1+bend)+' '+y1+', '+(x2-bend)+' '+y2+', '+x2+' '+y2);
-   path.setAttribute('fill','none');path.setAttribute('stroke',kind==='winner'?'#70c79a':'#e5a33b');path.setAttribute('stroke-width','2');
-   if(kind==='loser')path.setAttribute('stroke-dasharray','5 4');
-   path.setAttribute('opacity','.8');svg.appendChild(path);
+   const centerY=a.top+a.height/2-rect.top+board.scrollTop;
+   edges.push({
+    kind,
+    x1:a.right-rect.left+board.scrollLeft,
+    y1:centerY+(kind==='winner'?-7:7),
+    x2:b.left-rect.left+board.scrollLeft,
+    y2:b.top+b.height/2-rect.top+board.scrollTop,
+   });
   }
+ }
+ // Route each edge through a consistent elbow in the open space between cards.
+ // Sorting makes the SVG draw order stable between refreshes.
+ edges.sort((a,b)=>a.x1-b.x1||a.y1-b.y1||a.x2-b.x2||a.y2-b.y2);
+ for(const edge of edges){
+  const path=document.createElementNS(ns,'path');
+  const channel=edge.x1+(edge.x2-edge.x1)*.5;
+  path.setAttribute('d','M '+edge.x1+' '+edge.y1+' H '+channel+' V '+edge.y2+' H '+edge.x2);
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke',edge.kind==='winner'?'#70c79a':'#e5a33b');
+  path.setAttribute('stroke-width','2');
+  path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round');
+  if(edge.kind==='loser')path.setAttribute('stroke-dasharray','5 4');
+  path.setAttribute('opacity','.82');
+  svg.appendChild(path);
  }
 }
 function setBracketMode(traditional){
