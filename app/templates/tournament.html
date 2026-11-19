@@ -113,17 +113,18 @@ function render(data){
  const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
  const completedPlacements={};
- data.bracket.filter(match=>match.status==='completed'&&match.placement_payouts).forEach(match=>{
-  completedPlacements[match.placement_payouts.winner_place]=match.winner;
-  completedPlacements[match.placement_payouts.loser_place]=match.loser;
+ data.bracket.filter(match=>match.placement_players).forEach(match=>{
+  Object.entries(match.placement_players).forEach(([place,players])=>{
+   completedPlacements[place]=players;
+  });
  });
  $('side-pot-toggle').checked=sidePotEnabled;
  $('payout-list').innerHTML=payoutEntries.map(([place,amount])=>{
   const ordinal=place==='1'?'st':place==='2'?'nd':place==='3'?'rd':'th';
   const team=completedPlacements[place];
-  const playerNames=team?' · '+esc(team):'';
+  const playerNames=team?' '+esc(team):'';
   const perPlayer=formatter.format(Number(amount)/2)+' /ea';
-  return '<div class="payout-item"><span>'+esc(place)+ordinal+' place'+playerNames+'</span>'+formatter.format(amount)+' ('+perPlayer+')</div>';
+  return '<div class="payout-item"><span>'+esc(place)+ordinal+' place'+playerNames+'</span> ('+perPlayer+')</div>';
  }).join('');
  $('side-pot-value').hidden=!sidePotEnabled;
  $('side-pot-value').textContent=sidePotEnabled?'Separate side pot: '+formatter.format(data.payouts?.side_pot_amount||0):'';
