@@ -94,11 +94,11 @@ a{color:inherit}
 </section>
 <section id="draw-section">
   <h2>2. Number draw</h2>
-  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If exactly two players are unmatched, they automatically become partners; four or more unmatched players draw again.</p>
+  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If four males remain unmatched, the two with the highest original draw numbers take the female playing role and pair with the two lower-numbered males in order.</p>
   <div id="draw-order" class="notice"></div>
   <div id="draw-inputs" class="draw-columns"></div>
   <div id="draw-off-area" class="hidden">
-    <h3>Draw-off</h3><p class="hint">If exactly two players are unmatched, they automatically become partners. With four or more unmatched players, each draws again; every new number must appear exactly twice.</p>
+    <h3>Playing-role assignment</h3><p class="hint">The two unmatched males with the highest original draw numbers take the female playing role. They pair in draw order with the two lower-numbered unmatched males; no second number draw is needed.</p>
     <div id="draw-off-inputs" class="draw-columns"></div>
   </div>
   <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
@@ -133,7 +133,7 @@ function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
  const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=6;
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
- $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
+ $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><span class="pill">'+(p.playing_role==='female'?'Female':'Male')+(p.playing_role!==p.gender?' role':'')+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
  $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
  $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
@@ -147,7 +147,7 @@ function render(){
  $('teams-section').classList.toggle('hidden',!state.teams.length);
  $('seeds-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
- $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>').join('');
+ $('teams').innerHTML=state.teams.map(t=>{const one=state.players.find(p=>p.player_id===t.player_one_id),two=state.players.find(p=>p.player_id===t.player_two_id);return '<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' <span class="small">('+((one?.playing_role||one?.gender)==='female'?'Female':'Male')+' role)</span> + '+escapeHtml(t.player_two)+' <span class="small">('+((two?.playing_role||two?.gender)==='female'?'Female':'Male')+' role)</span></div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>';}).join('');
  if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
  if(state.teams.length)renderSeeds();
 }
@@ -171,16 +171,17 @@ function previewDrawOff(){
  if(!valid){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];return;}
  const numbersByGender={male:new Set(),female:new Set()};
  state.players.forEach(p=>numbersByGender[p.gender].add(values[p.player_id]));
- const first=firstGender(),second=first==='male'?'female':'male';
- const unmatched=state.players.filter(p=>!numbersByGender[second].has(values[p.player_id])||p.gender===first&&!numbersByGender[second].has(values[p.player_id]));
  const matchedIds=new Set();
- state.players.filter(p=>p.gender===first).forEach(p=>{if(numbersByGender[second].has(values[p.player_id]))matchedIds.add(p.player_id)});
- state.players.filter(p=>p.gender===second).forEach(p=>{if(numbersByGender[first].has(values[p.player_id]))matchedIds.add(p.player_id)});
+ state.players.filter(p=>p.gender==='male').forEach(p=>{if(numbersByGender.female.has(values[p.player_id]))matchedIds.add(p.player_id)});
+ state.players.filter(p=>p.gender==='female').forEach(p=>{if(numbersByGender.male.has(values[p.player_id]))matchedIds.add(p.player_id)});
  drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
- if(drawOffIds.length<=2){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
+ const unmatched=state.players.filter(p=>drawOffIds.includes(p.player_id)).sort((a,b)=>values[a.player_id]-values[b.player_id]);
+ if(unmatched.length!==4||unmatched.some(p=>p.gender!=='male')){
+  $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;
+ }
+ const lower=unmatched.slice(0,2),higher=unmatched.slice(2);
  $('draw-off-area').classList.remove('hidden');
- const unmatchedPlayers=state.players.filter(p=>drawOffIds.includes(p.player_id));
- $('draw-off-inputs').innerHTML=drawGroupMarkup(unmatchedPlayers,'data-off','Draw-off number');
+ $('draw-off-inputs').innerHTML='<div class="draw-group male"><h3>Male playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group female"><h3>Female playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+escapeHtml(lower[0].display_name)+' + '+escapeHtml(higher[0].display_name)+' and '+escapeHtml(lower[1].display_name)+' + '+escapeHtml(higher[1].display_name)+'.</p>';
 }
 $('player-gender-toggle').addEventListener('click',()=>{
  const next=$('player-gender').value==='female'?'male':'female';
@@ -194,8 +195,7 @@ $('player-form').addEventListener('submit',async e=>{e.preventDefault();try{awai
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
  const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
- const off={};if(drawOffIds.length){$('draw-off-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a draw-off number for every unmatched player.');off[i.dataset.off]=Number(i.value)});}
- const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed,draw_off_draws:off})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
+ const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
 function renderSeeds(){
