@@ -60,3 +60,23 @@ def test_valid_championship_reset_references(team_count):
     assert bracket.games["GGF"]["teams"] == ["W-GF", "L-GF"]
     assert bracket.games["GF"]["winner_advances_to"] == {"result": "CHAMPION"}
     assert bracket.games["GF"]["loser_drops_to"] == {"result": "GF_CONDITIONAL"}
+
+
+SIDE_POT_PAYOUTS = {
+    3: ({"1": 24, "2": 0, "3": 0}, 6),
+    4: ({"1": 20, "2": 8, "3": 4}, 8),
+    5: ({"1": 24, "2": 10, "3": 6}, 10),
+    6: ({"1": 28, "2": 12, "3": 8}, 12),
+    7: ({"1": 32, "2": 14, "3": 10}, 14),
+    8: ({"1": 34, "2": 18, "3": 12}, 16),
+    9: ({"1": 38, "2": 20, "3": 14}, 18),
+    10: ({"1": 42, "2": 22, "3": 16}, 20),
+}
+
+
+@pytest.mark.parametrize(("team_count", "expected"), SIDE_POT_PAYOUTS.items())
+def test_supplied_bracket_has_spreadsheet_side_pot_payouts(team_count, expected):
+    bracket = load_bracket(DATA_DIR / f"{team_count}teamD.json")
+
+    assert bracket.prizes_with_side_pot == expected[0]
+    assert bracket.side_pot_amount == expected[1]
