@@ -464,6 +464,8 @@ def tournament_payload(session: TournamentSession) -> dict:
             "prizes": dict(session.runtime.definition.prizes),
             "prizes_with_side_pot": dict(session.runtime.definition.prizes_with_side_pot),
             "side_pot_amount": session.runtime.definition.side_pot_amount,
+            "side_pot_contribution_per_player": session.runtime.definition.side_pot_contribution_per_player,
+            "side_pot_contribution_per_team": session.runtime.definition.side_pot_contribution_per_player * 2,
         },
         "scheduler": {
             "board_count": 4,
