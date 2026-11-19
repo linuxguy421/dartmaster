@@ -397,11 +397,19 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         )
         game_rounds[game_id] = round_number
 
+        placement_payouts = None
+        if isinstance(placement, dict) and placement.get("winner") and placement.get("loser"):
+            placement_payouts = {
+                "winner_place": str(placement["winner"]),
+                "loser_place": str(placement["loser"]),
+            }
+
         entries.append({
             "match_id": match_id,
             "source_game_id": source_game_id,
             "label": "Championship Match" if is_championship else f"Match {game_id}",
             "placement_label": placement_label,
+            "placement_payouts": placement_payouts,
             "status": status,
             "participants": participants,
             "winner": winner,
