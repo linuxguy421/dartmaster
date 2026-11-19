@@ -45,7 +45,8 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert "side-pot-instructions" in page.text
     assert "Set aside" in page.text
     assert "Playing for" in page.text
-    assert "per player" in page.text
+    assert "completedPlacements" in page.text
+    assert " /ea" in page.text
     bracket_page = client.get(f"/tournaments/{tournament_id}/bracket")
     assert bracket_page.status_code == 200
     assert "total payout" in bracket_page.text
