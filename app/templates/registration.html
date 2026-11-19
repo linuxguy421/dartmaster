@@ -11,6 +11,7 @@ header{padding:24px clamp(18px,4vw,56px);border-bottom:1px solid var(--line);bac
 header h1{margin:0;font-size:26px;letter-spacing:.04em}header p{margin:4px 0 0;color:var(--muted)}
 main{max-width:1120px;margin:0 auto;padding:16px 16px 32px;display:grid;gap:12px}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+#registration-section{width:fit-content;min-width:min(100%,430px);max-width:100%}
 h2{font-size:17px;margin:0 0 7px}h3{font-size:15px;margin:18px 0 8px;color:var(--accent)}
 p.hint,.muted{color:var(--muted);margin:2px 0 9px}.row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 label{display:grid;gap:3px;color:var(--muted);font-size:12px;flex:1;min-width:150px}label.gender-field{flex:0 0 auto;min-width:0}label.player-name-field{flex:0 1 240px;min-width:180px}
@@ -39,7 +40,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;
   <p class="hint">Open a saved tournament to continue its bracket and board assignments.</p>
   <div id="unfinished-tournaments"></div>
 </section>
-<section>
+<section id="registration-section">
   <h2>1. Register players</h2>
   <p class="hint">Register each player once. The draw pairs players into two-person teams.</p>
   <form id="player-form" class="row">
