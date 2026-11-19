@@ -404,11 +404,25 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         game_rounds[game_id] = round_number
 
         placement_payouts = None
+        placement_players = None
         if isinstance(placement, dict) and placement.get("winner") and placement.get("loser"):
             placement_payouts = {
                 "winner_place": str(placement["winner"]),
                 "loser_place": str(placement["loser"]),
             }
+            if result is not None and session.roster is not None:
+                entrant_players = {}
+                for seed, team_id in session.roster.seed_assignments.items():
+                    team = session.roster.teams[team_id]
+                    entrant = runtime.entrants[seed]
+                    entrant_players[entrant] = (
+                        f"{session.roster.players[team.player_one_id].display_name} / "
+                        f"{session.roster.players[team.player_two_id].display_name}"
+                    )
+                placement_players = {
+                    placement_payouts["winner_place"]: entrant_players.get(result.winner, result.winner),
+                    placement_payouts["loser_place"]: entrant_players.get(result.loser, result.loser),
+                }
 
         entries.append({
             "match_id": match_id,
@@ -416,6 +430,7 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             "label": "Championship Match" if is_championship else f"Match {game_id}",
             "placement_label": placement_label,
             "placement_payouts": placement_payouts,
+            "placement_players": placement_players,
             "status": status,
             "participants": participants,
             "winner": winner,
