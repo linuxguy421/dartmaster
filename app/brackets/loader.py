@@ -24,6 +24,7 @@ class BracketDefinition:
     prizes: dict[str, int]
     prizes_with_side_pot: dict[str, int]
     side_pot_amount: int
+    side_pot_contribution_per_player: int
     currency: str
     games: dict[str, dict[str, Any]]
     source_path: Path
@@ -136,6 +137,7 @@ def load_bracket(path: str | Path) -> BracketDefinition:
             str(place): int(amount) for place, amount in prizes_with_side_pot.items()
         },
         side_pot_amount=int(payload.get("side_pot_amount", 0)),
+        side_pot_contribution_per_player=int(payload.get("side_pot_contribution_per_player", 0)),
         currency=str(payload.get("currency", "USD")),
         games=games,
         source_path=source,
