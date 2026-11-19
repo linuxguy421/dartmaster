@@ -16,6 +16,7 @@ class DrawResult:
     draw_order: tuple[Gender, Gender]
     mixed_teams: tuple[Team, ...]
     draw_off_teams: tuple[Team, ...]
+    female_role_ids: tuple[str, ...] = ()
 
     @property
     def teams(self) -> tuple[Team, ...]:
@@ -55,8 +56,9 @@ def create_teams_from_draw(
     Each player draws one positive number in the mixed draw. Numbers must be unique
     within each gender group; a male and female with the same number form a mixed
     team. If exactly two players are unmatched, they automatically form a team.
-    Four or more unmatched players draw again; each draw-off number must occur
-    exactly twice to define one same-gender team.
+    When four males remain unmatched, the two with the highest original draw
+    numbers take the female playing role and pair, in ascending order, with the
+    two lower-numbered unmatched males. Biological gender is unchanged.
     """
     if roster.teams:
         raise RegistrationError("Draw pairing requires a roster with no existing teams")
@@ -121,20 +123,32 @@ def create_teams_from_draw(
         player_id for pair in mixed_pairs for player_id in pair
     }
 
-    draw_off_numbers: dict[str, int] = {}
+    female_role_ids: tuple[str, ...] = ()
     if len(unmatched) == 2:
         if draw_off_draws:
             raise RegistrationError(
                 "No draw-off is needed when exactly two players are unmatched"
             )
         draw_off_pairs = [tuple(sorted(unmatched))]
+    elif len(unmatched) == 4:
+        if draw_off_draws:
+            raise RegistrationError(
+                "The playing-role draw-off is determined by the original draw numbers"
+            )
+        unmatched_by_draw = sorted(
+            unmatched, key=lambda player_id: numbers[player_id]
+        )
+        male_role_players = unmatched_by_draw[:2]
+        female_role_players = unmatched_by_draw[2:]
+        female_role_ids = tuple(female_role_players)
+        draw_off_pairs = list(zip(male_role_players, female_role_players, strict=True))
     elif unmatched:
         if len(unmatched) % 2:
             raise RegistrationError(
                 "The number of unmatched players must be even to form teams"
             )
         if draw_off_draws is None:
-            raise RegistrationError("A draw-off is required for four or more unmatched players")
+            raise RegistrationError("A draw-off is required for more than four unmatched players")
         draw_off_numbers = _validate_numbers(
             draw_off_draws, unmatched, "Draw-off"
         )
@@ -180,4 +194,5 @@ def create_teams_from_draw(
         draw_order=(first_gender, second_gender),
         mixed_teams=tuple(created[:mixed_count]),
         draw_off_teams=tuple(created[mixed_count:]),
+        female_role_ids=female_role_ids,
     )
