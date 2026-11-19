@@ -67,6 +67,7 @@ def test_loader_reads_optional_side_pot_payout_fields(tmp_path):
         "prizes": {"1": 20, "2": 10, "3": 0},
         "prizes_with_side_pot": {"1": 24, "2": 0, "3": 0},
         "side_pot_amount": 6,
+        "side_pot_contribution_per_player": 1,
         "games": {"GF": {
             "teams": ["T1", "T2"],
             "winner_advances_to": {"result": "CHAMPION"},
@@ -79,6 +80,7 @@ def test_loader_reads_optional_side_pot_payout_fields(tmp_path):
     assert bracket.prizes == {"1": 20, "2": 10, "3": 0}
     assert bracket.prizes_with_side_pot == {"1": 24, "2": 0, "3": 0}
     assert bracket.side_pot_amount == 6
+    assert bracket.side_pot_contribution_per_player == 1
 
 
 def test_loader_defaults_side_pot_fields_for_legacy_json(tmp_path):
@@ -93,3 +95,4 @@ def test_loader_defaults_side_pot_fields_for_legacy_json(tmp_path):
 
     assert bracket.prizes_with_side_pot == {}
     assert bracket.side_pot_amount == 0
+    assert bracket.side_pot_contribution_per_player == 0
