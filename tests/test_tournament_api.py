@@ -71,6 +71,9 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert [match["match_id"] for match in status["bracket"]] == [
         "G1", "G2", "G3", "G4", "G5", "CHAMPIONSHIP"
     ]
+    first_game = next(match for match in status["bracket"] if match["match_id"] == "G1")
+    assert first_game["winner_advances_to"] == {"game": "G3", "slot": 0}
+    assert first_game["loser_drops_to"] == {"game": "G4", "slot": 0}
 
 
 def test_operator_assigns_ready_matches_and_completion_does_not_auto_assign(tmp_path, monkeypatch):
