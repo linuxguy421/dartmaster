@@ -130,7 +130,9 @@ def create_teams_from_draw(
                 "No draw-off is needed when exactly two players are unmatched"
             )
         draw_off_pairs = [tuple(sorted(unmatched))]
-    elif len(unmatched) == 4:
+    elif len(unmatched) == 4 and all(
+        roster.players[player_id].gender == Gender.MALE for player_id in unmatched
+    ):
         if draw_off_draws:
             raise RegistrationError(
                 "The playing-role draw-off is determined by the original draw numbers"
