@@ -60,9 +60,18 @@ function matchCard(match){
   match.status==='reset_pending'?'Conditional reset may be required':
   match.status==='ready'?'Ready to be assigned':
   match.status==='completed'?'Match complete':statusLabel;
+ const outcomeLabel=role=>{
+  if(match.status!=='completed'||!match.placement_payouts)return '';
+  const place=match.placement_payouts[role+'_place'];
+  const amount=Number(window.currentPayouts?.prizes?.[place]||0);
+  if(!place||amount<=0)return '';
+  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:window.currentPayouts?.currency||'USD',maximumFractionDigits:0});
+  return '<small>'+(role==='winner'?'WINNER':esc(place.toUpperCase()))+' · '+formatter.format(amount)+' total payout</small>';
+ };
  return '<article class="match '+esc(match.status)+'" data-game="'+esc(match.source_game_id)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
-  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?'<small>WINNER</small>':'')+'</div>'+
-  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?'<small>WINNER</small>':'')+'</div>'+
+  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?outcomeLabel('winner'):'')+'</div>'+
+  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?outcomeLabel('winner'):'')+'</div>'+
+  (match.status==='completed'&&match.placement_payouts?'<div class="match-foot">'+(outcomeLabel('loser').replace('<small>','').replace('</small>',''))+'</div>':'')+
   (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
   '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div>'+routeNotes(match)+'</article>';
 }
@@ -129,6 +138,7 @@ $('round-mode').addEventListener('click',()=>setBracketMode(false));
 window.addEventListener('resize',()=>{if($('traditional-mode').classList.contains('active')&&window.lastBracketData)drawConnectors(window.lastBracketData);});
 function render(data){
  window.lastBracketData=data;
+ window.currentPayouts=data.payouts||{};
  $('tournament-name').textContent=data.bracket_file+' · '+(data.complete?'Tournament complete':'Live tournament');
  $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
  for(const [type,target] of [['winners','winners'],['losers','losers'],['championship','championship']]){
