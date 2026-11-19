@@ -133,14 +133,24 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
     ]
     response = client.post(
         "/api/registration/draw",
-        json={
-            "mixed_draws": mixed,
-            "draw_off_draws": {unmatched[0]: 9, unmatched[1]: 9, unmatched[2]: 10, unmatched[3]: 10},
-        },
+        json={"mixed_draws": mixed},
     )
     assert response.status_code == 200
-    assert len(response.json()["teams"]) == 4
-    assert len(response.json()["draw"]["draw_off_team_ids"]) == 2
+    registration = response.json()
+    assert len(registration["teams"]) == 4
+    assert len(registration["draw"]["draw_off_team_ids"]) == 2
+    assert registration["draw"]["female_role_ids"] == [unmatched[2], unmatched[3]]
+    players_by_id = {player["player_id"]: player for player in registration["players"]}
+    assert [players_by_id[player_id]["playing_role"] for player_id in unmatched] == [
+        "male", "male", "female", "female"
+    ]
+    unmatched_teams = [
+        team for team in registration["teams"]
+        if team["team_id"] in registration["draw"]["draw_off_team_ids"]
+    ]
+    assert [
+        (team["player_one"], team["player_two"]) for team in unmatched_teams
+    ] == [("Male 3", "Male 5"), ("Male 4", "Male 6")]
 
 
 def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
@@ -326,3 +336,5 @@ def test_registration_page_offers_confirmed_permanent_tournament_deletion(tmp_pa
     assert response.status_code == 200
     assert "data-delete-tournament" in response.text
     assert "Permanently delete this tournament and all of its saved match/event history? This cannot be undone." in response.text
+    assert "highest original draw numbers" in response.text
+    assert "Female playing role" in response.text
