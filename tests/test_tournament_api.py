@@ -42,6 +42,8 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert "Prize payouts" in page.text
     assert "side-pot-toggle" in page.text
     assert "prizes_with_side_pot" in page.text
+    assert "side-pot-instructions" in page.text
+    assert "Set aside" in page.text
     assert "Playing for" in page.text
     assert "data-assign" in page.text
     assert "const selectedBoards=new Map()" in page.text
@@ -54,6 +56,8 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
         "prizes": {"1": 18, "2": 12, "3": 10},
         "prizes_with_side_pot": {"1": 20, "2": 8, "3": 4},
         "side_pot_amount": 8,
+        "side_pot_contribution_per_player": 1,
+        "side_pot_contribution_per_team": 2,
     }
     assert next(match for match in status["bracket"] if match["match_id"] == "G5")["placement_label"] == "3rd Place"
     assert next(match for match in status["bracket"] if match["match_id"] == "CHAMPIONSHIP")["placement_label"] == "1st / 2nd Place Match"
