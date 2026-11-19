@@ -161,4 +161,11 @@ def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypat
     third_place = next(match for match in status["bracket"] if match["match_id"] == "G5")
     assert third_place["status"] == "completed"
     assert third_place["placement_payouts"] == {"winner_place": "3rd", "loser_place": "4th"}
+    assert set(third_place["placement_players"]) == {"3rd", "4th"}
+    assert all(" / " in players for players in third_place["placement_players"].values())
+    assert all(
+        player.startswith(("Male ", "Female "))
+        for players in third_place["placement_players"].values()
+        for player in players.split(" / ")
+    )
     assert third_place["winner"] is not None
