@@ -84,6 +84,11 @@ def registration_payload(roster: TournamentRoster, draw_state=None) -> dict:
                 "player_id": player.player_id,
                 "display_name": player.display_name,
                 "gender": player.gender.value,
+                "playing_role": (
+                    "female"
+                    if draw_state and player.player_id in draw_state.get("female_role_ids", [])
+                    else player.gender.value
+                ),
             }
             for player in roster.players.values()
         ],
@@ -211,6 +216,7 @@ def draw_teams(request: DrawRequest) -> dict:
             "draw_off_draws": request.draw_off_draws,
             "mixed_team_ids": [team.team_id for team in result.mixed_teams],
             "draw_off_team_ids": [team.team_id for team in result.draw_off_teams],
+            "female_role_ids": list(result.female_role_ids),
             "team_draw_order": [team.team_id for team in ordered_teams],
         }
         store.save(roster, draw_state)
