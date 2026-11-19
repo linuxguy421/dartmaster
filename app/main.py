@@ -472,7 +472,6 @@ def tournament_payload(session: TournamentSession) -> dict:
         "scheduler": {
             "board_count": 4,
             "free_boards": list(session.scheduler.free_boards),
-            "recommended_boards": list(session.scheduler.recommended_boards(session.runtime)),
         },
         "ready_matches": [
             {
