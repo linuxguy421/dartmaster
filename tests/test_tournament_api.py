@@ -132,3 +132,32 @@ def test_health_endpoint():
     response = TestClient(main.app).get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+
+def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypatch):
+    client, tournament = setup_tournament(tmp_path, monkeypatch)
+    base = f"/api/tournaments/{tournament['tournament_id']}/boards"
+
+    def play(match_id, board_id):
+        assigned = client.post(base + f"/{board_id}/assign", json={"match_id": match_id})
+        assert assigned.status_code == 200
+        match = assigned.json()["boards"][board_id - 1]["match"]
+        completed = client.post(
+            base + f"/{board_id}/winner", json={"winner": match["participants"][0]}
+        )
+        assert completed.status_code == 200
+        return completed.json()
+
+    play("G1", 1)
+    status = play("G2", 2)
+    assert {match["match_id"] for match in status["ready_matches"]} == {"G3", "G4"}
+    play("G3", 1)
+    status = play("G4", 2)
+    assert any(match["match_id"] == "G5" for match in status["ready_matches"])
+    status = play("G5", 1)
+
+    third_place = next(match for match in status["bracket"] if match["match_id"] == "G5")
+    assert third_place["status"] == "completed"
+    assert third_place["placement_payouts"] == {"winner_place": "3rd", "loser_place": "4th"}
+    assert third_place["winner"] is not None
