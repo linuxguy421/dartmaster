@@ -9,7 +9,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,sans-serif}
 header{position:sticky;top:0;z-index:5;padding:16px 24px;border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:var(--muted)}a{color:var(--accent)}
-main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summary strong{color:var(--text)}
+main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.view-switch{display:flex;gap:8px;margin:0 0 12px}.view-switch button{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px 12px;border-radius:7px;cursor:pointer}.view-switch button.active{border-color:var(--accent);color:var(--accent)}.bracket-board{position:relative;overflow:auto}.bracket-board .lane{width:max-content;min-width:100%;position:relative}.bracket-board .rounds{overflow:visible}.bracket-board .match{position:relative;z-index:2;width:220px}.bracket-board #connectors{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible}.bracket-board.no-connectors #connectors{display:none}.route-note{font-size:10px;color:var(--muted);margin-top:3px}.route-note strong{color:var(--accent)}.summary strong{color:var(--text)}
 .lane{margin:0 0 24px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
 .lane h2{font-size:17px;margin:0 0 12px}.rounds{display:flex;gap:14px;overflow-x:auto;align-items:stretch;padding:2px 2px 12px}
 .round{flex:0 0 240px;display:flex;flex-direction:column;gap:10px}.round h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 2px}
@@ -32,9 +32,12 @@ main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summ
 </header>
 <main>
  <div class="summary" id="summary">Loading bracket…</div>
- <section class="lane"><h2>Winners bracket</h2><div class="rounds" id="winners"></div></section>
- <section class="lane"><h2>Losers bracket</h2><div class="rounds" id="losers"></div></section>
- <section class="lane championship"><h2>Championship</h2><div class="rounds" id="championship"></div></section>
+ <div class="view-switch"><button id="traditional-mode" class="active" type="button">Traditional bracket</button><button id="round-mode" type="button">Round view</button></div>
+ <div class="bracket-board" id="bracket-board"><svg id="connectors" aria-hidden="true"></svg>
+  <section class="lane"><h2>Winners bracket</h2><div class="rounds" id="winners"></div></section>
+  <section class="lane"><h2>Losers bracket</h2><div class="rounds" id="losers"></div></section>
+  <section class="lane championship"><h2>Championship</h2><div class="rounds" id="championship"></div></section>
+ </div>
  <div id="notice">This display refreshes automatically every five seconds.</div>
 </main>
 <script>
@@ -57,13 +60,55 @@ function matchCard(match){
   match.status==='reset_pending'?'Conditional reset may be required':
   match.status==='ready'?'Ready to be assigned':
   match.status==='completed'?'Match complete':statusLabel;
- return '<article class="match '+esc(match.status)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
+ return '<article class="match '+esc(match.status)+'" data-game="'+esc(match.source_game_id)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
   '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?'<small>WINNER</small>':'')+'</div>'+
   '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?'<small>WINNER</small>':'')+'</div>'+
   (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
-  '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div></article>';
+  '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div>'+routeNotes(match)+'</article>';
 }
+function routeNotes(match){
+ const winner=match.winner_advances_to?.game;
+ const loser=match.loser_drops_to?.game;
+ const notes=[];
+ if(winner)notes.push('<span>W → <strong>'+esc(winner)+'</strong></span>');
+ if(loser)notes.push('<span>L → <strong>'+esc(loser)+'</strong></span>');
+ return notes.length?'<div class="route-note">'+notes.join(' · ')+'</div>':'';
+}
+function drawConnectors(data){
+ const board=$('bracket-board'),svg=$('connectors');
+ const rect=board.getBoundingClientRect(),width=board.scrollWidth,height=board.scrollHeight;
+ svg.setAttribute('width',width);svg.setAttribute('height',height);svg.setAttribute('viewBox','0 0 '+width+' '+height);svg.innerHTML='';
+ const cards=new Map();
+ board.querySelectorAll('[data-game]').forEach(card=>cards.set(card.dataset.game,card));
+ const ns='http://www.w3.org/2000/svg';
+ for(const match of data.bracket){
+  const source=cards.get(match.source_game_id);if(!source)continue;
+  for(const [kind,route] of [['winner',match.winner_advances_to],['loser',match.loser_drops_to]]){
+   if(!route?.game)continue;
+   const target=cards.get(route.game);if(!target)continue;
+   const slots=target.querySelectorAll('.slot');
+   const targetSlot=slots[Number(route.slot)||0];if(!targetSlot)continue;
+   const a=source.getBoundingClientRect(),b=targetSlot.getBoundingClientRect();
+   const x1=a.right-rect.left+board.scrollLeft,y1=a.top+a.height/2-rect.top+board.scrollTop;
+   const x2=b.left-rect.left+board.scrollLeft,y2=b.top+b.height/2-rect.top+board.scrollTop;
+   const bend=Math.max(24,(x2-x1)*.45),path=document.createElementNS(ns,'path');
+   path.setAttribute('d','M '+x1+' '+y1+' C '+(x1+bend)+' '+y1+', '+(x2-bend)+' '+y2+', '+x2+' '+y2);
+   path.setAttribute('fill','none');path.setAttribute('stroke',kind==='winner'?'#70c79a':'#e5a33b');path.setAttribute('stroke-width','2');
+   if(kind==='loser')path.setAttribute('stroke-dasharray','5 4');
+   path.setAttribute('opacity','.8');svg.appendChild(path);
+  }
+ }
+}
+function setBracketMode(traditional){
+ $('bracket-board').classList.toggle('no-connectors',!traditional);
+ $('traditional-mode').classList.toggle('active',traditional);
+ $('round-mode').classList.toggle('active',!traditional);
+}
+$('traditional-mode').addEventListener('click',()=>setBracketMode(true));
+$('round-mode').addEventListener('click',()=>setBracketMode(false));
+window.addEventListener('resize',()=>{if($('traditional-mode').classList.contains('active')&&window.lastBracketData)drawConnectors(window.lastBracketData);});
 function render(data){
+ window.lastBracketData=data;
  $('tournament-name').textContent=data.bracket_file+' · '+(data.complete?'Tournament complete':'Live tournament');
  $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
  for(const [type,target] of [['winners','winners'],['losers','losers'],['championship','championship']]){
@@ -73,6 +118,7 @@ function render(data){
   const rounds=[...groups.entries()].sort((a,b)=>a[0]-b[0]);
   $(target).innerHTML=rounds.length?rounds.map(([round,items],index)=>'<div class="round"><h3>'+(type==='championship'?'Final': 'Round '+(index+1))+'</h3>'+items.map(matchCard).join('')+'</div>').join(''):'<p class="status">No matches in this bracket.</p>';
  }
+ requestAnimationFrame(()=>{if($('traditional-mode').classList.contains('active'))drawConnectors(data);});
 }
 async function refresh(){
  try{const response=await fetch('/api/tournaments/'+encodeURIComponent(tournamentId));if(!response.ok)throw new Error('Tournament unavailable');render(await response.json());}
