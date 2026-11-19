@@ -70,7 +70,7 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert third_place["placement_label"] == "3rd Place"
     assert third_place["placement_payouts"] == {"winner_place": "3rd", "loser_place": "4th"}
     championship = next(match for match in status["bracket"] if match["match_id"] == "CHAMPIONSHIP")
-    assert championship["placement_label"] == "1st / 2nd Place Match"
+    assert championship["placement_label"] == "1st / 2nd Place"
     assert championship["placement_payouts"] == {"winner_place": "1st", "loser_place": "2nd"}
     assert len(status["boards"]) == 4
     assert all(board["status"] == "available" for board in status["boards"])
