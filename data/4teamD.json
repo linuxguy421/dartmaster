@@ -121,5 +121,11 @@
       }
     }
   },
-  "currency": "USD"
+  "currency": "USD",
+  "prizes_with_side_pot": {
+    "1": 20,
+    "2": 8,
+    "3": 4
+  },
+  "side_pot_amount": 8
 }
