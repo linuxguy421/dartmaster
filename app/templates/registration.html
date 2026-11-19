@@ -5,31 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dartmaster · Tournament setup</title>
 <style>
-:root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
-header{padding:24px clamp(18px,4vw,56px);border-bottom:1px solid var(--line);background:#141c27}
-header h1{margin:0;font-size:26px;letter-spacing:.04em}header p{margin:4px 0 0;color:var(--muted)}
-main{max-width:1120px;margin:0 auto;padding:16px 16px 32px;display:grid;gap:12px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-#registration-section{width:fit-content;min-width:min(100%,430px);max-width:100%}
-h2{font-size:17px;margin:0 0 7px}h3{font-size:15px;margin:18px 0 8px;color:var(--accent)}
-p.hint,.muted{color:var(--muted);margin:2px 0 9px}.row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
-label{display:grid;gap:3px;color:var(--muted);font-size:12px;flex:1;min-width:150px}label.gender-field{flex:0 0 auto;min-width:0}label.player-name-field{flex:0 1 240px;min-width:180px}
-input,select{width:100%;padding:8px 9px;border-radius:6px;border:1px solid var(--line);background:#111923;color:var(--text);font:inherit}
-input[type=number]{max-width:110px}
-button{border:0;border-radius:6px;padding:7px 11px;background:var(--accent);color:#1c2025;font-weight:700;cursor:pointer}
-button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
-.gender-toggle{width:fit-content;min-width:0;padding:5px 9px;border:0;border-radius:5px;font-size:11px;line-height:1.2;font-weight:700;justify-self:start}
-.gender-toggle.female{background:#e7a4c2;color:#30202a}
-.gender-toggle.male{background:#8eb9e8;color:#172638}
-button.danger{background:#633b40;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:6px 7px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
-#player-form{gap:9px}#player-summary{margin:6px 0 4px}#players>p{margin:4px 0 0}.small{font-size:12px;color:var(--muted)}.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--panel2);color:var(--muted);font-size:12px}
-.notice{padding:8px 10px;border-radius:7px;background:var(--panel2);margin:8px 0}.error{color:var(--bad)}.success{color:var(--good)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}.draw-columns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.draw-group{min-width:0;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}.draw-group h3{margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}.draw-group.female h3{color:#e7a4c2}.draw-group.male h3{color:#8eb9e8}.draw-group .grid{grid-template-columns:1fr}.draw-card{padding:8px;background:#151e29;border:1px solid var(--line);border-radius:7px}
-.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.team{padding:9px;border:1px solid var(--line);border-radius:7px;background:#151e29}
-.hidden{display:none!important}#status{position:sticky;bottom:12px;max-width:1120px;margin:0 auto;padding:0 20px;pointer-events:none}#status span{display:block;padding:10px 14px;background:#263446;border:1px solid var(--line);border-radius:8px;pointer-events:auto}
-@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:600px){section{padding:15px}header{padding:18px}th,td{padding:7px 4px}}
+:root{color-scheme:dark;--bg:#0d131b;--surface:#17212d;--surface-raised:#202d3c;--line:#34465b;--muted:#a7b6c8;--text:#edf3f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585;--female:#e7a4c2;--male:#8eb9e8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:20px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:#121b26}
+header h1{margin:0;font-size:23px;letter-spacing:.09em;font-weight:800}
+header p{margin:3px 0 0;color:var(--muted);font-size:13px}
+main{width:min(100% - 32px,1000px);margin:0 auto;padding:24px 0 48px;display:grid;gap:16px}
+section{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:0 5px 18px #00000012}
+#registration-section{width:100%;max-width:680px;justify-self:start}
+h2{font-size:17px;line-height:1.3;margin:0 0 5px;font-weight:750}
+h3{font-size:14px;margin:16px 0 8px;color:var(--accent)}
+p.hint,.muted{color:var(--muted);margin:0 0 12px;font-size:13px}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600;min-width:0}
+label.player-name-field{flex:0 1 260px;min-width:190px}
+label.gender-field{flex:0 0 auto;min-width:0}
+input,select{width:100%;min-width:0;padding:9px 10px;border-radius:7px;border:1px solid var(--line);background:#101923;color:var(--text);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=number]{max-width:120px}
+button{border:0;border-radius:7px;padding:9px 14px;background:var(--accent);color:#241b0d;font-weight:750;cursor:pointer;min-height:38px}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button.secondary{background:var(--surface-raised);color:var(--text);border:1px solid var(--line)}
+button.danger{background:#633b40;color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+.gender-toggle{width:auto;min-width:72px;min-height:38px;padding:7px 12px;border:0;border-radius:7px;font-size:12px;line-height:1.2;font-weight:750;justify-self:start}
+.gender-toggle.female{background:var(--female);color:#30202a}
+.gender-toggle.male{background:var(--male);color:#172638}
+#player-form{gap:10px}
+#player-summary{display:inline-flex;align-items:center;margin:12px 0 4px;padding:5px 9px;border-radius:6px;background:var(--surface-raised);font-size:12px}
+#players>p{margin:8px 0 0}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+td:last-child{text-align:right;width:1%;white-space:nowrap}
+td button{min-height:30px;padding:5px 9px;font-size:12px}
+.small{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--surface-raised);color:var(--muted);font-size:11px;font-weight:650}
+.notice{padding:10px 12px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--line);margin:10px 0;font-size:13px}
+.error{color:var(--bad)}.success{color:var(--good)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.draw-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.draw-group{min-width:0;padding:14px;background:#131d28;border:1px solid var(--line);border-radius:9px}
+.draw-group h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.draw-group.female h3{color:var(--female)}.draw-group.male h3{color:var(--male)}
+.draw-group .grid{grid-template-columns:1fr}
+.draw-card{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;align-items:center;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:7px;color:var(--text);font-size:13px}
+.draw-card input{padding:7px 8px}
+.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.team{padding:12px;border:1px solid var(--line);border-radius:8px;background:#131d28}
+.team strong{display:block;margin-bottom:3px}
+.hidden{display:none!important}
+#status{position:sticky;bottom:12px;width:min(100% - 32px,1000px);margin:0 auto;padding:0 0 12px;pointer-events:none}
+#status span{display:block;padding:10px 14px;background:#263446;border:1px solid var(--line);border-radius:8px;pointer-events:auto;box-shadow:0 6px 20px #0005}
+a{color:inherit}
+@media(max-width:700px){main{width:min(100% - 24px,1000px);padding-top:16px}.draw-columns{grid-template-columns:1fr}section{padding:15px}#registration-section{max-width:none}}
+@media(max-width:480px){header{padding:16px 14px}.row{align-items:stretch}.row>button{flex:1}label.player-name-field{flex:1 1 100%;min-width:0}label.gender-field{flex:0 0 auto}.draw-card{grid-template-columns:minmax(0,1fr) 90px}th,td{padding:7px 5px}}
 </style>
 </head>
 <body>
