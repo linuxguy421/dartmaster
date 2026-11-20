@@ -71,6 +71,12 @@ td button{min-height:30px;padding:5px 9px;font-size:12px}
 a{color:inherit}
 @media(max-width:700px){main{width:min(100% - 24px,1000px);padding-top:16px}.draw-columns{grid-template-columns:1fr}section{padding:15px}#registration-section{max-width:none}}
 @media(max-width:480px){header{padding:16px 14px}.row{align-items:stretch}.row>button{flex:1}label.player-name-field{flex:1 1 100%;min-width:0}label.gender-field{flex:0 0 auto}.draw-card{grid-template-columns:minmax(0,1fr) 90px}th,td{padding:7px 5px}}
+
+/* Pasadena Moose tournament background */
+body{background:#10151d!important;position:relative;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
+header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
+main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
 </style>
 </head>
 <body>
