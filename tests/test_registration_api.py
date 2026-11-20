@@ -338,3 +338,11 @@ def test_registration_page_offers_confirmed_permanent_tournament_deletion(tmp_pa
     assert "Permanently delete this tournament and all of its saved match/event history? This cannot be undone." in response.text
     assert "highest original draw numbers" in response.text
     assert "Female playing role" in response.text
+
+
+def test_registration_api_rejects_duplicate_names_case_insensitive(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    assert client.post('/api/registration/players', json={'display_name':'Alex', 'gender':'male'}).status_code == 201
+    response = client.post('/api/registration/players', json={'display_name':' alex ', 'gender':'female'})
+    assert response.status_code == 400
+    assert 'already registered' in response.json()['detail']
