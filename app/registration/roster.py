@@ -30,6 +30,9 @@ class TournamentRoster:
             raise RegistrationError("Player display name cannot be empty")
         if player_id in self.players:
             raise RegistrationError(f"Player ID already exists: {player_id}")
+        normalized_name = display_name.casefold()
+        if any(player.display_name.casefold() == normalized_name for player in self.players.values()):
+            raise RegistrationError(f"Player name already registered: {display_name}")
         try:
             normalized_gender = Gender(gender)
         except ValueError as exc:
