@@ -130,3 +130,10 @@ def test_draw_does_not_mutate_roster_when_draw_validation_fails():
             {"m3": 1, "m4": 2, "m5": 3, "m6": 4},
         )
     assert roster.teams == {}
+
+
+def test_rejects_duplicate_player_names_case_insensitive():
+    roster = roster_with_counts(0, 0)
+    roster.register_player('m1', '  John Smith ', Gender.MALE)
+    with pytest.raises(RegistrationError, match='Player name already registered'):
+        roster.register_player('m2', 'john smith', Gender.FEMALE)
