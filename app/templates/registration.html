@@ -191,11 +191,11 @@ $('player-gender-toggle').addEventListener('click',()=>{
  $('player-gender-toggle').setAttribute('aria-label','Gender: '+(next==='female'?'Female':'Male')+'. Click to switch');
  $('player-gender-toggle').textContent=next==='female'?'Female':'Male';
 });
-$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:$('player-name').value,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
  const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
- const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
+ const byGender={male:new Set(),female:new Set()};state.players.forEach(p=>{const n=mixed[p.player_id];if(byGender[p.gender].has(n))throw new Error('Duplicate draw number '+n+' among '+p.gender+' players. Each number may be used once per gender.');byGender[p.gender].add(n);});const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
 function renderSeeds(){
