@@ -6,7 +6,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse\nfrom fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.brackets.loader import BracketLoadError, available_brackets, load_bracket
