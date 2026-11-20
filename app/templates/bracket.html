@@ -23,6 +23,12 @@ main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.view
 .championship .rounds{justify-content:flex-start}.championship .round{flex-basis:300px}
 #notice{color:var(--muted);font-size:12px}
 @media(max-width:600px){header{align-items:flex-start}main{padding:14px}.lane{padding:11px}}
+
+/* Pasadena Moose tournament background */
+body{background:#10151d!important;position:relative;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
+header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
+main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
 </style>
 </head>
 <body>
