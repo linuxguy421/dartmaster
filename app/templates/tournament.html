@@ -154,8 +154,17 @@ function render(data){
  const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
  const completedPlacements={};
+ const placeNumbers={'1st':'1','2nd':'2','3rd':'3','4th':'4','1':'1','2':'2','3':'3','4':'4'};
+ Object.entries(data.placements||{}).forEach(([place,team])=>{
+  const number=placeNumbers[place];
+  if(number&&team)completedPlacements[number]=team;
+ });
+ // Retain compatibility with snapshots/API responses that only include
+ // placement-match details, without allowing them to overwrite final API standings.
  data.bracket.filter(match=>match.placement_players).forEach(match=>{
-  Object.entries(match.placement_players).forEach(([place,players])=>{completedPlacements[place]=players;});
+  Object.entries(match.placement_players).forEach(([place,players])=>{
+   if(!completedPlacements[place]&&players)completedPlacements[place]=players;
+  });
  });
  $('side-pot-toggle').checked=sidePotEnabled;
  $('payout-list').innerHTML=payoutEntries.map(([place,amount])=>{
@@ -193,7 +202,7 @@ function render(data){
   const total=Number(prizeTable[place]||0);
   const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(total/2)+' per player</div>':'<div class="detail">No prize amount configured for this placement.</div>';
   return '<article class="overview-place"><strong>'+finishLabels[place]+'</strong><div class="team">'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
- }).join('')+'</div>':'<p>Final placements have not been awarded yet. Placement matches determine the finishing order.</p>';
+ }).join('')+'</div>':'<p>'+(data.complete?'The tournament is marked complete, but the API has not supplied any placement assignments. Check the tournament bracket results.':'Final placements will appear here as placement matches are completed. The championship winner and runner-up are added when the championship is decided.')+'</p>';
  const bracketHtml=data.bracket.map(match=>{
   const names=(match.participants||[]).map(esc);
   const matchup=names.length?names.join(' vs '):'Participants to be determined';
@@ -207,7 +216,7 @@ function render(data){
  }).join(''):'<p>No matches have been completed yet. Recorded winners and opponents will appear here as results are entered.</p>';
  const progressNote=data.complete?'Every match in the bracket has been resolved and the tournament champion has been determined.':activeMatches?activeMatches+' match'+(activeMatches===1?' is':'es are')+' currently in play; '+waitingMatches+' match'+(waitingMatches===1?' is':'es are')+' still waiting for earlier results or assignment.':'Matches unlock as earlier results are recorded. Use the Ready to play section above to assign an available board.';
  $('summary-content').innerHTML=stats+
-  '<section class="overview-section"><h3>Standings &amp; prize awards</h3>'+standingsHtml+(data.complete?'<p class="overview-note">Prize amounts show the total award for each two-player team and the equivalent amount per player.</p>':'')+'</section>'+
+  '<section class="overview-section"><h3>Standings &amp; prize awards</h3>'+standingsHtml+(awardedPlaces.length?'<p class="overview-note">Prize amounts show the total award for each two-player team and the equivalent amount per player.</p>':'')+'</section>'+
   '<section class="overview-section"><h3>Full bracket</h3><p>'+esc(progressNote)+'</p><div class="bracket-list">'+bracketHtml+'</div></section>'+
   '<section class="overview-section"><h3>Completed match results</h3><p>Recorded winners and opponents, in the order results were entered.</p><div class="overview-match-list">'+resultRows+'</div></section>';
 }
