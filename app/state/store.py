@@ -260,6 +260,41 @@ class TournamentStateStore:
                 ) from exc
         return output
 
+    def completed(self) -> list[dict[str, Any]]:
+        """Return immutable tournament snapshots whose championship is complete."""
+        try:
+            with self._connection() as connection:
+                rows = connection.execute(
+                    """
+                    SELECT tournament_id, bracket_file, state_json, created_at, updated_at
+                    FROM tournaments
+                    ORDER BY updated_at DESC, created_at DESC
+                    """
+                ).fetchall()
+        except sqlite3.Error as exc:
+            raise TournamentStoreError(f"Could not list completed tournaments: {exc}") from exc
+
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                snapshot = json.loads(row["state_json"])
+                runtime = snapshot.get("runtime", {})
+                champion = runtime.get("champion")
+                if champion is None:
+                    continue
+                output.append({
+                    "tournament_id": row["tournament_id"],
+                    "bracket_file": row["bracket_file"],
+                    "created_at": row["created_at"],
+                    "completed_at": row["updated_at"],
+                    "snapshot": snapshot,
+                })
+            except (json.JSONDecodeError, AttributeError, TypeError) as exc:
+                raise TournamentStoreError(
+                    f"Could not read completed tournament {row['tournament_id']}: {exc}"
+                ) from exc
+        return output
+
     def delete(self, tournament_id: str) -> None:
         """Permanently delete a tournament snapshot and its event history."""
         try:
