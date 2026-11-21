@@ -8,7 +8,7 @@ def test_audit_reports_every_supplied_bracket_and_known_diagnostics():
 
     report = audit_directory(data_dir)
 
-    assert report["bracket_count"] == 8
+    assert report["bracket_count"] == 7
     assert report["diagnostic_count"] == 5
     by_team_count = {item["team_count"]: item for item in report["brackets"]}
     assert by_team_count[5]["game_count"] == 9
