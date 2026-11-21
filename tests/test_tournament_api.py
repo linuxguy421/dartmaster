@@ -53,7 +53,7 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert "currentPayouts" in bracket_page.text
     assert "data-assign" in page.text
     assert "const selectedBoards=new Map()" in page.text
-    assert "selectedBoards.set(select.dataset.boardSelect,Number(select.value))" in page.text
+    assert "selectedBoards.set(matchId,Number(select.value))" in page.text
     assert "Choose a board" in page.text
     assert "Suggested board" not in page.text
     assert "recommended_boards" not in page.text
