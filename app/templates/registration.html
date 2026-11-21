@@ -139,14 +139,14 @@ async function api(url,options={}){const response=await fetch(url,{headers:{'Con
 function counts(){return {male:state.players.filter(p=>p.gender==='male').length,female:state.players.filter(p=>p.gender==='female').length};}
 function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
- const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=8;
+ const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=8,allPaid=state.players.length>0&&state.players.every(p=>p.paid);
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
- $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th></th></tr></thead><tbody>'+state.players.map(p=>{const roleAssigned=Boolean(state.draw&&state.teams.length);const role=p.playing_role||p.gender;return '<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill gender-'+p.gender+'">'+p.gender+'</span></td><td>'+(roleAssigned?'<span class="pill role-'+role+'">'+(role==='female'?'female':'male')+'</span>':'<span class="muted">—</span>')+'</td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>';}).join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
+ $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th>Entry fee paid</th><th></th></tr></thead><tbody>'+state.players.map(p=>{const roleAssigned=Boolean(state.draw&&state.teams.length);const role=p.playing_role||p.gender;return '<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill gender-'+p.gender+'">'+p.gender+'</span></td><td>'+(roleAssigned?'<span class="pill role-'+role+'">'+(role==='female'?'female':'male')+'</span>':'<span class="muted">—</span>')+'</td><td><label style="display:flex;align-items:center;gap:7px;white-space:nowrap"><input type="checkbox" data-paid="'+p.player_id+'" '+(p.paid?'checked':'')+' '+(state.teams.length?'disabled':'')+' aria-label="Entry fee paid for '+escapeHtml(p.display_name)+'">Paid</label></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>';}).join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
  $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
- $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
- if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet)){
-  $('draw-order').textContent=!minimumPlayersMet?'At least 8 players are required to form the minimum 4 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
+ $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet||!allPaid;
+ if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet||!allPaid)){
+  $('draw-order').textContent=!allPaid?'All players must be marked paid before the draw can start. Check the Entry fee paid box for each player.':!minimumPlayersMet?'At least 8 players are required to form the minimum 4 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
   $('draw-inputs').innerHTML='';
   $('draw-off-area').classList.add('hidden');
   $('draw-off-inputs').innerHTML='';
@@ -205,6 +205,7 @@ $('player-gender-toggle').addEventListener('click',()=>{
  $('player-gender-toggle').textContent=next==='female'?'Female':'Male';
 });
 $('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+$('players').addEventListener('change',async e=>{const id=e.target.dataset.paid;if(!id)return;try{await api('/api/registration/players/'+id+'/payment',{method:'PUT',body:JSON.stringify({paid:e.target.checked})});await refresh();notify('Payment status updated.');}catch(err){notify(err.message,true);await refresh();}});
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
  const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
