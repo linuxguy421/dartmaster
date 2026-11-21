@@ -520,6 +520,7 @@ def tournament_payload(session: TournamentSession) -> dict:
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
+        "team_count": len(session.runtime.entrants),
         "placements": display_placements,
         "payouts": {
             "currency": session.runtime.definition.currency,
