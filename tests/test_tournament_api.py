@@ -3,18 +3,18 @@ from fastapi.testclient import TestClient
 from app import main
 
 
-def setup_tournament(tmp_path, monkeypatch, bracket_file="4teamD.json"):
+def setup_tournament(tmp_path, monkeypatch, bracket_file="4teamD.json", team_count=4):
     monkeypatch.setenv("DARTMASTER_DB_PATH", str(tmp_path / "dartmaster.sqlite3"))
     client = TestClient(main.app)
     for gender in ("male", "female"):
-        for index in range(4):
+        for index in range(team_count):
             response = client.post(
                 "/api/registration/players",
                 json={"display_name": f"{gender.title()} {index + 1}", "gender": gender},
             )
             assert response.status_code == 201
     players = client.get("/api/registration").json()["players"]
-    numbers = [1, 2, 3, 4, 1, 2, 3, 4]
+    numbers = list(range(1, team_count + 1)) * 2
     draws = {
         player["player_id"]: number
         for player, number in zip(players, numbers, strict=True)
@@ -23,7 +23,7 @@ def setup_tournament(tmp_path, monkeypatch, bracket_file="4teamD.json"):
         "/api/registration/draw", json={"mixed_draws": draws}
     ).status_code == 200
     registration = client.get("/api/registration").json()
-    assert set(registration["seed_assignments"]) == {"T1", "T2", "T3", "T4"}
+    assert set(registration["seed_assignments"]) == {f"T{index}" for index in range(1, team_count + 1)}
     created = client.post(
         "/api/tournaments", json={"bracket_file": bracket_file}
     )
@@ -182,7 +182,7 @@ def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypat
 
 
 def test_three_team_bracket_awards_only_three_places(tmp_path, monkeypatch):
-    client, tournament = setup_tournament(tmp_path, monkeypatch, "3teamD.json")
+    client, tournament = setup_tournament(tmp_path, monkeypatch, "3teamD.json", team_count=3)
     base = f"/api/tournaments/{tournament['tournament_id']}/boards"
 
     def play(match_id):
