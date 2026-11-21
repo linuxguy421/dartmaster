@@ -66,7 +66,8 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <article class="board disabled">Loading board status…</article>
  </section>
  <section class="bracket"><h2>Bracket progress</h2><div id="bracket" class="bracket-list"><p class="status">Loading bracket…</p></div></section>
- <section class="results"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
+ <section class="results" id="results-section"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
+ <section class="results" id="game-summary" hidden><h2>Tournament summary</h2><div id="summary-content"></div></section>
 </main>
 <div id="notice" role="status" aria-live="polite"></div>
 <script>
@@ -120,6 +121,11 @@ function render(data){
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
  }
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
+ $('payouts').hidden=data.complete;
+ document.querySelector('.ready-queue').hidden=data.complete;
+ $('boards').hidden=data.complete;
+ $('results-section').hidden=data.complete;
+ $('game-summary').hidden=!data.complete;
  const payoutTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
  const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
@@ -160,6 +166,12 @@ function render(data){
   return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+detail+'</div>'+outcome+'</article>';
  }).join('');
  $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
+ if(data.complete){
+  const finishOrder=['3','2','1'];
+  const finishLabels={'1':'1st','2':'2nd','3':'3rd','4':'4th'};
+  const placementsHtml=finishOrder.filter(place=>completedPlacements[place]).map(place=>'<div class="placement-award"><span>'+finishLabels[place]+' -</span> '+esc(completedPlacements[place])+'</div>').join('');
+  $('summary-content').innerHTML='<h3>Final placements</h3>'+placementsHtml+'<h3>Match results</h3><ul>'+data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join('')+'</ul>';
+ }
 }
 async function refresh(){
  if(refreshing)return;refreshing=true;
