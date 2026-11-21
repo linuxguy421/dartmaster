@@ -36,7 +36,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .placement{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin:3px 0}
 .payouts{margin:0 0 18px;padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .payouts h2{font-size:14px;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.payout-list{display:flex;gap:18px;flex-wrap:wrap}.payout-item{font-weight:700}.payout-item span{color:var(--muted);font-weight:500;margin-right:5px}.payout-toggle{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px}.payout-toggle input{width:auto;accent-color:var(--accent)}.side-pot-value{color:var(--accent);font-weight:700}.side-pot-instructions{flex-basis:100%;font-size:13px;color:var(--muted)}.placement-awards{flex-basis:100%;display:grid;gap:4px;color:var(--text);font-weight:700}.placement-award{display:block}.placement-award span{color:var(--muted);font-weight:500;margin-right:6px}
+.payout-list{display:flex;gap:18px;flex-wrap:wrap}.payout-item{font-weight:700}.payout-item span{color:var(--muted);font-weight:500;margin-right:5px}.payout-toggle{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px}.payout-toggle input{width:auto;accent-color:var(--accent)}.side-pot-value{color:var(--accent);font-weight:700}.placement-awards{flex-basis:100%;display:grid;gap:4px;color:var(--text);font-weight:700}.placement-award{display:block}.placement-award span{color:var(--muted);font-weight:500;margin-right:6px}
 @media(max-width:720px){.board{min-height:220px}header{align-items:flex-start}}
 
 /* Pasadena Moose tournament background */
@@ -57,7 +57,7 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <div class="controls"><button id="refresh" class="secondary">Refresh</button></div>
  </div>
  <div id="champion"></div>
- <section class="payouts" id="payouts" aria-label="Tournament payouts"><h2>Prize payouts</h2><label class="payout-toggle"><input id="side-pot-toggle" type="checkbox"> Side pot enabled</label><div class="payout-list" id="payout-list"></div><div id="side-pot-value" class="side-pot-value" hidden></div><div id="side-pot-instructions" class="side-pot-instructions" hidden></div><div id="placement-awards" class="placement-awards"></div></section>
+ <section class="payouts" id="payouts" aria-label="Tournament payouts"><h2>Prize payouts</h2><label class="payout-toggle"><input id="side-pot-toggle" type="checkbox"> Side pot enabled</label><div class="payout-list" id="payout-list"></div><div id="side-pot-value" class="side-pot-value" hidden></div><div id="placement-awards" class="placement-awards"></div></section>
  <section class="ready-queue"><h2>Ready to play</h2><div id="ready-matches" class="ready-list"><p class="status">Loading ready matches…</p></div></section>
  <section class="boards" id="boards" aria-label="Four dartboards">
   <article class="board disabled">Loading board status…</article>
@@ -145,8 +145,6 @@ function render(data){
  }).join('');
  $('side-pot-value').hidden=!sidePotEnabled;
  $('side-pot-value').textContent=sidePotEnabled?'Separate side pot: '+formatter.format(data.payouts?.side_pot_amount||0):'';
- $('side-pot-instructions').hidden=!sidePotEnabled;
- $('side-pot-instructions').textContent=sidePotEnabled?'Collect '+formatter.format(data.payouts?.side_pot_contribution_per_player||0)+' from each player ('+formatter.format(data.payouts?.side_pot_contribution_per_team||0)+' per team). Set aside '+formatter.format(data.payouts?.side_pot_amount||0)+' total.':' ';
  const awardOrder=['3','2','1'];
  $('placement-awards').innerHTML=awardOrder.filter(place=>completedPlacements[place]).map(place=>{
   const ordinal=place==='1'?'1st':place==='2'?'2nd':'3rd';
