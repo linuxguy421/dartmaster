@@ -46,7 +46,7 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
         ]
         assert len(third_place_games) == 1
         game_id, game = third_place_games[0]
-        assert "placement_match" not in game
+        assert game["placement_match"] == {"winner": "4th", "loser": "3rd"}
         assert game["winner_advances_to"] == {"game": "GF", "slot": 1}
         assert game["loser_drops_to"] == {"result": "ELIMINATED", "rank": "3rd"}
         prior_fourth_game = next(
