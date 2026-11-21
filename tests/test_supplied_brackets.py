@@ -42,7 +42,7 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
     else:
         third_place_games = [
             (game_id, game) for game_id, game in bracket.games.items()
-            if game.get("display_label") == "Playing for 3rd Place"
+            if game.get("display_label") == "3rd Place"
         ]
         assert len(third_place_games) == 1
         game_id, game = third_place_games[0]
