@@ -133,35 +133,40 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
 const $=id=>document.getElementById(id);
 let state={players:[],teams:[],seed_assignments:{},draw:null},brackets=[];
 let drawOffIds=[];
+const drawNumbers={};
+function captureDrawNumbers(){
+ $('draw-inputs').querySelectorAll('input[data-mixed]').forEach(input=>{
+  if(input.value!=='')drawNumbers[input.dataset.mixed]=input.value;
+  else delete drawNumbers[input.dataset.mixed];
+ });
+}
 function notify(message,error=false){$('status').innerHTML='<span class="'+(error?'error':'')+'">'+escapeHtml(message)+'</span>'; }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function api(url,options={}){const response=await fetch(url,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});if(!response.ok){let detail='Request failed';try{detail=(await response.json()).detail||detail}catch{}throw new Error(detail)}return response.status===204?null:response.json();}
 function counts(){return {male:state.players.filter(p=>p.gender==='male').length,female:state.players.filter(p=>p.gender==='female').length};}
 function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
+ captureDrawNumbers();
  const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=8,allPaid=state.players.length>0&&state.players.every(p=>p.paid);
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
  $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th>Entry fee paid</th><th></th></tr></thead><tbody>'+state.players.map(p=>{const roleAssigned=Boolean(state.draw&&state.teams.length);const role=p.playing_role||p.gender;return '<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill gender-'+p.gender+'">'+p.gender+'</span></td><td>'+(roleAssigned?'<span class="pill role-'+role+'">'+(role==='female'?'female':'male')+'</span>':'<span class="muted">—</span>')+'</td><td><label class="payment-toggle" title="Click to change payment status"><input type="checkbox" data-paid="'+p.player_id+'" '+(p.paid?'checked':'')+' '+(state.teams.length?'disabled':'')+' aria-label="Entry fee '+(p.paid?'paid':'unpaid')+' for '+escapeHtml(p.display_name)+'"><span class="pill payment-status '+(p.paid?'paid':'unpaid')+'">'+(p.paid?'Paid':'Unpaid')+'</span></label></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>';}).join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
- $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
+ $('draw-section').classList.toggle('hidden',!hasBoth||!allPaid||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
  $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet||!allPaid;
  if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet||!allPaid)){
   $('draw-order').textContent=!allPaid?'All players must be marked paid before the draw can start. Check the Entry fee paid box for each player.':!minimumPlayersMet?'At least 8 players are required to form the minimum 4 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
-  $('draw-inputs').innerHTML='';
-  $('draw-off-area').classList.add('hidden');
-  $('draw-off-inputs').innerHTML='';
-  drawOffIds=[];
+  // Keep entered draw numbers intact while the draw is temporarily unavailable.
  }
  $('teams-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
  $('teams').innerHTML=state.teams.map(t=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Co-op':'Same-sex')+'</span></div>').join('');
- if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
+ if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet&&allPaid)renderDrawInputs();
  if(state.teams.length)renderTournamentSetup();
 }
 function drawGroupMarkup(players, attribute, label){
  return ['female','male'].map(gender=>{
   const group=players.filter(p=>p.gender===gender);
-  const cards=group.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+'<input type="number" min="1" step="1" required '+attribute+'="'+p.player_id+'" aria-label="'+label+' for '+escapeHtml(p.display_name)+'"></label>').join('');
+  const cards=group.map(p=>'<label class="draw-card">'+escapeHtml(p.display_name)+'<input type="number" min="1" step="1" required '+attribute+'="'+p.player_id+'" value="'+escapeHtml(drawNumbers[p.player_id]??'')+'" aria-label="'+label+' for '+escapeHtml(p.display_name)+'"></label>').join('');
   return '<div class="draw-group '+gender+'"><h3>'+(gender==='female'?'Females':'Males')+' <span class="pill">'+group.length+'</span></h3><div class="grid">'+(cards||'<p class="muted">No players</p>')+'</div></div>';
  }).join('');
 }
@@ -170,7 +175,8 @@ function renderDrawInputs(){
  $('draw-order').textContent='Draw order: '+(order==='female'?'females':'males')+' first, then '+(other==='female'?'females':'males')+'. Enter each player’s number in their group.';
  $('draw-inputs').innerHTML=drawGroupMarkup(state.players,'data-mixed','Initial draw number');
  $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];
- $('draw-inputs').querySelectorAll('input').forEach(input=>input.addEventListener('input',previewDrawOff));
+ $('draw-inputs').querySelectorAll('input').forEach(input=>input.addEventListener('input',()=>{captureDrawNumbers();previewDrawOff();}));
+ if(state.players.every(p=>drawNumbers[p.player_id]!==undefined))previewDrawOff();
 }
 function previewDrawOff(){
  const values={};let valid=true;
