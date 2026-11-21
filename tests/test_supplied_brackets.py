@@ -29,11 +29,22 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
     assert bracket.currency == "USD"
     assert bracket.games["GF"]["placement_match"] == {"winner": "1st", "loser": "2nd"}
     assert bracket.games["GGF"]["placement_match"] == {"winner": "1st", "loser": "2nd"}
-    third_place = [
-        game for game in bracket.games.values()
-        if game.get("placement_match") == {"winner": "3rd", "loser": "4th"}
-    ]
-    assert len(third_place) == 1
+    if team_count == 4:
+        # The G5 winner advances to the championship; only its loser is awarded 3rd.
+        assert "placement_match" not in bracket.games["G5"]
+        assert bracket.games["G5"]["winner_advances_to"] == {"game": "GF", "slot": 1}
+        assert bracket.games["G5"]["loser_drops_to"] == {
+            "result": "ELIMINATED", "rank": "3rd"
+        }
+        assert bracket.games["G4"]["loser_drops_to"] == {
+            "result": "ELIMINATED", "rank": "4th"
+        }
+    else:
+        third_place = [
+            game for game in bracket.games.values()
+            if game.get("placement_match") == {"winner": "3rd", "loser": "4th"}
+        ]
+        assert len(third_place) == 1
 
 
 def test_known_legacy_reference_anomalies_are_reported():
