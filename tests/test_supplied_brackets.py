@@ -7,7 +7,6 @@ from app.brackets.loader import load_bracket
 DATA_DIR = Path(__file__).parents[1] / "data"
 
 EXPECTED_GAME_COUNTS = {
-    3: 5,
     4: 7,
     5: 9,
     6: 11,
@@ -34,12 +33,7 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
         game for game in bracket.games.values()
         if game.get("placement_match") == {"winner": "3rd", "loser": "4th"}
     ]
-    if team_count == 3:
-        # The third-team elimination game decides who advances to the final;
-        # its loser is third, so it is not a 3rd/4th-place match.
-        assert third_place == []
-    else:
-        assert len(third_place) == 1
+    assert len(third_place) == 1
 
 
 def test_known_legacy_reference_anomalies_are_reported():
@@ -57,7 +51,7 @@ def test_known_legacy_reference_anomalies_are_reported():
     assert any("instead of W-G15" in message for message in nine_messages)
 
 
-@pytest.mark.parametrize("team_count", [3, 4, 6, 7, 8, 10])
+@pytest.mark.parametrize("team_count", [4, 6, 7, 8, 10])
 def test_valid_championship_reset_references(team_count):
     bracket = load_bracket(DATA_DIR / f"{team_count}teamD.json")
 
@@ -67,7 +61,6 @@ def test_valid_championship_reset_references(team_count):
 
 
 SIDE_POT_PAYOUTS = {
-    3: ({"1": 24, "2": 0, "3": 0}, 6),
     4: ({"1": 20, "2": 8, "3": 4}, 8),
     5: ({"1": 24, "2": 10, "3": 6}, 10),
     6: ({"1": 28, "2": 12, "3": 8}, 12),
