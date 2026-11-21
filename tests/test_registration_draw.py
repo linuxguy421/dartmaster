@@ -141,3 +141,17 @@ def test_rejects_duplicate_player_names_case_insensitive():
     roster.register_player('m1', '  John Smith ', Gender.MALE)
     with pytest.raises(RegistrationError, match='Player name already registered'):
         roster.register_player('m2', 'john smith', Gender.FEMALE)
+
+
+def test_four_unmatched_females_mirror_male_playing_role_assignment():
+    roster = roster_with_counts(2, 6)
+    result = create_teams_from_draw(
+        roster,
+        {"m1": 1, "m2": 2, "f1": 1, "f2": 2, "f3": 3, "f4": 4, "f5": 5, "f6": 6},
+    )
+    assert result.female_role_ids == ("f3", "f4")
+    assert result.male_role_ids == ("f5", "f6")
+    assert [
+        (team.player_one_id, team.player_two_id)
+        for team in result.draw_off_teams
+    ] == [("f3", "f5"), ("f4", "f6")]
