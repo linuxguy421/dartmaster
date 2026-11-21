@@ -114,8 +114,8 @@ def create_teams_from_draw(
     )
     mixed_pairs = [
         (
-            player_for_number[Gender.MALE][number],
             player_for_number[Gender.FEMALE][number],
+            player_for_number[Gender.MALE][number],
         )
         for number in sorted(shared_numbers)
     ]
@@ -173,9 +173,19 @@ def create_teams_from_draw(
             raise RegistrationError("No draw-off is needed when every player is matched")
         draw_off_pairs = []
 
-    # Validate every pairing before mutating the roster.
+    # Store every team with its female player/playing role first. This keeps
+    # player order consistent in registration, bracket labels, and match displays.
+    female_role_set = set(female_role_ids)
+
+    def is_female_role(player_id: str) -> bool:
+        return (
+            player_id in female_role_set
+            or roster.players[player_id].gender == Gender.FEMALE
+        )
+
     pairs = mixed_pairs + [
-        (pair[0], pair[1]) for pair in draw_off_pairs
+        tuple(sorted(pair, key=lambda player_id: not is_female_role(player_id)))
+        for pair in draw_off_pairs
     ]
     next_number = len(roster.teams) + 1
     created: list[Team] = []
