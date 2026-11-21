@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app import main
 
 
-def setup_tournament(tmp_path, monkeypatch):
+def setup_tournament(tmp_path, monkeypatch, bracket_file="4teamD.json"):
     monkeypatch.setenv("DARTMASTER_DB_PATH", str(tmp_path / "dartmaster.sqlite3"))
     client = TestClient(main.app)
     for gender in ("male", "female"):
@@ -25,7 +25,7 @@ def setup_tournament(tmp_path, monkeypatch):
     registration = client.get("/api/registration").json()
     assert set(registration["seed_assignments"]) == {"T1", "T2", "T3", "T4"}
     created = client.post(
-        "/api/tournaments", json={"bracket_file": "4teamD.json"}
+        "/api/tournaments", json={"bracket_file": bracket_file}
     )
     assert created.status_code == 201
     return client, created.json()
@@ -179,3 +179,36 @@ def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypat
     )
     assert championship["placements"]["1st"] == final_match["placement_players"]["1st"]
     assert championship["placements"]["2nd"] == final_match["placement_players"]["2nd"]
+
+
+def test_three_team_bracket_awards_only_three_places(tmp_path, monkeypatch):
+    client, tournament = setup_tournament(tmp_path, monkeypatch, "3teamD.json")
+    base = f"/api/tournaments/{tournament['tournament_id']}/boards"
+
+    def play(match_id):
+        assigned = client.post(base + "/1/assign", json={"match_id": match_id})
+        assert assigned.status_code == 200
+        match = assigned.json()["boards"][0]["match"]
+        completed = client.post(
+            base + "/1/winner", json={"winner": match["participants"][0]}
+        )
+        assert completed.status_code == 200
+        return completed.json()
+
+    initial = client.get(f"/api/tournaments/{tournament['tournament_id']}").json()
+    first_elimination = next(
+        match for match in initial["bracket"] if match["match_id"] == "G3"
+    )
+    assert first_elimination["placement_label"] is None
+    assert first_elimination["placement_payouts"] is None
+
+    play("G1")
+    play("G2")
+    after_elimination = play("G3")
+    third_place = after_elimination["placements"]["3rd"]
+    assert "4th" not in after_elimination["placements"]
+
+    complete = play("CHAMPIONSHIP")
+    assert complete["complete"] is True
+    assert complete["placements"]["3rd"] == third_place
+    assert set(complete["placements"]) == {"1st", "2nd", "3rd"}
