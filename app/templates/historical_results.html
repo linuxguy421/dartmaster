@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pasadena Moose Dart Tournament · Historical Results</title>
+<style>
+:root{color-scheme:dark;--bg:#10151d;--panel:rgba(25,34,46,.9);--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(#090d13c9,#090d13e0),url('/assets/background.jpg') center/cover no-repeat}
+header{padding:16px clamp(18px,4vw,48px);background:linear-gradient(110deg,#111a26f7,#192534e8);border-bottom:1px solid #e5a33b66;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}.mark{width:58px;height:58px;border:2px solid var(--accent);border-radius:50%;display:grid;place-items:center;color:#f4c875;font-weight:900;font-size:18px;box-shadow:inset 0 0 0 4px #e5a33b20}
+.kicker{font-size:10px;letter-spacing:.22em;color:var(--accent);font-weight:800}h1{font-size:23px;line-height:1.2;margin:2px 0;letter-spacing:.06em}header p{margin:0;color:var(--muted);font-size:13px}
+nav{display:flex;gap:14px;flex-wrap:wrap}a{color:var(--accent);text-underline-offset:4px}nav a{font-size:13px;font-weight:700}
+main{width:min(1200px,calc(100% - 32px));margin:26px auto 60px;display:grid;gap:18px}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}.intro h2{font-size:22px;margin:0}.muted{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px;backdrop-filter:blur(6px)}
+.stat{font-size:29px;font-weight:850;line-height:1.2;font-variant-numeric:tabular-nums}.stat-label{font-size:12px;color:var(--muted);margin-top:5px}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel h3{font-size:16px;margin:0 0 12px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}td.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}.empty{padding:28px;text-align:center;color:var(--muted)}
+.tournament-link{font-weight:750}.pill{display:inline-block;padding:3px 8px;border-radius:99px;background:#e5a33b22;color:#f4c875;font-size:11px}
+.detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.detail-head h2{margin:0}.back{font-size:13px}
+.result-list{display:grid;gap:8px}.result{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:#111923;border:1px solid var(--line);border-radius:8px}.result .game{color:var(--accent);font-size:12px;font-weight:800}.result .teams{min-width:0}.result .winner{font-weight:750}.result .loser{color:var(--muted);font-size:13px}.loading,.error{padding:28px;text-align:center;color:var(--muted)}.error{color:#ef8585}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.columns{grid-template-columns:1fr}}
+@media(max-width:480px){header{padding:13px 15px}.mark{width:48px;height:48px}.brand{gap:10px}h1{font-size:18px}main{width:calc(100% - 22px);margin-top:18px}.card,.panel{padding:12px}th,td{padding:7px 5px;font-size:12px}.result{grid-template-columns:42px minmax(0,1fr)}.result .pill{grid-column:2;justify-self:start}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand"><div class="mark">PM</div><div><div class="kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p>Historical results and statistics</p></div></div>
+ <nav><a href="/">Tournament Setup</a><a href="/historical-results">Historical Results</a></nav>
+</header>
+<main id="app"><div class="loading">Loading historical results…</div></main>
+<script>
+const app=document.getElementById('app');
+const pathParts=location.pathname.split('/').filter(Boolean);
+const tournamentId=pathParts.length>1?pathParts[1]:null;
+const esc=value=>String(value??'—').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const date=value=>value?new Date(value).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'—';
+const pct=(wins,losses)=>wins+losses?Math.round(wins/(wins+losses)*100)+'%':'—';
+function statCards(summary){return '<section class="cards">'+[['tournaments','Completed tournaments'],['games','Games played'],['players','Players represented'],['partnerships','Partnerships']].map(([key,label])=>'<div class="card"><div class="stat">'+esc(summary[key]??0)+'</div><div class="stat-label">'+label+'</div></div>').join('')+'</section>'}
+function playerTable(players){if(!players.length)return '<div class="empty">No player statistics yet.</div>';return '<table><thead><tr><th>Player</th><th class="num">Events</th><th class="num">Titles</th><th class="num">W–L</th><th class="num">Win %</th></tr></thead><tbody>'+players.slice(0,15).map(p=>'<tr><td><strong>'+esc(p.name)+'</strong><br><span class="muted">1st '+p.finishes['1st']+' · 2nd '+p.finishes['2nd']+' · 3rd '+p.finishes['3rd']+' · 4th '+p.finishes['4th']+'</span></td><td class="num">'+p.tournaments+'</td><td class="num">'+p.titles+'</td><td class="num">'+p.games_won+'–'+p.games_lost+'</td><td class="num">'+pct(p.games_won,p.games_lost)+'</td></tr>').join('')+'</tbody></table>'}
+function partnershipTable(items){if(!items.length)return '<div class="empty">No partnership statistics yet.</div>';return '<table><thead><tr><th>Partnership</th><th class="num">Events</th><th class="num">Titles</th><th class="num">W–L</th></tr></thead><tbody>'+items.slice(0,15).map(p=>'<tr><td><strong>'+p.players.map(esc).join(' &amp; ')+'</strong><br><span class="muted">Best finish: '+esc(p.top_finish||'—')+'</span></td><td class="num">'+p.tournaments+'</td><td class="num">'+p.titles+'</td><td class="num">'+p.games_won+'–'+p.games_lost+'</td></tr>').join('')+'</tbody></table>'}
+function tournamentTable(items){if(!items.length)return '<div class="empty">No completed tournaments have been recorded yet. Completed events will appear here automatically.</div>';return '<table><thead><tr><th>Tournament</th><th>Date</th><th>Teams</th><th>Champion</th></tr></thead><tbody>'+items.map(t=>'<tr><td><a class="tournament-link" href="/historical-results/'+encodeURIComponent(t.tournament_id)+'">View tournament details</a><br><span class="muted">'+esc(t.bracket_file)+'</span></td><td>'+date(t.completed_at)+'</td><td>'+t.team_count+'</td><td><span class="pill">'+esc(t.champion)+'</span></td></tr>').join('')+'</tbody></table>'}
+function detailView(t){const members={};for(const [seed,teamId] of Object.entries(t.seed_assignments||{})){const team=(t.teams||{})[teamId]||{};const names=[(t.players||{})[team.player_one_id],(t.players||{})[team.player_two_id]].filter(Boolean);if(t.entrants[seed])members[t.entrants[seed]]=names}
+const placements=Object.entries(t.placements||{}).sort((a,b)=>Number(a[0][0])-Number(b[0][0]));
+app.innerHTML='<div class="detail-head"><div><a class="back" href="/historical-results">← All historical results</a><h2>Completed tournament</h2><p class="muted">'+date(t.completed_at)+' · '+t.team_count+' teams</p></div><span class="pill">Champion: '+esc(t.champion)+'</span></div><section class="panel"><h3>Final standings</h3><table><thead><tr><th>Place</th><th>Team</th><th>Players</th></tr></thead><tbody>'+placements.map(([place,team])=>'<tr><td><strong>'+esc(place)+'</strong></td><td>'+esc(team)+'</td><td>'+((members[team]||[]).map(esc).join(' &amp; ')||'—')+'</td></tr>').join('')+'</tbody></table></section><section class="panel"><h3>Completed matches ('+t.results.length+')</h3><div class="result-list">'+t.results.map(r=>'<div class="result"><div class="game">'+esc(r.game_id)+'</div><div class="teams"><div class="winner">'+esc(r.winner)+'</div><div class="loser">Defeated '+esc(r.loser)+'</div></div><span class="pill">Final</span></div>').join('')+'</div></section>'}
+async function load(){try{const url=tournamentId?'/api/historical-results/'+encodeURIComponent(tournamentId):'/api/historical-results';const response=await fetch(url);const data=await response.json();if(!response.ok)throw new Error(data.detail||'Could not load historical results');if(tournamentId){detailView(data.tournaments[0]);return}app.innerHTML='<div class="intro"><div><h2>Historical Results</h2><div class="muted">Records from completed tournaments only</div></div><span class="pill">Read-only archive</span></div>'+statCards(data.summary)+'<section class="panel"><h3>Tournament history</h3>'+tournamentTable(data.tournaments)+'</section><div class="columns"><section class="panel"><h3>Player leaderboard</h3>'+playerTable(data.players)+'</section><section class="panel"><h3>Top partnerships</h3>'+partnershipTable(data.partnerships)+'</section></div>'}catch(error){app.innerHTML='<div class="error">'+esc(error.message)+'</div>'}}
+load();
+</script>
+</body>
+</html>
