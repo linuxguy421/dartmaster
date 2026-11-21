@@ -29,12 +29,20 @@ body{background:#10151d!important;position:relative;isolation:isolate}
 body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
 header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
 main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
+
+/* Shared Pasadena Moose tournament masthead */
+.site-header{min-height:104px;padding:16px clamp(18px,3vw,36px)!important;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:linear-gradient(110deg,rgba(17,26,38,.97),rgba(25,37,52,.91))!important;border-bottom:1px solid rgba(229,163,59,.42)!important;box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(10px)}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:0}.brand-mark{width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center;border:2px solid var(--accent);border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(229,163,59,.2),rgba(10,16,24,.92) 68%);box-shadow:inset 0 0 0 4px rgba(229,163,59,.12),0 3px 14px rgba(0,0,0,.28);position:relative}.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:var(--accent);opacity:.72}.brand-mark:before{width:1px;height:48px}.brand-mark:after{height:1px;width:48px}.brand-mark span{z-index:1;padding:3px 5px;background:#17212d;color:#f4c875;font-size:18px;font-weight:900;letter-spacing:.04em}.brand-copy{min-width:0}.brand-kicker{font-size:10px;font-weight:800;letter-spacing:.24em;color:var(--accent);line-height:1.3}.site-header h1{margin:2px 0 1px;font-size:clamp(19px,2.2vw,25px);font-weight:850;letter-spacing:.075em;line-height:1.2;color:var(--text)}.site-header p{margin:4px 0 0;color:var(--muted);font-size:13px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}.header-actions a{font-size:13px;font-weight:650;text-underline-offset:4px}.header-actions button{font-size:13px}
+@media(max-width:560px){.site-header{align-items:flex-start;padding:13px 16px!important;gap:12px}.brand-lockup{gap:12px}.brand-mark{width:54px;height:54px;flex-basis:54px}.brand-mark:before{height:38px}.brand-mark:after{width:38px}.brand-mark span{font-size:15px}.header-actions{width:100%;justify-content:flex-start;padding-left:66px}}
 </style>
 </head>
 <body>
-<header>
- <div><h1>PASADENA MOOSE DART TOURNAMENT · BRACKET</h1><p id="tournament-name">Loading tournament…</p></div>
- <div><a id="back-link" href="#">Return to tournament controls</a></div>
+<header class="site-header">
+ <div class="brand-lockup">
+  <div class="brand-mark" aria-label="Pasadena Moose logo placeholder"><span>PM</span></div>
+  <div class="brand-copy"><div class="brand-kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p id="tournament-name">Loading tournament…</p></div>
+ </div>
+ <div class="header-actions"><a id="back-link" href="#">Return to tournament controls</a></div>
 </header>
 <main>
  <div class="summary" id="summary">Loading bracket…</div>
