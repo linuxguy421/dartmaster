@@ -120,14 +120,10 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
 </section>
 <section id="teams-section" class="hidden">
-  <h2>3. Review teams</h2>
-  <p class="hint">Confirm the pairings. Bracket seeds are assigned automatically from the original draw numbers.</p>
+  <h2>3. Teams &amp; partner draw results</h2>
+  <p class="hint">Review the confirmed partnerships and their automatically assigned bracket seeds. Team order is based on the original draw numbers.</p>
   <div id="teams" class="team-list"></div>
-</section>
-<section id="seeds-section" class="hidden">
-  <h2>4. Partner draw results</h2>
-  <p class="hint">These are your tournament partners. Team order is based on the original draw numbers.</p>
-  <div id="seed-inputs" class="grid"></div>
+  <div id="tournament-setup-note" class="notice hidden"></div>
   <div class="row" style="margin-top:14px"><button id="start-tournament" disabled>Start tournament</button></div>
   <div id="tournament-result" class="notice hidden"></div>
 </section>
@@ -157,11 +153,10 @@ function render(){
   drawOffIds=[];
  }
  $('teams-section').classList.toggle('hidden',!state.teams.length);
- $('seeds-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
  $('teams').innerHTML=state.teams.map(t=>{const one=state.players.find(p=>p.player_id===t.player_one_id),two=state.players.find(p=>p.player_id===t.player_two_id);return '<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' <span class="small">('+((one?.playing_role||one?.gender)==='female'?'female':'male')+'</span> + '+escapeHtml(t.player_two)+' <span class="small">('+((two?.playing_role||two?.gender)==='female'?'Female':'Male')+'</span></div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>';}).join('');
  if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
- if(state.teams.length)renderSeeds();
+ if(state.teams.length)renderTournamentSetup();
 }
 function drawGroupMarkup(players, attribute, label){
  return ['female','male'].map(gender=>{
@@ -216,20 +211,13 @@ $('draw-button').addEventListener('click',async()=>{try{
  const byGender={male:new Set(),female:new Set()};state.players.forEach(p=>{const n=mixed[p.player_id];if(byGender[p.gender].has(n))throw new Error('Duplicate draw number '+n+' among '+p.gender+' players. Each number may be used once per gender.');byGender[p.gender].add(n);});const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
-function renderSeeds(){
+function renderTournamentSetup(){
  const bracket=brackets.find(b=>b.team_count===state.teams.length);
- 
- if(!bracket){
-  $('seed-inputs').innerHTML='<p class="error">No bracket definition is available for '+state.teams.length+' teams. Add the matching JSON bracket before continuing.</p>';
-  $('start-tournament').disabled=true;
-  return;
- }
  const assignments=state.seed_assignments||{};
- $('seed-inputs').innerHTML=Array.from({length:bracket.team_count},(_,i)=>{
-  const seed='T'+(i+1),teamId=assignments[seed],team=state.teams.find(item=>item.team_id===teamId);
-  return '<div class="team"><strong>Team '+(i+1)+'</strong><div>'+(team?escapeHtml(team.player_one)+' + '+escapeHtml(team.player_two):'<span class="error">No team assigned</span>')+'</div></div>';
- }).join('');
- $('start-tournament').disabled=Object.keys(assignments).length!==bracket.team_count;
+ const complete=Boolean(bracket)&&Object.keys(assignments).length===bracket.team_count;
+ $('tournament-setup-note').classList.toggle('hidden',Boolean(bracket));
+ $('tournament-setup-note').textContent=bracket?'': 'No bracket definition is available for '+state.teams.length+' teams. Add the matching bracket before continuing.';
+ $('start-tournament').disabled=!complete;
 }
 $('start-tournament').addEventListener('click',async()=>{const button=$('start-tournament');button.disabled=true;try{const result=await api('/api/tournaments',{method:'POST',body:JSON.stringify({bracket_file:brackets.find(b=>b.team_count===state.teams.length)?.filename})});if(!result.dashboard_url||!result.dashboard_url.startsWith('/tournaments/'))throw new Error('Tournament was created, but the dashboard URL was missing or invalid.');$('tournament-result').classList.remove('hidden');$('tournament-result').innerHTML='<strong class="success">Tournament created</strong><br> ID: '+escapeHtml(result.tournament_id)+'<br> '+result.team_count+' teams · four boards available';notify('Tournament created. Opening dashboard…');window.location.assign(result.dashboard_url);}catch(err){notify(err.message,true);button.disabled=false}});
 async function refresh(){state=await api('/api/registration');render();}
