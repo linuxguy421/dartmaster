@@ -173,7 +173,7 @@
     },
     "G12": {
       "teams": [
-        "L-10",
+        "L-G10",
         "W-G8"
       ],
       "winner_advances_to": {
@@ -230,15 +230,12 @@
         "rank": "3rd"
       },
       "is_winnerbracket": "false",
-      "placement_match": {
-        "winner": "3rd",
-        "loser": "4th"
-      }
+      "display_label": "Playing for 3rd Place"
     },
     "GF": {
       "teams": [
         "W-G15",
-        "W-G17"
+        "W-G15"
       ],
       "winner_advances_to": {
         "result": "CHAMPION"
