@@ -110,10 +110,7 @@
         "rank": "3rd"
       },
       "is_winnerbracket": "false",
-      "placement_match": {
-        "winner": "3rd",
-        "loser": "4th"
-      }
+      "display_label": "Playing for 3rd Place"
     },
     "GF": {
       "teams": [
