@@ -15,12 +15,67 @@ def add_players(client, males=2, females=2):
             json={"display_name": f"Male {index + 1}", "gender": "male"},
         )
         assert response.status_code == 201
+        assert client.put(f"/api/registration/players/{response.json()['player_id']}/payment", json={"paid": True}).status_code == 200
     for index in range(females):
         response = client.post(
             "/api/registration/players",
             json={"display_name": f"Female {index + 1}", "gender": "female"},
         )
         assert response.status_code == 201
+        assert client.put(f"/api/registration/players/{response.json()['player_id']}/payment", json={"paid": True}).status_code == 200
+
+
+def test_draw_is_blocked_until_every_player_has_paid(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=4, females=4)
+    players = client.get("/api/registration").json()["players"]
+    unpaid_player = players[-1]
+    assert unpaid_player["paid"] is True
+    assert client.put(
+        f"/api/registration/players/{unpaid_player['player_id']}/payment",
+        json={"paid": False},
+    ).status_code == 200
+    draws = {player["player_id"]: index + 1 for index, player in enumerate(players)}
+
+    response = client.post("/api/registration/draw", json={"mixed_draws": draws})
+
+    assert response.status_code == 400
+    assert "All players must pay" in response.json()["detail"]
+    assert client.get("/api/registration").json()["teams"] == []
+
+
+def test_payment_status_persists_and_can_be_updated(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    created = client.post(
+        "/api/registration/players",
+        json={"display_name": "Unpaid Player", "gender": "male"},
+    )
+    player_id = created.json()["player_id"]
+    assert client.get("/api/registration").json()["players"][0]["paid"] is False
+
+    updated = client.put(
+        f"/api/registration/players/{player_id}/payment", json={"paid": True}
+    )
+
+    assert updated.status_code == 200
+    assert client.get("/api/registration").json()["players"][0]["paid"] is True
+
+
+def test_tournament_creation_rejects_unpaid_player_even_if_draw_exists(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=4, females=4)
+    players = client.get("/api/registration").json()["players"]
+    draws = {player["player_id"]: number for player, number in zip(players, [1,2,3,4,1,2,3,4], strict=True)}
+    assert client.post("/api/registration/draw", json={"mixed_draws": draws}).status_code == 200
+    roster, draw_state = main.registration_store().load()
+    player = next(iter(roster.players.values()))
+    roster.players[player.player_id] = player.__class__(player.player_id, player.display_name, player.gender, False)
+    main.registration_store().save(roster, draw_state)
+
+    response = client.post("/api/tournaments", json={"bracket_file": "4teamD.json"})
+
+    assert response.status_code == 400
+    assert "All players must pay" in response.json()["detail"]
 
 
 def test_draw_rejects_odd_number_of_registered_players(tmp_path, monkeypatch):
@@ -233,6 +288,8 @@ def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypa
 
     assert response.status_code == 200
     assert 'Bracket selected automatically' not in response.text
+    assert 'Entry fee paid' in response.text
+    assert 'data-paid=' in response.text
     assert 'id="bracket-select"' not in response.text
     assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
     assert "window.location.assign(result.dashboard_url)" in response.text
