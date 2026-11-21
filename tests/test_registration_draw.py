@@ -26,6 +26,10 @@ def test_larger_male_group_draws_first_and_surplus_redraws():
     assert result.draw_order == (Gender.MALE, Gender.FEMALE)
     assert len(result.mixed_teams) == 4
     assert len(result.draw_off_teams) == 1
+    assert all(
+        roster.players[team.player_one_id].gender == Gender.FEMALE
+        for team in result.mixed_teams
+    )
     final_team = result.draw_off_teams[0]
     assert {final_team.player_one_id, final_team.player_two_id} == {"m5", "m6"}
     assert len(roster.teams) == 5
@@ -69,7 +73,7 @@ def test_four_unmatched_males_use_highest_original_numbers_as_female_roles():
     assert [
         (team.player_one_id, team.player_two_id)
         for team in result.draw_off_teams
-    ] == [("m3", "m5"), ("m4", "m6")]
+    ] == [("m5", "m3"), ("m6", "m4")]
 
 
 def test_rejects_odd_total_player_count():
