@@ -39,6 +39,10 @@ class PlayerRequest(BaseModel):
     gender: Gender
 
 
+class PlayerPaymentRequest(BaseModel):
+    paid: bool
+
+
 class DrawRequest(BaseModel):
     mixed_draws: dict[str, int]
     draw_off_draws: dict[str, int] = Field(default_factory=dict)
@@ -87,6 +91,7 @@ def registration_payload(roster: TournamentRoster, draw_state=None) -> dict:
                 "player_id": player.player_id,
                 "display_name": player.display_name,
                 "gender": player.gender.value,
+                "paid": player.paid,
                 "playing_role": (
                     "female"
                     if draw_state and player.player_id in draw_state.get("female_role_ids", [])
@@ -173,6 +178,21 @@ def add_player(request: PlayerRequest) -> dict:
     }
 
 
+@app.put("/api/registration/players/{player_id}/payment")
+def update_player_payment(player_id: str, request: PlayerPaymentRequest) -> dict:
+    roster, draw_state = registration_store().load()
+    if roster.teams:
+        raise HTTPException(status_code=409, detail="Reset the draw before changing payment status")
+    player = roster.players.get(player_id)
+    if player is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+    roster.players[player_id] = player.__class__(
+        player.player_id, player.display_name, player.gender, request.paid
+    )
+    registration_store().save(roster, draw_state)
+    return {"player_id": player_id, "paid": request.paid}
+
+
 @app.delete("/api/registration/players/{player_id}", status_code=204)
 def remove_player(player_id: str) -> None:
     roster, draw_state = registration_store().load()
@@ -188,6 +208,12 @@ def remove_player(player_id: str) -> None:
 def draw_teams(request: DrawRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
+    if any(not player.paid for player in roster.players.values()):
+        unpaid = [player.display_name for player in roster.players.values() if not player.paid]
+        raise HTTPException(
+            status_code=400,
+            detail="All players must pay their entry fee before the draw can start. Unpaid: " + ", ".join(unpaid),
+        )
     if len(roster.players) % 2:
         raise HTTPException(
             status_code=400,
@@ -245,6 +271,8 @@ def reset_draw() -> dict:
 def create_tournament(request: TournamentRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
+    if any(not player.paid for player in roster.players.values()):
+        raise HTTPException(status_code=400, detail="All players must pay their entry fee before starting the tournament.")
     if len(roster.players) < 8 or len(roster.teams) < 4:
         raise HTTPException(
             status_code=400,
