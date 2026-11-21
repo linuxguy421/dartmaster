@@ -53,7 +53,7 @@ Stopping the stack with docker compose down preserves tournament and registratio
 
 ## Current implementation
 
-The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, operator-controlled four-board assignment system, SQLite-backed tournament session/state store, and player/team registration domain. The browser setup workflow is served at `/`. Starting a tournament opens its live four-board dashboard at `/tournaments/{tournament_id}`, with polling updates, a bracket-driven ready-match queue, explicit board assignment, winner-only match completion, and a completed-match history:
+The foundation includes the ordered JSON bracket loader, read-only bracket audit CLI, in-memory progression engine, operator-controlled four-board assignment system, SQLite-backed tournament session/state store, and player/team registration domain. A minimum of four two-player teams (eight players) is required. The browser setup workflow is served at `/`. Starting a tournament opens its live four-board dashboard at `/tournaments/{tournament_id}`, with polling updates, a bracket-driven ready-match queue, explicit board assignment, winner-only match completion, and a completed-match history:
 
 1. Register players with a display name and gender.
 2. Record the larger group's number draw first (females draw first when group sizes are equal), then the other group's matching numbers.
