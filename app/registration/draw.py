@@ -17,6 +17,7 @@ class DrawResult:
     mixed_teams: tuple[Team, ...]
     draw_off_teams: tuple[Team, ...]
     female_role_ids: tuple[str, ...] = ()
+    male_role_ids: tuple[str, ...] = ()
 
     @property
     def teams(self) -> tuple[Team, ...]:
@@ -56,9 +57,10 @@ def create_teams_from_draw(
     Each player draws one positive number in the mixed draw. Numbers must be unique
     within each gender group; a male and female with the same number form a mixed
     team. If exactly two players are unmatched, they automatically form a team.
-    When four males remain unmatched, the two with the highest original draw
-    numbers take the female playing role and pair, in ascending order, with the
-    two lower-numbered unmatched males. Biological gender is unchanged.
+    When four players of one gender remain unmatched, the two with the highest
+    original draw numbers take the opposite playing role and pair, in ascending
+    order, with the two lower-numbered unmatched players. Biological gender is
+    unchanged.
     """
     if roster.teams:
         raise RegistrationError("Draw pairing requires a roster with no existing teams")
@@ -124,15 +126,14 @@ def create_teams_from_draw(
     }
 
     female_role_ids: tuple[str, ...] = ()
+    male_role_ids: tuple[str, ...] = ()
     if len(unmatched) == 2:
         if draw_off_draws:
             raise RegistrationError(
                 "No draw-off is needed when exactly two players are unmatched"
             )
         draw_off_pairs = [tuple(sorted(unmatched))]
-    elif len(unmatched) == 4 and all(
-        roster.players[player_id].gender == Gender.MALE for player_id in unmatched
-    ):
+    elif len(unmatched) == 4 and len({roster.players[player_id].gender for player_id in unmatched}) == 1:
         if draw_off_draws:
             raise RegistrationError(
                 "The playing-role draw-off is determined by the original draw numbers"
@@ -140,10 +141,17 @@ def create_teams_from_draw(
         unmatched_by_draw = sorted(
             unmatched, key=lambda player_id: numbers[player_id]
         )
-        male_role_players = unmatched_by_draw[:2]
-        female_role_players = unmatched_by_draw[2:]
-        female_role_ids = tuple(female_role_players)
-        draw_off_pairs = list(zip(male_role_players, female_role_players, strict=True))
+        lower_draw_players = unmatched_by_draw[:2]
+        higher_draw_players = unmatched_by_draw[2:]
+        unmatched_gender = roster.players[unmatched_by_draw[0]].gender
+        if unmatched_gender == Gender.MALE:
+            male_role_ids = tuple(lower_draw_players)
+            female_role_ids = tuple(higher_draw_players)
+            draw_off_pairs = list(zip(higher_draw_players, lower_draw_players, strict=True))
+        else:
+            female_role_ids = tuple(lower_draw_players)
+            male_role_ids = tuple(higher_draw_players)
+            draw_off_pairs = list(zip(lower_draw_players, higher_draw_players, strict=True))
     elif unmatched:
         if len(unmatched) % 2:
             raise RegistrationError(
@@ -176,12 +184,14 @@ def create_teams_from_draw(
     # Store every team with its female player/playing role first. This keeps
     # player order consistent in registration, bracket labels, and match displays.
     female_role_set = set(female_role_ids)
+    male_role_set = set(male_role_ids)
 
     def is_female_role(player_id: str) -> bool:
-        return (
-            player_id in female_role_set
-            or roster.players[player_id].gender == Gender.FEMALE
-        )
+        if player_id in female_role_set:
+            return True
+        if player_id in male_role_set:
+            return False
+        return roster.players[player_id].gender == Gender.FEMALE
 
     pairs = mixed_pairs + [
         tuple(sorted(pair, key=lambda player_id: not is_female_role(player_id)))
@@ -207,4 +217,5 @@ def create_teams_from_draw(
         mixed_teams=tuple(created[:mixed_count]),
         draw_off_teams=tuple(created[mixed_count:]),
         female_role_ids=female_role_ids,
+        male_role_ids=male_role_ids,
     )
