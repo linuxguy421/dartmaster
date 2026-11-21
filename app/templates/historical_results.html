@@ -17,7 +17,7 @@ main{width:min(1200px,calc(100% - 32px));margin:26px auto 60px;display:grid;gap:
 .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px;backdrop-filter:blur(6px)}
 .stat{font-size:29px;font-weight:850;line-height:1.2;font-variant-numeric:tabular-nums}.stat-label{font-size:12px;color:var(--muted);margin-top:5px}
 .columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel h3{font-size:16px;margin:0 0 12px}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}td.num{text-align:right;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}th.num,td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}table:has(th.num){table-layout:fixed}table:has(th.num) th:first-child,table:has(th.num) td:first-child{width:42%}table:has(th.num) th.num,table:has(th.num) td.num{width:auto}
 tbody tr:last-child td{border-bottom:0}.empty{padding:28px;text-align:center;color:var(--muted)}
 .tournament-link{font-weight:750}.pill{display:inline-block;padding:3px 8px;border-radius:99px;background:#e5a33b22;color:#f4c875;font-size:11px}
 .detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.detail-head h2{margin:0}.back{font-size:13px}
