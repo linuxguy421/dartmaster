@@ -32,6 +32,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
+.confirm-dialog{width:min(440px,calc(100vw - 32px));padding:0;border:1px solid var(--line);border-radius:14px;background:#1a2330;color:var(--text);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.confirm-dialog::backdrop{background:rgba(3,7,12,.72);backdrop-filter:blur(3px)}
+.confirm-dialog-content{padding:22px}
+.confirm-dialog h2{font-size:19px;margin:0 0 8px}
+.confirm-dialog p{margin:0;color:var(--muted)}
+.confirm-dialog strong{color:var(--text)}
+.confirm-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.confirm-dialog-actions button{min-width:96px}
 .complete{padding:16px;border:1px solid var(--good);border-radius:9px;color:var(--good);margin-bottom:16px}
 .placement{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin:3px 0}
 .payouts{margin:0 0 18px;padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -74,11 +82,22 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
  <section class="results" id="results-section"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
  <section class="results" id="game-summary" hidden><h2>Tournament summary</h2><div id="summary-content"></div></section>
 </main>
+<dialog id="winner-confirmation" class="confirm-dialog" aria-labelledby="winner-confirmation-title">
+ <div class="confirm-dialog-content">
+  <h2 id="winner-confirmation-title">Confirm match winner</h2>
+  <p id="winner-confirmation-message"></p>
+  <div class="confirm-dialog-actions">
+   <button type="button" class="secondary" id="cancel-winner">Cancel</button>
+   <button type="button" id="confirm-winner">Record winner</button>
+  </div>
+ </div>
+</dialog>
 <div id="notice" role="status" aria-live="polite"></div>
 <script>
 const tournamentId=location.pathname.split('/').filter(Boolean).pop();
 const $=id=>document.getElementById(id);
 let current=null,refreshing=false,sidePotEnabled=false;
+let pendingWinner=null;
 const selectedBoards=new Map();
 let readyQueueSignature=null;
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -212,12 +231,22 @@ $('ready-matches').addEventListener('click',async e=>{
  const assigned=await act('/api/tournaments/'+tournamentId+'/boards/'+select.value+'/assign','POST',{match_id:matchId});
  if(assigned)selectedBoards.delete(matchId);
 });
-$('boards').addEventListener('click',async e=>{
- const target=e.target;
- if(target.dataset.winner){
-  const winner=target.dataset.winner;
-  await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
+const winnerDialog=$('winner-confirmation');
+$('cancel-winner').addEventListener('click',()=>winnerDialog.close('cancel'));
+$('confirm-winner').addEventListener('click',()=>winnerDialog.close('confirm'));
+winnerDialog.addEventListener('close',async()=>{
+ const action=pendingWinner;
+ pendingWinner=null;
+ if(winnerDialog.returnValue==='confirm'&&action){
+  await act('/api/tournaments/'+tournamentId+'/boards/'+action.board+'/winner','POST',{winner:action.winner});
  }
+});
+$('boards').addEventListener('click',e=>{
+ const target=e.target.closest('[data-winner]');
+ if(!target)return;
+ pendingWinner={winner:target.dataset.winner,board:target.dataset.board};
+ $('winner-confirmation-message').textContent='Record '+pendingWinner.winner+' as the winner of this match?';
+ winnerDialog.showModal();
 });
 $('open-bracket').addEventListener('click',()=>window.open('/tournaments/'+encodeURIComponent(tournamentId)+'/bracket','_blank','noopener'));
 $('refresh').addEventListener('click',refresh);
