@@ -348,3 +348,28 @@ def test_registration_api_rejects_duplicate_names_case_insensitive(tmp_path, mon
     response = client.post('/api/registration/players', json={'display_name':' alex ', 'gender':'female'})
     assert response.status_code == 400
     assert 'already registered' in response.json()['detail']
+
+
+def test_four_unmatched_females_are_assigned_opposite_playing_roles(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=2, females=6)
+    players = client.get("/api/registration").json()["players"]
+    mixed = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 1, 2, 3, 4, 5, 6], strict=True)
+    }
+    response = client.post("/api/registration/draw", json={"mixed_draws": mixed})
+    assert response.status_code == 200
+    registration = response.json()
+    assert registration["draw"]["female_role_ids"] == [players[4]["player_id"], players[5]["player_id"]]
+    assert registration["draw"]["male_role_ids"] == [players[6]["player_id"], players[7]["player_id"]]
+    assert [player["playing_role"] for player in registration["players"] if player["gender"] == "female"] == [
+        "female", "female", "female", "female", "male", "male"
+    ]
+    unmatched_teams = [
+        team for team in registration["teams"]
+        if team["team_id"] in registration["draw"]["draw_off_team_ids"]
+    ]
+    assert [(team["player_one"], team["player_two"]) for team in unmatched_teams] == [
+        ("Female 3", "Female 5"), ("Female 4", "Female 6")
+    ]
