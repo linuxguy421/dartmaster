@@ -490,9 +490,26 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "loser": final_result.loser,
             })
 
+    placement_teams = dict(session.runtime.placements)
+    if session.runtime.champion is not None:
+        placement_teams["1st"] = session.runtime.champion
+    entrant_players = {}
+    if session.roster is not None:
+        for seed, team_id in session.roster.seed_assignments.items():
+            team = session.roster.teams[team_id]
+            entrant_players[session.runtime.entrants[seed]] = (
+                f"{session.roster.players[team.player_one_id].display_name} / "
+                f"{session.roster.players[team.player_two_id].display_name}"
+            )
+    display_placements = {
+        place: entrant_players.get(team_name, team_name)
+        for place, team_name in placement_teams.items()
+    }
+
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
+        "placements": display_placements,
         "payouts": {
             "currency": session.runtime.definition.currency,
             "prizes": dict(session.runtime.definition.prizes),
