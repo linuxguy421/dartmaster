@@ -50,7 +50,6 @@ main{padding-left:clamp(10px,1.25vw,22px);padding-right:clamp(10px,1.25vw,22px)}
   <div class="brand-mark" aria-label="Pasadena Moose logo placeholder"><span>PM</span></div>
   <div class="brand-copy"><div class="brand-kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p id="tournament-name">Loading tournament…</p></div>
  </div>
- <div class="header-actions"><a id="back-link" href="#">Return to tournament controls</a></div>
 </header>
 <main>
  <div class="summary" id="summary">Loading bracket…</div>
@@ -67,7 +66,6 @@ main{padding-left:clamp(10px,1.25vw,22px);padding-right:clamp(10px,1.25vw,22px)}
 const tournamentId=location.pathname.split('/').filter(Boolean).at(-2);
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-$('back-link').href='/tournaments/'+encodeURIComponent(tournamentId);
 function participantName(value){
  if(/^T[1-9][0-9]*$/.test(value))return 'Seed '+value.slice(1);
  const ref=value.match(/^([WL])-(.+)$/);
@@ -161,8 +159,8 @@ window.addEventListener('resize',()=>{if($('traditional-mode').classList.contain
 function render(data){
  window.lastBracketData=data;
  window.currentPayouts=data.payouts||{};
- $('tournament-name').textContent=data.bracket_file+' · '+(data.complete?'Tournament complete':'Live tournament');
- $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
+ $('tournament-name').textContent=data.complete?'Tournament complete':'Live tournament';
+ $('summary').innerHTML=data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
  for(const [type,target] of [['winners','winners'],['losers','losers'],['championship','championship']]){
   const matches=data.bracket.filter(m=>m.bracket_type===type);
   const groups=new Map();
