@@ -42,8 +42,8 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     assert "Prize payouts" in page.text
     assert "side-pot-toggle" in page.text
     assert "prizes_with_side_pot" in page.text
-    assert "side-pot-instructions" in page.text
-    assert "Set aside" in page.text
+    assert "side-pot-instructions" not in page.text
+    assert "Set aside" not in page.text
     assert "Playing for" in page.text
     assert "completedPlacements" in page.text
     assert " /ea" in page.text
@@ -169,3 +169,13 @@ def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypat
         for player in players.split(" / ")
     )
     assert third_place["winner"] is not None
+    assert status["placements"]["3rd"] == third_place["placement_players"]["3rd"]
+    assert status["placements"]["4th"] == third_place["placement_players"]["4th"]
+
+    championship = play("CHAMPIONSHIP", 1)
+    assert championship["complete"] is True
+    final_match = next(
+        match for match in championship["bracket"] if match["match_id"] == "CHAMPIONSHIP"
+    )
+    assert championship["placements"]["1st"] == final_match["placement_players"]["1st"]
+    assert championship["placements"]["2nd"] == final_match["placement_players"]["2nd"]
