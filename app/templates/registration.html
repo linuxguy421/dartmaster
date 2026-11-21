@@ -114,7 +114,7 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <div id="draw-order" class="notice"></div>
   <div id="draw-inputs" class="draw-columns"></div>
   <div id="draw-off-area" class="hidden">
-    <h3>Playing-role assignment</h3><p class="hint">The two unmatched males with the highest original draw numbers take the female playing role. They pair in draw order with the two lower-numbered unmatched males; no second number draw is needed.</p>
+    <h3>Playing-role assignment</h3><p class="hint">The two unmatched players with the highest original draw numbers take the opposite playing role. They pair in draw order with the two lower-numbered unmatched players; no second number draw is needed.</p>
     <div id="draw-off-inputs" class="draw-columns"></div>
   </div>
   <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
@@ -188,12 +188,18 @@ function previewDrawOff(){
  state.players.filter(p=>p.gender==='female').forEach(p=>{if(numbersByGender.male.has(values[p.player_id]))matchedIds.add(p.player_id)});
  drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
  const unmatched=state.players.filter(p=>drawOffIds.includes(p.player_id)).sort((a,b)=>values[a.player_id]-values[b.player_id]);
- if(unmatched.length!==4||unmatched.some(p=>p.gender!=='male')){
+ if(unmatched.length!==4||new Set(unmatched.map(p=>p.gender)).size!==1){
   $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;
  }
  const lower=unmatched.slice(0,2),higher=unmatched.slice(2);
+ const unmatchedGender=unmatched[0].gender;
+ const lowerRole=unmatchedGender==='male'?'male':'female';
+ const higherRole=unmatchedGender==='male'?'female':'male';
+ const femaleRolePlayers=lowerRole==='female'?lower:higher;
+ const maleRolePlayers=lowerRole==='male'?lower:higher;
+ const pairs=femaleRolePlayers.map((player,index)=>[player,maleRolePlayers[index]]);
  $('draw-off-area').classList.remove('hidden');
- $('draw-off-inputs').innerHTML='<div class="draw-group male"><h3>Male playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group female"><h3>Female playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+escapeHtml(higher[0].display_name)+' + '+escapeHtml(lower[0].display_name)+' and '+escapeHtml(higher[1].display_name)+' + '+escapeHtml(lower[1].display_name)+'.</p>';
+ $('draw-off-inputs').innerHTML='<div class="draw-group '+lowerRole+'"><h3>'+(lowerRole==='female'?'Female':'Male')+' playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group '+higherRole+'"><h3>'+(higherRole==='female'?'Female':'Male')+' playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+pairs.map(pair=>escapeHtml(pair[0].display_name)+' + '+escapeHtml(pair[1].display_name)).join(' and ')+'.</p>';
 }
 $('player-gender-toggle').addEventListener('click',()=>{
  const next=$('player-gender').value==='female'?'male':'female';
