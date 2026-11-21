@@ -68,8 +68,8 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
         "side_pot_contribution_per_team": 2,
     }
     third_place = next(match for match in status["bracket"] if match["match_id"] == "G5")
-    assert third_place["placement_label"] == "3rd Place"
-    assert third_place["placement_payouts"] == {"winner_place": "3rd", "loser_place": "4th"}
+    assert third_place["placement_label"] == "Playing for 3rd Place"
+    assert third_place["placement_payouts"] == {"winner_place": "4th", "loser_place": "3rd"}
     championship = next(match for match in status["bracket"] if match["match_id"] == "CHAMPIONSHIP")
     assert championship["placement_label"] == "1st / 2nd Place"
     assert championship["placement_payouts"] == {"winner_place": "1st", "loser_place": "2nd"}
