@@ -191,10 +191,10 @@ def draw_teams(request: DrawRequest) -> dict:
             status_code=400,
             detail="An even number of players is required to form two-player teams.",
         )
-    if len(roster.players) < 6:
+    if len(roster.players) < 8:
         raise HTTPException(
             status_code=400,
-            detail="At least 6 players are required (3 teams minimum).",
+            detail="At least 8 players are required (4 teams minimum).",
         )
     try:
         result = create_teams_from_draw(
@@ -242,10 +242,10 @@ def reset_draw() -> dict:
 def create_tournament(request: TournamentRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
-    if len(roster.players) < 6 or len(roster.teams) < 3:
+    if len(roster.players) < 8 or len(roster.teams) < 4:
         raise HTTPException(
             status_code=400,
-            detail="At least 6 players (3 teams) are required to start a tournament.",
+            detail="At least 8 players (4 teams) are required to start a tournament.",
         )
     try:
         definition = load_bracket(bracket_path(request.bracket_file))
