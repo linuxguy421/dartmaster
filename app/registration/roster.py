@@ -20,7 +20,7 @@ class TournamentRoster:
         self.seed_assignments: dict[str, str] = {}
 
     def register_player(
-        self, player_id: str, display_name: str, gender: Gender | str
+        self, player_id: str, display_name: str, gender: Gender | str, paid: bool = False
     ) -> Player:
         player_id = player_id.strip()
         display_name = display_name.strip()
@@ -38,7 +38,7 @@ class TournamentRoster:
         except ValueError as exc:
             raise RegistrationError("Player gender must be 'male' or 'female'") from exc
 
-        player = Player(player_id, display_name, normalized_gender)
+        player = Player(player_id, display_name, normalized_gender, bool(paid))
         self.players[player_id] = player
         return player
 
@@ -134,6 +134,7 @@ class TournamentRoster:
                     "player_id": player.player_id,
                     "display_name": player.display_name,
                     "gender": player.gender.value,
+                    "paid": player.paid,
                 }
                 for player in self.players.values()
             ],
@@ -164,7 +165,7 @@ class TournamentRoster:
                 raise RegistrationError("Persisted seed assignments must be an object")
             for raw in players:
                 roster.register_player(
-                    raw["player_id"], raw["display_name"], raw["gender"]
+                    raw["player_id"], raw["display_name"], raw["gender"], raw.get("paid", False)
                 )
             for raw in teams:
                 # Accept the previous mixed-doubles snapshot shape while writing only
