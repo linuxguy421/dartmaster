@@ -314,7 +314,13 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         source_game_id = (
             "GGF"
             if is_championship
-            and runtime.championship_phase.value == "reset"
+            and (
+                runtime.championship_phase.value == "reset"
+                or (
+                    runtime.championship_phase.value == "complete"
+                    and "GGF" in runtime.results
+                )
+            )
             else game_id
         )
         result = runtime.results.get(source_game_id)
@@ -491,6 +497,11 @@ def tournament_payload(session: TournamentSession) -> dict:
             })
 
     placement_teams = dict(session.runtime.placements)
+    # Placement-match metadata is the source of truth for both sides of a
+    # placement game; terminal routes alone may only identify one side.
+    for match in bracket_payload(session):
+        for place, team in (match.get("placement_players") or {}).items():
+            placement_teams[place] = team
     if session.runtime.champion is not None:
         placement_teams["1st"] = session.runtime.champion
     entrant_players = {}
