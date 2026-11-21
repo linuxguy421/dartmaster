@@ -168,7 +168,11 @@ async function act(path,method='POST',body){
 }
 $('ready-matches').addEventListener('change',e=>{
  const select=e.target.closest('[data-board-select]');
- if(select)selectedBoards.set(select.dataset.boardSelect,Number(select.value));
+ if(!select)return;
+ const matchId=select.dataset.boardSelect;
+ if(select.value)selectedBoards.set(matchId,Number(select.value));else selectedBoards.delete(matchId);
+ const assignButton=$('ready-matches').querySelector('[data-assign="'+CSS.escape(matchId)+'"]');
+ if(assignButton)assignButton.disabled=!select.value;
 });
 $('ready-matches').addEventListener('click',async e=>{
  const target=e.target;
