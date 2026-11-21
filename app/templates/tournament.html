@@ -200,7 +200,7 @@ function render(data){
  const awardedPlaces=['1','2','3','4'].filter(place=>completedPlacements[place]);
  const standingsHtml=awardedPlaces.length?'<div class="overview-standings">'+awardedPlaces.map(place=>{
   const total=Number(prizeTable[place]||0);
-  const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(total/2)+' per player</div>':'<div class="detail">No prize amount configured for this placement.</div>';
+  const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(total/2)+' per player</div>':'<div class="detail">Handshake</div>';
   return '<article class="overview-place"><strong>'+finishLabels[place]+'</strong><div class="team">'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
  }).join('')+'</div>':'<p>'+(data.complete?'The tournament is marked complete, but the API has not supplied any placement assignments. Check the tournament bracket results.':'Final placements will appear here as placement matches are completed. The championship winner and runner-up are added when the championship is decided.')+'</p>';
  const bracketHtml=data.bracket.map(match=>{
