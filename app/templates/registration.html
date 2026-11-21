@@ -51,7 +51,7 @@ th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07
 td:last-child{text-align:right;width:1%;white-space:nowrap}
 td button{min-height:30px;padding:5px 9px;font-size:12px}
 .small{font-size:12px;color:var(--muted)}
-.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--surface-raised);color:var(--muted);font-size:11px;font-weight:650}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--surface-raised);color:var(--muted);font-size:11px;font-weight:650}.pill.gender-female,.pill.role-female{background:var(--female);color:#30202a}.pill.gender-male,.pill.role-male{background:var(--male);color:#172638}
 .notice{padding:10px 12px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--line);margin:10px 0;font-size:13px}
 .error{color:var(--bad)}.success{color:var(--good)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
@@ -135,7 +135,7 @@ function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
  const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=8;
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
- $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><span class="pill">'+(p.playing_role==='female'?'Female':'Male')+(p.playing_role!==p.gender?' role':'')+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
+ $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th></th></tr></thead><tbody>'+state.players.map(p=>{const roleAssigned=Boolean(state.draw&&state.teams.length);const role=p.playing_role||p.gender;return '<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill gender-'+p.gender+'">'+(p.gender==='female'?'Female':'Male')+'</span></td><td>'+(roleAssigned?'<span class="pill role-'+role+'">'+(role==='female'?'Female':'Male')+(role!==p.gender?' role':'')+'</span>':'<span class="muted">—</span>')+'</td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>';}).join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
  $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
  $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
