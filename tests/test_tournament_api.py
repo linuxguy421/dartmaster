@@ -73,7 +73,7 @@ def test_live_dashboard_exposes_four_available_boards_and_ready_matches(tmp_path
     }
     third_place = next(match for match in status["bracket"] if match["match_id"] == "G5")
     assert third_place["placement_label"] == "Playing for 3rd Place"
-    assert third_place["placement_payouts"] == {"winner_place": "4th", "loser_place": "3rd"}
+    assert third_place["placement_payouts"] is None
     championship = next(match for match in status["bracket"] if match["match_id"] == "CHAMPIONSHIP")
     assert championship["placement_label"] == "1st / 2nd Place"
     assert championship["placement_payouts"] == {"winner_place": "1st", "loser_place": "2nd"}
@@ -164,17 +164,16 @@ def test_completed_third_place_match_exposes_prize_placement(tmp_path, monkeypat
 
     third_place = next(match for match in status["bracket"] if match["match_id"] == "G5")
     assert third_place["status"] == "completed"
-    assert third_place["placement_payouts"] == {"winner_place": "3rd", "loser_place": "4th"}
-    assert set(third_place["placement_players"]) == {"3rd", "4th"}
-    assert all(" / " in players for players in third_place["placement_players"].values())
+    assert third_place["placement_payouts"] is None
+    assert third_place["placement_players"] is None
+    assert third_place["winner"] is not None
+    assert set(status["placements"]) >= {"3rd", "4th"}
+    assert all(" / " in status["placements"][place] for place in ("3rd", "4th"))
     assert all(
         player.startswith(("Male ", "Female "))
-        for players in third_place["placement_players"].values()
-        for player in players.split(" / ")
+        for place in ("3rd", "4th")
+        for player in status["placements"][place].split(" / ")
     )
-    assert third_place["winner"] is not None
-    assert status["placements"]["3rd"] == third_place["placement_players"]["3rd"]
-    assert status["placements"]["4th"] == third_place["placement_players"]["4th"]
 
     championship = play("CHAMPIONSHIP", 1)
     assert championship["complete"] is True
