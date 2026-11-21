@@ -13,6 +13,10 @@ def setup_tournament(tmp_path, monkeypatch, bracket_file="4teamD.json", team_cou
                 json={"display_name": f"{gender.title()} {index + 1}", "gender": gender},
             )
             assert response.status_code == 201
+            assert client.put(
+                f"/api/registration/players/{response.json()['player_id']}/payment",
+                json={"paid": True},
+            ).status_code == 200
     players = client.get("/api/registration").json()["players"]
     numbers = list(range(1, team_count + 1)) * 2
     draws = {
