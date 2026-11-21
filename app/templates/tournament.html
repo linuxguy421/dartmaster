@@ -195,13 +195,13 @@ function render(data){
  const completedMatches=data.bracket.filter(match=>match.status==='completed').length;
  const activeMatches=data.bracket.filter(match=>match.status==='in_progress'||match.status==='reset_pending').length;
  const waitingMatches=Math.max(0,totalMatches-completedMatches-activeMatches);
- const teams=new Set(data.bracket.flatMap(match=>(match.participants||[]).filter(Boolean)));
+ const teamsInBracket=Number.isFinite(Number(data.team_count))?Number(data.team_count):new Set(data.bracket.flatMap(match=>(match.participants||[]).filter(name=>name&&name!=='TBD'&&!/^(Winner|Loser) of /.test(name)))).size;
  const progress=totalMatches?Math.round(completedMatches/totalMatches*100):0;
  $('overview-title').textContent=data.complete?'Tournament summary':'Tournament progress & bracket';
  $('overview-intro').textContent=data.complete?'The tournament is complete. Review final standings, prize awards, the full bracket, and every recorded result below.':'A live view of match status, completed results, awarded placements, and what remains to be played.';
  $('overview-status').textContent=data.complete?'Completed':activeMatches?'Matches in play':'In progress';
  const stats='<div class="overview-stats">'+
-  '<div class="overview-stat"><strong>'+teams.size+'</strong><span>Teams in bracket</span></div>'+
+  '<div class="overview-stat"><strong>'+teamsInBracket+'</strong><span>Teams in bracket</span></div>'+
   '<div class="overview-stat"><strong>'+completedMatches+' / '+totalMatches+'</strong><span>Matches completed</span></div>'+
   '<div class="overview-stat"><strong>'+activeMatches+'</strong><span>Matches in play</span></div>'+
   '<div class="overview-stat"><strong>'+waitingMatches+'</strong><span>Matches remaining</span></div>'+
