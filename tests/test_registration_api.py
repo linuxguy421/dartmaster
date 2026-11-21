@@ -339,7 +339,7 @@ def test_registration_page_offers_confirmed_permanent_tournament_deletion(tmp_pa
     assert "data-delete-tournament" in response.text
     assert "Permanently delete this tournament and all of its saved match/event history? This cannot be undone." in response.text
     assert "highest original draw numbers" in response.text
-    assert "Female playing role" in response.text
+    assert "two unmatched players with the highest original draw numbers take the opposite playing role" in response.text
 
 
 def test_registration_api_rejects_duplicate_names_case_insensitive(tmp_path, monkeypatch):
