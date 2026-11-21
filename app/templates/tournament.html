@@ -220,16 +220,11 @@ function render(data){
   const outcome=match.status==='completed'?'<div class="detail winner">Winner: '+esc(match.winner)+'</div>':match.status==='reset_pending'?'<div class="detail">The first championship game is complete; the conditional reset is still pending.</div>':'<div class="detail">'+esc(match.status.replaceAll('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
   return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+matchup+'</div>'+outcome+'</article>';
  }).join('');
- const resultRows=data.results.length?data.results.map((result,index)=>{
-  const match=data.bracket.find(item=>item.match_id===result.game_id||item.id===result.game_id);
-  const label=result.game_id==='CHAMPIONSHIP'?'Championship match':match?.label||('Match '+result.game_id);
-  return '<article class="overview-match"><div><strong>'+esc(label)+'</strong><div class="detail">'+esc(result.winner)+' defeated '+esc(result.loser)+'</div></div><span class="pill">Result '+(index+1)+'</span></article>';
- }).join(''):'<p>No matches have been completed yet. Recorded winners and opponents will appear here as results are entered.</p>';
  const progressNote=data.complete?'Every match in the bracket has been resolved and the tournament champion has been determined.':activeMatches?activeMatches+' match'+(activeMatches===1?' is':'es are')+' currently in play; '+waitingMatches+' match'+(waitingMatches===1?' is':'es are')+' still waiting for earlier results or assignment.':'Matches unlock as earlier results are recorded. Use the Ready to play section above to assign an available board.';
  $('summary-content').innerHTML=stats+
   '<section class="overview-section"><h3>Standings &amp; prize awards</h3>'+standingsHtml+'<p class="overview-note">Prize amounts show the total award for each two-player team and the equivalent amount per player. Undetermined places are filled in as match results become available.</p></section>'+
   '<section class="overview-section"><h3>Full bracket</h3><p>'+esc(progressNote)+'</p><div class="bracket-list">'+bracketHtml+'</div></section>'+
-  '<section class="overview-section"><h3>Completed match results</h3><p>Recorded winners and opponents, in the order results were entered.</p><div class="overview-match-list">'+resultRows+'</div></section>';
+  '';
 }
 async function refresh(){
  if(refreshing)return;refreshing=true;
