@@ -6,7 +6,7 @@
 <title>Pasadena Moose Dart Tournament · Live tournament</title>
 <style>
 :root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
 header{padding:20px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
 h1{font-size:25px;margin:0;letter-spacing:.04em}header p{color:var(--muted);margin:3px 0 0}
 a{color:var(--accent)}main{max-width:1280px;margin:auto;padding:24px 20px 70px}
@@ -165,10 +165,19 @@ function render(data){
  }).join('');
  $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
  if(data.complete){
-  const finishOrder=['3','2','1'];
+  const finishOrder=['1','2','3','4'];
   const finishLabels={'1':'1st','2':'2nd','3':'3rd','4':'4th'};
-  const placementsHtml=finishOrder.filter(place=>completedPlacements[place]).map(place=>'<div class="placement-award"><span>'+finishLabels[place]+' -</span> '+esc(completedPlacements[place])+'</div>').join('');
-  $('summary-content').innerHTML='<h3>Final placements</h3>'+placementsHtml+'<h3>Match results</h3><ul>'+data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join('')+'</ul>';
+  const finalTeams=new Set(data.results.flatMap(result=>[result.winner,result.loser]));
+  const prizeTable=data.payouts?.prizes||{};
+  const standingsHtml=finishOrder.filter(place=>completedPlacements[place]).map(place=>{
+   const total=Number(prizeTable[place]||0);
+   const perPlayer=total/2;
+   const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(perPlayer)+' per player</div>':'';
+   return '<article class="bracket-match completed"><strong>'+finishLabels[place]+'</strong><div>'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
+  }).join('');
+  const matchRows=data.results.map((result,index)=>'<li><strong>'+esc(result.game_id==='CHAMPIONSHIP'?'Championship':result.game_id)+'</strong> — '+esc(result.winner)+' defeated '+esc(result.loser)+'</li>').join('');
+  $('summary-content').innerHTML='<div class="summary-stats"><strong>'+finalTeams.size+' teams</strong> · <strong>'+data.results.length+' matches completed</strong></div><h3>Final standings &amp; payouts</h3><div class="bracket-list">'+standingsHtml+'</div><h3>Match results</h3><ol>'+matchRows+'</ol>';
+
  }
 }
 async function refresh(){
