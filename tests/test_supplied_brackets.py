@@ -59,5 +59,5 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
 
 def test_all_supplied_brackets_have_no_reference_anomalies():
     nine = load_bracket(DATA_DIR / "9teamD.json")
-    assert nine.diagnostics == []
+    assert nine.diagnostics == ()
 
