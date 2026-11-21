@@ -34,7 +34,12 @@ def test_supplied_bracket_preserves_all_source_games(team_count, game_count):
         game for game in bracket.games.values()
         if game.get("placement_match") == {"winner": "3rd", "loser": "4th"}
     ]
-    assert len(third_place) == 1
+    if team_count == 3:
+        # The third-team elimination game decides who advances to the final;
+        # its loser is third, so it is not a 3rd/4th-place match.
+        assert third_place == []
+    else:
+        assert len(third_place) == 1
 
 
 def test_known_legacy_reference_anomalies_are_reported():
