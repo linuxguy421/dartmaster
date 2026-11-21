@@ -359,9 +359,10 @@ def historical_results_payload(tournament_id: str | None = None) -> dict:
         for team_name, members in entrant_members.items():
             if len(members) != 2:
                 continue
-            pair = tuple(sorted(members, key=str.casefold))
-            stats = partnerships.setdefault(pair, {
-                "players": list(pair), "tournaments": 0, "titles": 0,
+            pair_names = sorted(members, key=str.casefold)
+            pair_key = tuple(name.casefold() for name in pair_names)
+            stats = partnerships.setdefault(pair_key, {
+                "players": pair_names, "tournaments": 0, "titles": 0,
                 "games_won": 0, "games_lost": 0, "top_finish": None,
             })
             stats["tournaments"] += 1
