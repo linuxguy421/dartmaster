@@ -28,7 +28,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.actions button{flex:1;min-width:120px}
 .blocked-reason{color:var(--bad);font-size:13px}
-.ready-queue{margin:0 0 18px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.ready-queue h2{font-size:17px;margin:0 0 8px}.ready-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.ready-match{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.ready-match strong{display:block;margin-bottom:6px}.ready-match .detail{color:var(--muted);font-size:15px;margin-bottom:10px}.ready-match .assign-row{display:flex;gap:8px;align-items:center}.ready-match select{min-width:0;flex:1}.bracket{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.bracket h2{font-size:17px;margin:0 0 10px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.ready-queue{margin:0 0 18px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.ready-queue h2{font-size:17px;margin:0 0 8px}.ready-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.ready-match{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.ready-match strong{display:block;margin-bottom:6px}.ready-match .detail{color:var(--muted);font-size:15px;margin-bottom:10px}.ready-match .assign-row{display:flex;gap:8px;align-items:center}.ready-match select{min-width:0;flex:1}.bracket{margin-top:22px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}.bracket h2{font-size:20px;margin:0 0 5px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
+.overview-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.overview-heading p{margin:0}.overview-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:0 0 22px}.overview-stat{padding:13px 14px;border:1px solid var(--line);border-radius:9px;background:rgba(10,16,24,.5)}.overview-stat strong{display:block;font-size:23px;line-height:1.2}.overview-stat span{display:block;margin-top:5px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}.overview-section{margin-top:22px}.overview-section h3{font-size:15px;margin:0 0 10px}.overview-section>p{color:var(--muted);margin:0 0 12px}.overview-match-list{display:grid;gap:8px}.overview-match{padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:rgba(10,16,24,.48);display:flex;justify-content:space-between;align-items:center;gap:14px}.overview-match strong{display:block}.overview-match .detail{color:var(--muted);font-size:13px}.overview-match .winner{color:var(--good);font-weight:700}.overview-standings{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.overview-place{padding:14px;border:1px solid var(--line);border-radius:9px;background:rgba(10,16,24,.5)}.overview-place>strong{display:block;color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:.06em}.overview-place .team{margin-top:7px}.overview-place .detail{margin-top:7px;color:var(--muted);font-size:13px}.overview-note{color:var(--muted);font-size:13px;margin-top:10px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
@@ -78,9 +79,10 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <article class="board disabled">Loading board status…</article>
   <article class="board disabled">Loading board status…</article>
  </section>
- <section class="bracket"><h2>Bracket progress</h2><div id="bracket" class="bracket-list"><p class="status">Loading bracket…</p></div></section>
- <section class="results" id="results-section"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
- <section class="results" id="game-summary" hidden><h2>Tournament summary</h2><div id="summary-content"></div></section>
+ <section class="bracket tournament-overview" id="tournament-overview">
+  <div class="overview-heading"><div><h2 id="overview-title">Tournament progress &amp; summary</h2><p id="overview-intro" class="status">Bracket and match information will appear here.</p></div><span id="overview-status" class="pill">In progress</span></div>
+  <div id="summary-content"><p class="status">Loading tournament details…</p></div>
+ </section>
 </main>
 <dialog id="winner-confirmation" class="confirm-dialog" aria-labelledby="winner-confirmation-title">
  <div class="confirm-dialog-content">
@@ -148,61 +150,66 @@ function render(data){
  $('payouts').hidden=data.complete;
  document.querySelector('.ready-queue').hidden=data.complete;
  $('boards').hidden=data.complete;
- $('results-section').hidden=data.complete;
- $('game-summary').hidden=!data.complete;
  const payoutTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
  const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
  const completedPlacements={};
  data.bracket.filter(match=>match.placement_players).forEach(match=>{
-  Object.entries(match.placement_players).forEach(([place,players])=>{
-   completedPlacements[place]=players;
-  });
+  Object.entries(match.placement_players).forEach(([place,players])=>{completedPlacements[place]=players;});
  });
  $('side-pot-toggle').checked=sidePotEnabled;
  $('payout-list').innerHTML=payoutEntries.map(([place,amount])=>{
   const ordinal=place==='1'?'st':place==='2'?'nd':place==='3'?'rd':'th';
   const team=completedPlacements[place];
-  const playerNames=team?' '+esc(team):'';
-  const perPlayer=formatter.format(Number(amount)/2)+' /ea';
-  return '<div class="payout-item"><span>'+esc(place)+ordinal+' place'+playerNames+'</span> ('+perPlayer+')</div>';
+  return '<div class="payout-item"><span>'+esc(place)+ordinal+' place'+(team?' '+esc(team):'')+'</span> ('+formatter.format(Number(amount)/2)+' /ea)</div>';
  }).join('');
  $('side-pot-value').hidden=!sidePotEnabled;
  $('side-pot-value').textContent=sidePotEnabled?'Separate side pot: '+formatter.format(data.payouts?.side_pot_amount||0):'';
- const awardOrder=['3','2','1'];
- $('placement-awards').innerHTML=awardOrder.filter(place=>completedPlacements[place]).map(place=>{
+ $('placement-awards').innerHTML=['3','2','1'].filter(place=>completedPlacements[place]).map(place=>{
   const ordinal=place==='1'?'1st':place==='2'?'2nd':'3rd';
   return '<div class="placement-award"><span>'+ordinal+' -</span> '+esc(completedPlacements[place])+'</div>';
  }).join('');
- $('payouts').hidden=!payoutEntries.length;
- $('bracket').innerHTML=data.bracket.map(match=>{
-  const names=match.participants.map(esc);
-  const detail=match.status==='waiting'
-   ? names.join(' vs ')
-   : names.join(' vs ');
-  const outcome=match.status==='completed'
-   ? '<div class="detail winner">Winner: '+esc(match.winner)+'</div>'
-   : match.status==='reset_pending'
-    ? '<div class="detail">First game complete · conditional reset pending</div>'
-    : '<div class="detail">'+esc(match.status.replace('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
-  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+detail+'</div>'+outcome+'</article>';
- }).join('');
- $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
- if(data.complete){
-  const finishOrder=['1','2','3','4'];
-  const finishLabels={'1':'1st','2':'2nd','3':'3rd','4':'4th'};
-  const finalTeams=new Set(data.results.flatMap(result=>[result.winner,result.loser]));
-  const prizeTable=data.payouts?.prizes||{};
-  const standingsHtml=finishOrder.filter(place=>completedPlacements[place]).map(place=>{
-   const total=Number(prizeTable[place]||0);
-   const perPlayer=total/2;
-   const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(perPlayer)+' per player</div>':'';
-   return '<article class="bracket-match completed"><strong>'+finishLabels[place]+'</strong><div>'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
-  }).join('');
-  const matchRows=data.results.map((result,index)=>'<li><strong>'+esc(result.game_id==='CHAMPIONSHIP'?'Championship':result.game_id)+'</strong> — '+esc(result.winner)+' defeated '+esc(result.loser)+'</li>').join('');
-  $('summary-content').innerHTML='<div class="summary-stats"><strong>'+finalTeams.size+' teams</strong> · <strong>'+data.results.length+' matches completed</strong></div><h3>Final standings &amp; payouts</h3><div class="bracket-list">'+standingsHtml+'</div><h3>Match results</h3><ol>'+matchRows+'</ol>';
+ $('payouts').hidden=!payoutEntries.length||data.complete;
 
- }
+ const totalMatches=data.bracket.length;
+ const completedMatches=data.bracket.filter(match=>match.status==='completed').length;
+ const activeMatches=data.bracket.filter(match=>match.status==='in_progress'||match.status==='reset_pending').length;
+ const waitingMatches=Math.max(0,totalMatches-completedMatches-activeMatches);
+ const teams=new Set(data.bracket.flatMap(match=>(match.participants||[]).filter(Boolean)));
+ const progress=totalMatches?Math.round(completedMatches/totalMatches*100):0;
+ $('overview-title').textContent=data.complete?'Tournament summary':'Tournament progress & bracket';
+ $('overview-intro').textContent=data.complete?'The tournament is complete. Review final standings, prize awards, the full bracket, and every recorded result below.':'A live view of match status, completed results, awarded placements, and what remains to be played.';
+ $('overview-status').textContent=data.complete?'Completed':activeMatches?'Matches in play':'In progress';
+ const stats='<div class="overview-stats">'+
+  '<div class="overview-stat"><strong>'+teams.size+'</strong><span>Teams in bracket</span></div>'+
+  '<div class="overview-stat"><strong>'+completedMatches+' / '+totalMatches+'</strong><span>Matches completed</span></div>'+
+  '<div class="overview-stat"><strong>'+activeMatches+'</strong><span>Matches in play</span></div>'+
+  '<div class="overview-stat"><strong>'+waitingMatches+'</strong><span>Matches remaining</span></div>'+
+  '<div class="overview-stat"><strong>'+progress+'%</strong><span>Bracket completion</span></div></div>';
+ const finishLabels={'1':'1st place','2':'2nd place','3':'3rd place','4':'4th place'};
+ const prizeTable=data.payouts?.prizes||{};
+ const awardedPlaces=['1','2','3','4'].filter(place=>completedPlacements[place]);
+ const standingsHtml=awardedPlaces.length?'<div class="overview-standings">'+awardedPlaces.map(place=>{
+  const total=Number(prizeTable[place]||0);
+  const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(total/2)+' per player</div>':'<div class="detail">No prize amount configured for this placement.</div>';
+  return '<article class="overview-place"><strong>'+finishLabels[place]+'</strong><div class="team">'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
+ }).join('')+'</div>':'<p>Final placements have not been awarded yet. Placement matches determine the finishing order.</p>';
+ const bracketHtml=data.bracket.map(match=>{
+  const names=(match.participants||[]).map(esc);
+  const matchup=names.length?names.join(' vs '):'Participants to be determined';
+  const outcome=match.status==='completed'?'<div class="detail winner">Winner: '+esc(match.winner)+'</div>':match.status==='reset_pending'?'<div class="detail">The first championship game is complete; the conditional reset is still pending.</div>':'<div class="detail">'+esc(match.status.replaceAll('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
+  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+matchup+'</div>'+outcome+'</article>';
+ }).join('');
+ const resultRows=data.results.length?data.results.map((result,index)=>{
+  const match=data.bracket.find(item=>item.match_id===result.game_id||item.id===result.game_id);
+  const label=result.game_id==='CHAMPIONSHIP'?'Championship match':match?.label||('Match '+result.game_id);
+  return '<article class="overview-match"><div><strong>'+esc(label)+'</strong><div class="detail">'+esc(result.winner)+' defeated '+esc(result.loser)+'</div></div><span class="pill">Result '+(index+1)+'</span></article>';
+ }).join(''):'<p>No matches have been completed yet. Recorded winners and opponents will appear here as results are entered.</p>';
+ const progressNote=data.complete?'Every match in the bracket has been resolved and the tournament champion has been determined.':activeMatches?activeMatches+' match'+(activeMatches===1?' is':'es are')+' currently in play; '+waitingMatches+' match'+(waitingMatches===1?' is':'es are')+' still waiting for earlier results or assignment.':'Matches unlock as earlier results are recorded. Use the Ready to play section above to assign an available board.';
+ $('summary-content').innerHTML=stats+
+  '<section class="overview-section"><h3>Standings &amp; prize awards</h3>'+standingsHtml+(data.complete?'<p class="overview-note">Prize amounts show the total award for each two-player team and the equivalent amount per player.</p>':'')+'</section>'+
+  '<section class="overview-section"><h3>Full bracket</h3><p>'+esc(progressNote)+'</p><div class="bracket-list">'+bracketHtml+'</div></section>'+
+  '<section class="overview-section"><h3>Completed match results</h3><p>Recorded winners and opponents, in the order results were entered.</p><div class="overview-match-list">'+resultRows+'</div></section>';
 }
 async function refresh(){
  if(refreshing)return;refreshing=true;
