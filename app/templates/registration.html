@@ -183,7 +183,7 @@ function previewDrawOff(){
  }
  const lower=unmatched.slice(0,2),higher=unmatched.slice(2);
  $('draw-off-area').classList.remove('hidden');
- $('draw-off-inputs').innerHTML='<div class="draw-group male"><h3>Male playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group female"><h3>Female playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+escapeHtml(lower[0].display_name)+' + '+escapeHtml(higher[0].display_name)+' and '+escapeHtml(lower[1].display_name)+' + '+escapeHtml(higher[1].display_name)+'.</p>';
+ $('draw-off-inputs').innerHTML='<div class="draw-group male"><h3>Male playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group female"><h3>Female playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+escapeHtml(higher[0].display_name)+' + '+escapeHtml(lower[0].display_name)+' and '+escapeHtml(higher[1].display_name)+' + '+escapeHtml(lower[1].display_name)+'.</p>';
 }
 $('player-gender-toggle').addEventListener('click',()=>{
  const next=$('player-gender').value==='female'?'male':'female';
