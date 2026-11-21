@@ -216,7 +216,6 @@ $('boards').addEventListener('click',async e=>{
  const target=e.target;
  if(target.dataset.winner){
   const winner=target.dataset.winner;
-  if(!confirm('Record '+winner+' as the winner of this match?'))return;
   await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
  }
 });
