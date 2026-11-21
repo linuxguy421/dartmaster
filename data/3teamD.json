@@ -49,11 +49,7 @@
         "result": "ELIMINATED",
         "rank": "3rd"
       },
-      "is_winnerbracket": "false",
-      "placement_match": {
-        "winner": "3rd",
-        "loser": "4th"
-      }
+      "is_winnerbracket": "false"
     },
     "GF": {
       "teams": [
