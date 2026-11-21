@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/darts-tournament-foundation
+      - feat/historical-results
   pull_request:
     branches:
       - main
