@@ -74,6 +74,7 @@ const tournamentId=location.pathname.split('/').filter(Boolean).pop();
 const $=id=>document.getElementById(id);
 let current=null,refreshing=false,sidePotEnabled=false;
 const selectedBoards=new Map();
+let readyQueueSignature=null;
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notify(message,error=false){const n=$('notice');n.textContent=message;n.className=error?'show error':'show';setTimeout(()=>n.className='',3500);}
 async function api(path,options={}){
@@ -107,13 +108,17 @@ function render(data){
  current=data;
  $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
  $('boards').innerHTML=data.boards.map(boardMarkup).join('');
- $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map(match=>{
+ const queueSignature=JSON.stringify({matches:data.ready_matches,freeBoards:data.scheduler.free_boards});
+ if(queueSignature!==readyQueueSignature){
+  readyQueueSignature=queueSignature;
+  $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map(match=>{
   const saved=selectedBoards.get(match.match_id);
   const selectedBoard=data.scheduler.free_boards.includes(saved)?saved:null;
   if(saved!==undefined&&!data.scheduler.free_boards.includes(saved))selectedBoards.delete(match.match_id);
   const options='<option value="" '+(selectedBoard===null?'selected':'')+'>Choose a board</option>'+data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===selectedBoard?'selected':'')+'>Board '+board+'</option>').join('');
   return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div><div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!selectedBoard?'disabled':'')+'>Assign</button></div></article>';
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
+ }
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
  const payoutTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
  const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
