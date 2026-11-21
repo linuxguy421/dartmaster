@@ -14,6 +14,7 @@ class Player:
     player_id: str
     display_name: str
     gender: Gender
+    paid: bool = False
 
 
 @dataclass(frozen=True, slots=True)
