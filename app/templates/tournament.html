@@ -22,7 +22,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .board{min-height:260px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:12px}
 .board.unavailable,.board.disabled{opacity:.42}.board.in_progress{border-color:#8c6b35;background:#211f1a}.board.blocked{border-color:var(--bad)}
 .board-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.board-head h2{font-size:20px;margin:0}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);text-transform:uppercase}
+.board-head h2{font-size:20px;margin:0}.board-title{display:flex;align-items:center;gap:10px;min-width:0}.board-art{display:block;width:62px;height:62px;object-fit:contain;border-radius:50%;background:#fff}.board-number{font-size:18px;font-weight:800;letter-spacing:.04em}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);text-transform:uppercase}
 .status{color:var(--muted)}.match-id{font-size:12px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
 .teams{display:grid;gap:8px;margin:2px 0}.team{background:#111923;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:17px;font-weight:650;display:flex;align-items:center;justify-content:space-between;gap:10px}.team-name{min-width:0}.team .winner-action{flex:0 0 auto;min-width:0;padding:4px 9px;border-radius:5px;font-size:12px;line-height:1.3}
 .vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
@@ -103,11 +103,11 @@ function boardMarkup(board){
  }else{
   body='<div class="status">'+statusText+'</div>';
  }
- return '<article class="board '+board.status+'"><div class="board-head"><h2>Board '+board.board_id+'</h2><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
+ return '<article class="board '+board.status+'"><div class="board-head"><div class="board-title"><img class="board-art" src="https://media.istockphoto.com/id/178295530/vector/dartboard-vector-illustration-isolated.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=hgPEHbC-Wzi6YEYuEdvj3s0eFsLoULhA0j_AmrY-yBk=" alt="Dartboard"><h2 class="board-number">'+board.board_id+'</h2></div><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
 }
 function render(data){
  current=data;
- $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
+ $('summary').innerHTML='Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
  $('boards').innerHTML=data.boards.map(boardMarkup).join('');
  const queueSignature=JSON.stringify({matches:data.ready_matches,freeBoards:data.scheduler.free_boards});
  if(queueSignature!==readyQueueSignature){
