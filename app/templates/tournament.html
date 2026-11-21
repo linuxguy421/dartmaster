@@ -207,7 +207,7 @@ function render(data){
   '<div class="overview-stat"><strong>'+waitingMatches+'</strong><span>Matches remaining</span></div>'+
   '<div class="overview-stat"><strong>'+progress+'%</strong><span>Bracket completion</span></div></div>';
  const finishLabels={'1':'1st place','2':'2nd place','3':'3rd place','4':'4th place'};
- const prizeTable=data.payouts?.prizes||{};
+ const prizeTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
  const awardedPlaces=['1','2','3','4'].filter(place=>completedPlacements[place]);
  const standingsHtml=awardedPlaces.length?'<div class="overview-standings">'+awardedPlaces.map(place=>{
   const total=Number(prizeTable[place]||0);
