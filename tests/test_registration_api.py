@@ -152,7 +152,7 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
     ]
     assert [
         (team["player_one"], team["player_two"]) for team in unmatched_teams
-    ] == [("Male 3", "Male 5"), ("Male 4", "Male 6")]
+    ] == [("Male 5", "Male 3"), ("Male 6", "Male 4")]
 
 
 def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
@@ -217,10 +217,10 @@ def test_teams_receive_automatic_seeds_in_original_draw_order(tmp_path, monkeypa
         team_by_id[seeds[f"T{index}"]] for index in range(1, 6)
     ]
     assert [(team["player_one"], team["player_two"]) for team in seeded_teams[:4]] == [
-        ("Male 3", "Female 1"),
-        ("Male 2", "Female 3"),
-        ("Male 4", "Female 4"),
-        ("Male 1", "Female 2"),
+        ("Female 1", "Male 3"),
+        ("Female 3", "Male 2"),
+        ("Female 4", "Male 4"),
+        ("Female 2", "Male 1"),
     ]
     assert {seeded_teams[4]["player_one"], seeded_teams[4]["player_two"]} == {
         "Male 5", "Male 6"
@@ -232,9 +232,9 @@ def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypa
     response = client.get("/")
 
     assert response.status_code == 200
-    assert 'Bracket selected automatically' in response.text
+    assert 'Bracket selected automatically' not in response.text
+    assert 'id="bracket-select"' not in response.text
     assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
-    assert 'id="bracket-select" disabled' in response.text
     assert "window.location.assign(result.dashboard_url)" in response.text
 
 
