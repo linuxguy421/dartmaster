@@ -14,6 +14,7 @@ RUN groupadd --system dartmaster \
 COPY pyproject.toml README.md ./
 COPY app ./app
 COPY data ./data
+COPY assets ./assets
 
 RUN python -m pip install --no-cache-dir .
 
