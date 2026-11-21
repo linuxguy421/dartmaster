@@ -31,6 +31,8 @@ app = FastAPI(
     version="0.2.0",
 )
 
+app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")
+
 
 class PlayerRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=80)
