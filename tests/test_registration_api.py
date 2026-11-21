@@ -45,21 +45,21 @@ def test_draw_rejects_odd_number_of_registered_players(tmp_path, monkeypatch):
     assert registration["draw"] is None
 
 
-def test_draw_rejects_fewer_than_six_players(tmp_path, monkeypatch):
+def test_draw_rejects_fewer_than_eight_players(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client, males=2, females=2)
+    add_players(client, males=4, females=2)
     players = client.get("/api/registration").json()["players"]
     response = client.post(
         "/api/registration/draw",
         json={"mixed_draws": {player["player_id"]: index + 1 for index, player in enumerate(players)}},
     )
     assert response.status_code == 400
-    assert "At least 6 players" in response.json()["detail"]
+    assert "At least 8 players" in response.json()["detail"]
 
 
 def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     client = client_for(tmp_path, monkeypatch)
-    add_players(client, males=4, females=2)
+    add_players(client, males=4, females=4)
 
     players = client.get("/api/registration").json()["players"]
     draws = {
@@ -69,6 +69,8 @@ def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
         players[3]["player_id"]: 4,
         players[4]["player_id"]: 1,
         players[5]["player_id"]: 2,
+        players[6]["player_id"]: 3,
+        players[7]["player_id"]: 4,
     }
     response = client.post(
         "/api/registration/draw",
@@ -76,12 +78,12 @@ def test_registration_draw_and_roster_survive_api_reload(tmp_path, monkeypatch):
     )
 
     assert response.status_code == 200
-    assert len(response.json()["teams"]) == 3
-    assert response.json()["draw"]["first_gender"] == "male"
+    assert len(response.json()["teams"]) == 4
+    assert response.json()["draw"]["first_gender"] == "female"
 
     reloaded = client.get("/api/registration").json()
-    assert len(reloaded["players"]) == 6
-    assert len(reloaded["teams"]) == 3
+    assert len(reloaded["players"]) == 8
+    assert len(reloaded["teams"]) == 4
     assert reloaded["draw"]["mixed_draws"] == draws
 
 
@@ -133,14 +135,24 @@ def test_draw_off_pairings_are_persisted(tmp_path, monkeypatch):
     ]
     response = client.post(
         "/api/registration/draw",
-        json={
-            "mixed_draws": mixed,
-            "draw_off_draws": {unmatched[0]: 9, unmatched[1]: 9, unmatched[2]: 10, unmatched[3]: 10},
-        },
+        json={"mixed_draws": mixed},
     )
     assert response.status_code == 200
-    assert len(response.json()["teams"]) == 4
-    assert len(response.json()["draw"]["draw_off_team_ids"]) == 2
+    registration = response.json()
+    assert len(registration["teams"]) == 4
+    assert len(registration["draw"]["draw_off_team_ids"]) == 2
+    assert registration["draw"]["female_role_ids"] == [unmatched[2], unmatched[3]]
+    players_by_id = {player["player_id"]: player for player in registration["players"]}
+    assert [players_by_id[player_id]["playing_role"] for player_id in unmatched] == [
+        "male", "male", "female", "female"
+    ]
+    unmatched_teams = [
+        team for team in registration["teams"]
+        if team["team_id"] in registration["draw"]["draw_off_team_ids"]
+    ]
+    assert [
+        (team["player_one"], team["player_two"]) for team in unmatched_teams
+    ] == [("Male 5", "Male 3"), ("Male 6", "Male 4")]
 
 
 def test_seed_assignment_and_tournament_creation(tmp_path, monkeypatch):
@@ -205,10 +217,10 @@ def test_teams_receive_automatic_seeds_in_original_draw_order(tmp_path, monkeypa
         team_by_id[seeds[f"T{index}"]] for index in range(1, 6)
     ]
     assert [(team["player_one"], team["player_two"]) for team in seeded_teams[:4]] == [
-        ("Male 3", "Female 1"),
-        ("Male 2", "Female 3"),
-        ("Male 4", "Female 4"),
-        ("Male 1", "Female 2"),
+        ("Female 1", "Male 3"),
+        ("Female 3", "Male 2"),
+        ("Female 4", "Male 4"),
+        ("Female 2", "Male 1"),
     ]
     assert {seeded_teams[4]["player_one"], seeded_teams[4]["player_two"]} == {
         "Male 5", "Male 6"
@@ -220,9 +232,9 @@ def test_registration_page_auto_selects_bracket_by_team_count(tmp_path, monkeypa
     response = client.get("/")
 
     assert response.status_code == 200
-    assert 'Bracket selected automatically' in response.text
+    assert 'Bracket selected automatically' not in response.text
+    assert 'id="bracket-select"' not in response.text
     assert "brackets.find(b=>b.team_count===state.teams.length)" in response.text
-    assert 'id="bracket-select" disabled' in response.text
     assert "window.location.assign(result.dashboard_url)" in response.text
 
 
@@ -326,3 +338,38 @@ def test_registration_page_offers_confirmed_permanent_tournament_deletion(tmp_pa
     assert response.status_code == 200
     assert "data-delete-tournament" in response.text
     assert "Permanently delete this tournament and all of its saved match/event history? This cannot be undone." in response.text
+    assert "highest original draw numbers" in response.text
+    assert "two unmatched players with the highest original draw numbers take the opposite playing role" in response.text
+
+
+def test_registration_api_rejects_duplicate_names_case_insensitive(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    assert client.post('/api/registration/players', json={'display_name':'Alex', 'gender':'male'}).status_code == 201
+    response = client.post('/api/registration/players', json={'display_name':' alex ', 'gender':'female'})
+    assert response.status_code == 400
+    assert 'already registered' in response.json()['detail']
+
+
+def test_four_unmatched_females_are_assigned_opposite_playing_roles(tmp_path, monkeypatch):
+    client = client_for(tmp_path, monkeypatch)
+    add_players(client, males=2, females=6)
+    players = client.get("/api/registration").json()["players"]
+    mixed = {
+        player["player_id"]: number
+        for player, number in zip(players, [1, 2, 1, 2, 3, 4, 5, 6], strict=True)
+    }
+    response = client.post("/api/registration/draw", json={"mixed_draws": mixed})
+    assert response.status_code == 200
+    registration = response.json()
+    assert registration["draw"]["female_role_ids"] == [players[4]["player_id"], players[5]["player_id"]]
+    assert registration["draw"]["male_role_ids"] == [players[6]["player_id"], players[7]["player_id"]]
+    assert [player["playing_role"] for player in registration["players"] if player["gender"] == "female"] == [
+        "female", "female", "female", "female", "male", "male"
+    ]
+    unmatched_teams = [
+        team for team in registration["teams"]
+        if team["team_id"] in registration["draw"]["draw_off_team_ids"]
+    ]
+    assert [(team["player_one"], team["player_two"]) for team in unmatched_teams] == [
+        ("Female 3", "Female 5"), ("Female 4", "Female 6")
+    ]

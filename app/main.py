@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.brackets.loader import BracketLoadError, available_brackets, load_bracket
@@ -29,6 +30,8 @@ app = FastAPI(
     description="Tournament management for up to four darts boards.",
     version="0.2.0",
 )
+
+app.mount("/assets", StaticFiles(directory=ROOT / "assets"), name="assets")
 
 
 class PlayerRequest(BaseModel):
@@ -84,6 +87,13 @@ def registration_payload(roster: TournamentRoster, draw_state=None) -> dict:
                 "player_id": player.player_id,
                 "display_name": player.display_name,
                 "gender": player.gender.value,
+                "playing_role": (
+                    "female"
+                    if draw_state and player.player_id in draw_state.get("female_role_ids", [])
+                    else "male"
+                    if draw_state and player.player_id in draw_state.get("male_role_ids", [])
+                    else player.gender.value
+                ),
             }
             for player in roster.players.values()
         ],
@@ -183,10 +193,10 @@ def draw_teams(request: DrawRequest) -> dict:
             status_code=400,
             detail="An even number of players is required to form two-player teams.",
         )
-    if len(roster.players) < 6:
+    if len(roster.players) < 8:
         raise HTTPException(
             status_code=400,
-            detail="At least 6 players are required (3 teams minimum).",
+            detail="At least 8 players are required (4 teams minimum).",
         )
     try:
         result = create_teams_from_draw(
@@ -211,6 +221,8 @@ def draw_teams(request: DrawRequest) -> dict:
             "draw_off_draws": request.draw_off_draws,
             "mixed_team_ids": [team.team_id for team in result.mixed_teams],
             "draw_off_team_ids": [team.team_id for team in result.draw_off_teams],
+            "female_role_ids": list(result.female_role_ids),
+            "male_role_ids": list(result.male_role_ids),
             "team_draw_order": [team.team_id for team in ordered_teams],
         }
         store.save(roster, draw_state)
@@ -233,10 +245,10 @@ def reset_draw() -> dict:
 def create_tournament(request: TournamentRequest) -> dict:
     store = registration_store()
     roster, _ = store.load()
-    if len(roster.players) < 6 or len(roster.teams) < 3:
+    if len(roster.players) < 8 or len(roster.teams) < 4:
         raise HTTPException(
             status_code=400,
-            detail="At least 6 players (3 teams) are required to start a tournament.",
+            detail="At least 8 players (4 teams) are required to start a tournament.",
         )
     try:
         definition = load_bracket(bracket_path(request.bracket_file))
@@ -305,7 +317,13 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         source_game_id = (
             "GGF"
             if is_championship
-            and runtime.championship_phase.value == "reset"
+            and (
+                runtime.championship_phase.value == "reset"
+                or (
+                    runtime.championship_phase.value == "complete"
+                    and "GGF" in runtime.results
+                )
+            )
             else game_id
         )
         result = runtime.results.get(source_game_id)
@@ -365,6 +383,20 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
                 winner, loser = final_result.winner, final_result.loser
 
         game_definition = runtime.definition.games.get(game_id, {})
+        placement = game_definition.get("placement_match", {})
+        placement_label = (
+            f"{placement['winner']} Place"
+            if isinstance(placement, dict)
+            and placement.get("winner")
+            and placement.get("loser") == "4th"
+            else (
+                f"{placement['winner']} / {placement['loser']} Place"
+                if isinstance(placement, dict)
+                and placement.get("winner")
+                and placement.get("loser")
+                else None
+            )
+        )
         bracket_type = (
             "championship"
             if is_championship
@@ -383,10 +415,34 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
         )
         game_rounds[game_id] = round_number
 
+        placement_payouts = None
+        placement_players = None
+        if isinstance(placement, dict) and placement.get("winner") and placement.get("loser"):
+            placement_payouts = {
+                "winner_place": str(placement["winner"]),
+                "loser_place": str(placement["loser"]),
+            }
+            if result is not None and session.roster is not None:
+                entrant_players = {}
+                for seed, team_id in session.roster.seed_assignments.items():
+                    team = session.roster.teams[team_id]
+                    entrant = runtime.entrants[seed]
+                    entrant_players[entrant] = (
+                        f"{session.roster.players[team.player_one_id].display_name} / "
+                        f"{session.roster.players[team.player_two_id].display_name}"
+                    )
+                placement_players = {
+                    placement_payouts["winner_place"]: entrant_players.get(result.winner, result.winner),
+                    placement_payouts["loser_place"]: entrant_players.get(result.loser, result.loser),
+                }
+
         entries.append({
             "match_id": match_id,
             "source_game_id": source_game_id,
             "label": "Championship Match" if is_championship else f"Match {game_id}",
+            "placement_label": placement_label,
+            "placement_payouts": placement_payouts,
+            "placement_players": placement_players,
             "status": status,
             "participants": participants,
             "winner": winner,
@@ -395,6 +451,8 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
             "phase": assignment.match.phase.value if assignment and assignment.match.phase else None,
             "bracket_type": bracket_type,
             "round": round_number,
+            "winner_advances_to": dict(game_definition.get("winner_advances_to", {})),
+            "loser_drops_to": dict(game_definition.get("loser_drops_to", {})),
         })
 
     return entries
@@ -420,6 +478,7 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "source_game_id": match.source_game_id,
                 "participants": list(match.participants),
                 "phase": match.phase.value if match.phase else None,
+                "placement_label": next((entry["placement_label"] for entry in bracket_payload(session) if entry["match_id"] == match.match_id), None),
                 "blocked_reason": assignment.blocked_reason,
             } if match else None),
         })
@@ -440,13 +499,43 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "loser": final_result.loser,
             })
 
+    placement_teams = dict(session.runtime.placements)
+    # Placement-match metadata is the source of truth for both sides of a
+    # placement game; terminal routes alone may only identify one side.
+    for match in bracket_payload(session):
+        for place, team in (match.get("placement_players") or {}).items():
+            placement_teams[place] = team
+    if session.runtime.champion is not None:
+        placement_teams["1st"] = session.runtime.champion
+    entrant_players = {}
+    if session.roster is not None:
+        for seed, team_id in session.roster.seed_assignments.items():
+            team = session.roster.teams[team_id]
+            entrant_players[session.runtime.entrants[seed]] = (
+                f"{session.roster.players[team.player_one_id].display_name} / "
+                f"{session.roster.players[team.player_two_id].display_name}"
+            )
+    display_placements = {
+        place: entrant_players.get(team_name, team_name)
+        for place, team_name in placement_teams.items()
+    }
+
     return {
         "tournament_id": session.tournament_id,
         "bracket_file": session.bracket_file,
+        "team_count": len(session.runtime.entrants),
+        "placements": display_placements,
+        "payouts": {
+            "currency": session.runtime.definition.currency,
+            "prizes": dict(session.runtime.definition.prizes),
+            "prizes_with_side_pot": dict(session.runtime.definition.prizes_with_side_pot),
+            "side_pot_amount": session.runtime.definition.side_pot_amount,
+            "side_pot_contribution_per_player": session.runtime.definition.side_pot_contribution_per_player,
+            "side_pot_contribution_per_team": session.runtime.definition.side_pot_contribution_per_player * 2,
+        },
         "scheduler": {
             "board_count": 4,
             "free_boards": list(session.scheduler.free_boards),
-            "recommended_boards": list(session.scheduler.recommended_boards(session.runtime)),
         },
         "ready_matches": [
             {
@@ -454,6 +543,7 @@ def tournament_payload(session: TournamentSession) -> dict:
                 "source_game_id": match.source_game_id,
                 "participants": list(match.participants),
                 "phase": match.phase.value if match.phase else None,
+                "placement_label": next((entry["placement_label"] for entry in bracket_payload(session) if entry["match_id"] == match.match_id), None),
             }
             for match in session.scheduler.ready_matches(session.runtime)
         ],

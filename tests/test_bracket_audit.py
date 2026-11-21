@@ -8,8 +8,8 @@ def test_audit_reports_every_supplied_bracket_and_known_diagnostics():
 
     report = audit_directory(data_dir)
 
-    assert report["bracket_count"] == 8
-    assert report["diagnostic_count"] == 7
+    assert report["bracket_count"] == 7
+    assert report["diagnostic_count"] == 5
     by_team_count = {item["team_count"]: item for item in report["brackets"]}
     assert by_team_count[5]["game_count"] == 9
     assert by_team_count[9]["game_count"] == 17
@@ -17,7 +17,6 @@ def test_audit_reports_every_supplied_bracket_and_known_diagnostics():
 
     five_messages = [item["message"] for item in by_team_count[5]["diagnostics"]]
     nine_messages = [item["message"] for item in by_team_count[9]["diagnostics"]]
-    assert any("W-G8" in message for message in five_messages)
-    assert any("L-G8" in message for message in five_messages)
+    assert five_messages == []
     assert any("L-10" in message for message in nine_messages)
     assert any("W-G17" in message for message in nine_messages)

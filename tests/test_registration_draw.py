@@ -26,6 +26,10 @@ def test_larger_male_group_draws_first_and_surplus_redraws():
     assert result.draw_order == (Gender.MALE, Gender.FEMALE)
     assert len(result.mixed_teams) == 4
     assert len(result.draw_off_teams) == 1
+    assert all(
+        roster.players[team.player_one_id].gender == Gender.FEMALE
+        for team in result.mixed_teams
+    )
     final_team = result.draw_off_teams[0]
     assert {final_team.player_one_id, final_team.player_two_id} == {"m5", "m6"}
     assert len(roster.teams) == 5
@@ -56,16 +60,20 @@ def test_equal_groups_default_to_females_drawing_first():
     assert len(result.teams) == 2
 
 
-def test_four_unmatched_players_redraw_into_two_teams():
+def test_four_unmatched_males_use_highest_original_numbers_as_female_roles():
     roster = roster_with_counts(6, 2)
     result = create_teams_from_draw(
         roster,
         {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
          "f1": 1, "f2": 2},
-        {"m3": 1, "m4": 1, "m5": 2, "m6": 2},
     )
     assert len(result.mixed_teams) == 2
     assert len(result.draw_off_teams) == 2
+    assert result.female_role_ids == ("m5", "m6")
+    assert [
+        (team.player_one_id, team.player_two_id)
+        for team in result.draw_off_teams
+    ] == [("m5", "m3"), ("m6", "m4")]
 
 
 def test_rejects_odd_total_player_count():
@@ -97,7 +105,7 @@ def test_rejects_duplicate_numbers_within_gender():
 
 def test_draw_off_number_must_identify_exactly_two_players():
     roster = roster_with_counts(6, 2)
-    with pytest.raises(RegistrationError, match="exactly two"):
+    with pytest.raises(RegistrationError, match="determined by the original draw numbers"):
         create_teams_from_draw(
             roster,
             {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
@@ -106,14 +114,14 @@ def test_draw_off_number_must_identify_exactly_two_players():
         )
 
 
-def test_requires_draw_off_when_players_are_unmatched():
+def test_four_unmatched_males_do_not_need_a_second_number_draw():
     roster = roster_with_counts(6, 2)
-    with pytest.raises(RegistrationError, match="draw-off is required"):
-        create_teams_from_draw(
-            roster,
-            {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
-             "f1": 1, "f2": 2},
-        )
+    result = create_teams_from_draw(
+        roster,
+        {"m1": 1, "m2": 2, "m3": 3, "m4": 4, "m5": 5, "m6": 6,
+         "f1": 1, "f2": 2},
+    )
+    assert result.female_role_ids == ("m5", "m6")
 
 
 def test_draw_does_not_mutate_roster_when_draw_validation_fails():
@@ -126,3 +134,24 @@ def test_draw_does_not_mutate_roster_when_draw_validation_fails():
             {"m3": 1, "m4": 2, "m5": 3, "m6": 4},
         )
     assert roster.teams == {}
+
+
+def test_rejects_duplicate_player_names_case_insensitive():
+    roster = roster_with_counts(0, 0)
+    roster.register_player('m1', '  John Smith ', Gender.MALE)
+    with pytest.raises(RegistrationError, match='Player name already registered'):
+        roster.register_player('m2', 'john smith', Gender.FEMALE)
+
+
+def test_four_unmatched_females_mirror_male_playing_role_assignment():
+    roster = roster_with_counts(2, 6)
+    result = create_teams_from_draw(
+        roster,
+        {"m1": 1, "m2": 2, "f1": 1, "f2": 2, "f3": 3, "f4": 4, "f5": 5, "f6": 6},
+    )
+    assert result.female_role_ids == ("f3", "f4")
+    assert result.male_role_ids == ("f5", "f6")
+    assert [
+        (team.player_one_id, team.player_two_id)
+        for team in result.draw_off_teams
+    ] == [("f3", "f5"), ("f4", "f6")]

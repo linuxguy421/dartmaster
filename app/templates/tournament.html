@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dartmaster · Live tournament</title>
+<title>Pasadena Moose Dart Tournament · Live tournament</title>
 <style>
 :root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
 header{padding:20px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
 h1{font-size:25px;margin:0;letter-spacing:.04em}header p{color:var(--muted);margin:3px 0 0}
 a{color:var(--accent)}main{max-width:1280px;margin:auto;padding:24px 20px 70px}
@@ -22,24 +22,59 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .board{min-height:260px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:12px}
 .board.unavailable,.board.disabled{opacity:.42}.board.in_progress{border-color:#8c6b35;background:#211f1a}.board.blocked{border-color:var(--bad)}
 .board-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.board-head h2{font-size:20px;margin:0}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);text-transform:uppercase}
-.status{color:var(--muted)}.match-id{font-size:12px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
-.teams{display:grid;gap:8px;margin:2px 0}.team{background:#111923;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:17px;font-weight:650}
+.board-head h2{font-size:20px;margin:0}.board-title{display:flex;align-items:center;min-width:0}.board-number{font-size:22px;font-weight:850;letter-spacing:.06em;text-shadow:0 2px 5px #000}.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);text-transform:uppercase}
+.status{color:var(--muted)}.match-id{font-size:12px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}.match-id .round-pill{display:inline-block;margin-left:7px;vertical-align:1px;background:rgba(229,163,59,.2);border:1px solid rgba(229,163,59,.55);color:#f4c875;font-size:10px;letter-spacing:.05em}
+.teams{display:grid;gap:8px;margin:2px 0}.team{background:#111923;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:17px;font-weight:650;display:flex;align-items:center;justify-content:space-between;gap:10px}.team-name{min-width:0}.team .winner-action{flex:0 0 auto;min-width:0;padding:4px 9px;border-radius:5px;font-size:12px;line-height:1.3}
 .vs{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}.actions button{flex:1;min-width:120px}
 .blocked-reason{color:var(--bad);font-size:13px}
-.ready-queue{margin:0 0 18px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.ready-queue h2{font-size:17px;margin:0 0 8px}.ready-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.ready-match{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.ready-match strong{display:block;margin-bottom:6px}.ready-match .detail{color:var(--muted);font-size:13px;margin-bottom:10px}.ready-match .assign-row{display:flex;gap:8px;align-items:center}.ready-match select{min-width:0;flex:1}.recommendation{color:var(--good);font-size:12px;margin-bottom:7px}.bracket{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.bracket h2{font-size:17px;margin:0 0 10px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.ready-queue{margin:0 0 18px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}.ready-queue h2{font-size:17px;margin:0 0 8px}.ready-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.ready-match{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.ready-match strong{display:block;margin-bottom:6px}.ready-match .detail{color:var(--muted);font-size:15px;margin-bottom:10px}.ready-match .assign-row{display:flex;gap:8px;align-items:center}.ready-match select{min-width:0;flex:1}.bracket{margin-top:22px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}.bracket h2{font-size:20px;margin:0 0 5px}.bracket-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
+.overview-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.overview-heading p{margin:0}.overview-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:0 0 22px}.overview-stat{padding:13px 14px;border:1px solid var(--line);border-radius:9px;background:rgba(10,16,24,.5)}.overview-stat strong{display:block;font-size:23px;line-height:1.2}.overview-stat span{display:block;margin-top:5px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}.overview-section{margin-top:22px}.overview-section h3{font-size:15px;margin:0 0 10px}.overview-section>p{color:var(--muted);margin:0 0 12px}.overview-match-list{display:grid;gap:8px}.overview-match{padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:rgba(10,16,24,.48);display:flex;justify-content:space-between;align-items:center;gap:14px}.overview-match strong{display:block}.overview-match .detail{color:var(--muted);font-size:13px}.overview-match .winner{color:var(--good);font-weight:700}.overview-standings{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.overview-place{padding:14px;border:1px solid var(--line);border-radius:9px;background:rgba(10,16,24,.5)}.overview-place>strong{display:block;color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:.06em}.overview-place .team{margin-top:7px}.overview-place .detail{margin-top:7px;color:var(--muted);font-size:13px}.overview-note{color:var(--muted);font-size:13px;margin-top:10px}.bracket-match{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#151e29}.bracket-match.in_progress{border-color:#8c6b35}.bracket-match.completed{border-color:#426b58}.bracket-match.waiting{opacity:.58}.bracket-match strong{display:block;font-size:13px;margin-bottom:5px}.bracket-match .detail{font-size:13px;color:var(--muted)}.bracket-match .winner{color:var(--good);font-weight:700}.results{margin-top:22px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .results h2{font-size:17px;margin:0 0 8px}.results ul{margin:0;padding-left:20px;color:var(--muted)}
 #notice{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:min(700px,calc(100vw - 28px));padding:10px 15px;border:1px solid var(--line);background:#263446;border-radius:8px;display:none;z-index:3}
 #notice.error{color:var(--bad)}#notice.show{display:block}
+.confirm-dialog{width:min(440px,calc(100vw - 32px));padding:0;border:1px solid var(--line);border-radius:14px;background:#1a2330;color:var(--text);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.confirm-dialog::backdrop{background:rgba(3,7,12,.72);backdrop-filter:blur(3px)}
+.confirm-dialog-content{padding:22px}
+.confirm-dialog h2{font-size:19px;margin:0 0 8px}
+.confirm-dialog p{margin:0;color:var(--muted)}
+.confirm-dialog strong{color:var(--text)}
+.confirm-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.confirm-dialog-actions button{min-width:96px}
 .complete{padding:16px;border:1px solid var(--good);border-radius:9px;color:var(--good);margin-bottom:16px}
+.placement{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin:3px 0}
+.payouts{margin:0 0 18px;padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.payouts h2{font-size:14px;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.payout-list{display:flex;gap:18px;flex-wrap:wrap}.payout-item{font-weight:700}.payout-item span{color:var(--muted);font-weight:500;margin-right:5px}.payout-toggle{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px}.payout-toggle input{width:auto;accent-color:var(--accent)}.side-pot-value{color:var(--accent);font-weight:700}.placement-awards{flex-basis:100%;display:grid;gap:4px;color:var(--text);font-weight:700}.placement-award{display:block}.placement-award span{color:var(--muted);font-weight:500;margin-right:6px}
 @media(max-width:720px){.board{min-height:220px}header{align-items:flex-start}}
-</style>
+
+/* Pasadena Moose tournament background */
+body{background:#10151d!important;position:relative;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
+header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
+main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
+
+/* Keep the gaps around the photographic board cards transparent. */
+.boards{background:transparent!important;backdrop-filter:none!important;border:0!important;padding:0!important;}
+
+/* Dark close-up dartboard photography as the full board-card background. */
+.board,.board.in_progress{background-image:linear-gradient(rgba(8,12,18,.55),rgba(8,12,18,.78)),url('https://images.unsplash.com/photo-1666040518944-53c2e0ba3b0d?auto=format&fit=crop&fm=jpg&q=85&w=1800')!important;background-position:center;background-size:cover;background-repeat:no-repeat;text-shadow:0 1px 3px #000}
+.board .team{background:rgba(10,15,22,.82);border-color:rgba(255,255,255,.3)}
+.board .pill{background:rgba(10,15,22,.82);color:#fff}
+
+/* Shared Pasadena Moose tournament masthead */
+.site-header{min-height:104px;padding:16px clamp(18px,3vw,36px)!important;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:linear-gradient(110deg,rgba(17,26,38,.97),rgba(25,37,52,.91))!important;border-bottom:1px solid rgba(229,163,59,.42)!important;box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(10px)}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:0}.brand-mark{width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center;border:2px solid var(--accent);border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(229,163,59,.2),rgba(10,16,24,.92) 68%);box-shadow:inset 0 0 0 4px rgba(229,163,59,.12),0 3px 14px rgba(0,0,0,.28);position:relative}.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:var(--accent);opacity:.72}.brand-mark:before{width:1px;height:48px}.brand-mark:after{height:1px;width:48px}.brand-mark span{z-index:1;padding:3px 5px;background:#17212d;color:#f4c875;font-size:18px;font-weight:900;letter-spacing:.04em}.brand-copy{min-width:0}.brand-kicker{font-size:10px;font-weight:800;letter-spacing:.24em;color:var(--accent);line-height:1.3}.site-header h1{margin:2px 0 1px;font-size:clamp(19px,2.2vw,25px);font-weight:850;letter-spacing:.075em;line-height:1.2;color:var(--text)}.site-header p{margin:4px 0 0;color:var(--muted);font-size:13px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}.header-actions a{font-size:13px;font-weight:650;text-underline-offset:4px}.header-actions button{font-size:13px}
+@media(max-width:560px){.site-header{align-items:flex-start;padding:13px 16px!important;gap:12px}.brand-lockup{gap:12px}.brand-mark{width:54px;height:54px;flex-basis:54px}.brand-mark:before{height:38px}.brand-mark:after{width:38px}.brand-mark span{font-size:15px}.header-actions{width:100%;justify-content:flex-start;padding-left:66px}}
+ .header-actions a.button{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--line);border-radius:7px;background:var(--panel2);color:var(--text);font-size:13px;font-weight:700;text-decoration:none}.header-actions a.button:hover{border-color:var(--accent);color:var(--accent)}</style>
 </head>
 <body>
-<header>
- <div><h1>DARTMASTER</h1><p>Live tournament control</p></div>
- <div class="controls"><button id="open-bracket" class="secondary" type="button">Open bracket ↗</button><a href="/">Registration / setup</a></div>
+<header class="site-header">
+ <div class="brand-lockup">
+  <div class="brand-mark" aria-label="Pasadena Moose logo placeholder"><span>PM</span></div>
+  <div class="brand-copy"><div class="brand-kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p>Live tournament control</p></div>
+ </div>
+ <div class="header-actions"><button id="open-bracket" class="secondary" type="button">Open bracket ↗</button><a class="button secondary" href="/">Registration</a></div>
 </header>
 <main>
  <div class="toolbar">
@@ -47,6 +82,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <div class="controls"><button id="refresh" class="secondary">Refresh</button></div>
  </div>
  <div id="champion"></div>
+ <section class="payouts" id="payouts" aria-label="Tournament payouts"><h2>Prize payouts</h2><label class="payout-toggle"><input id="side-pot-toggle" type="checkbox"> Side pot enabled</label><div class="payout-list" id="payout-list"></div><div id="side-pot-value" class="side-pot-value" hidden></div><div id="placement-awards" class="placement-awards"></div></section>
  <section class="ready-queue"><h2>Ready to play</h2><div id="ready-matches" class="ready-list"><p class="status">Loading ready matches…</p></div></section>
  <section class="boards" id="boards" aria-label="Four dartboards">
   <article class="board disabled">Loading board status…</article>
@@ -54,62 +90,146 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <article class="board disabled">Loading board status…</article>
   <article class="board disabled">Loading board status…</article>
  </section>
- <section class="bracket"><h2>Bracket progress</h2><div id="bracket" class="bracket-list"><p class="status">Loading bracket…</p></div></section>
- <section class="results"><h2>Completed matches</h2><ul id="results"><li>No results yet.</li></ul></section>
+ <section class="bracket tournament-overview" id="tournament-overview">
+  <div class="overview-heading"><div><h2 id="overview-title">Tournament progress &amp; summary</h2><p id="overview-intro" class="status">Bracket and match information will appear here.</p></div><span id="overview-status" class="pill">In progress</span></div>
+  <div id="summary-content"><p class="status">Loading tournament details…</p></div>
+ </section>
 </main>
+<dialog id="winner-confirmation" class="confirm-dialog" aria-labelledby="winner-confirmation-title">
+ <div class="confirm-dialog-content">
+  <h2 id="winner-confirmation-title">Confirm match winner</h2>
+  <p id="winner-confirmation-message"></p>
+  <div class="confirm-dialog-actions">
+   <button type="button" class="secondary" id="cancel-winner">Cancel</button>
+   <button type="button" id="confirm-winner">Record winner</button>
+  </div>
+ </div>
+</dialog>
 <div id="notice" role="status" aria-live="polite"></div>
 <script>
 const tournamentId=location.pathname.split('/').filter(Boolean).pop();
 const $=id=>document.getElementById(id);
-let current=null,refreshing=false;
+let current=null,refreshing=false,sidePotEnabled=false;
+let pendingWinner=null;
 const selectedBoards=new Map();
+let readyQueueSignature=null;
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function notify(message,error=false){const n=$('notice');n.textContent=message;n.className=error?'show error':'show';setTimeout(()=>n.className='',3500);}
 async function api(path,options={}){
  const response=await fetch(path,{headers:{'Content-Type':'application/json'},...options});
- if(!response.ok){let message='Request failed';try{message=(await response.json()).detail||message}catch{}throw new Error(message)}
- return response.json();
+ const responseText=await response.text();
+ let payload=null;
+ try{payload=responseText?JSON.parse(responseText):null}catch{}
+ if(!response.ok){
+  const detail=payload?.detail;
+  const message=detail||('HTTP '+response.status+(responseText?' · '+responseText.slice(0,240):' · Empty response'));
+  throw new Error(message);
+ }
+ if(!payload&&responseText)throw new Error('Invalid server response · '+responseText.slice(0,240));
+ return payload;
 }
 function boardMarkup(board){
  const match=board.match;
  const statusText={in_progress:'Match in progress',blocked:'Championship reset blocked',available:'Available · waiting for assignment'}[board.status];
  let body='<div class="status">'+statusText+'</div>';
  if(match){
-  body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' · Conditional reset':'')+'</div>'+
-   '<div class="teams"><div class="team">'+esc(match.participants[0])+'</div><div class="vs">versus</div><div class="team">'+esc(match.participants[1])+'</div></div>'+
-   (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'<div class="actions"><button data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'">'+esc(match.participants[0])+' won</button><button data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">'+esc(match.participants[1])+' won</button></div>');
+  body='<div class="match-id">'+(match.match_id==='CHAMPIONSHIP'?'Championship Match': 'Match '+esc(match.match_id))+(match.phase==='reset'?' <span class="pill round-pill">2nd Round</span>':'')+'</div>'+
+   (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
+   '<div class="teams"><div class="team"><span class="team-name">'+esc(match.participants[0])+'</span>'+(!match.blocked_reason?'<button class="winner-action" data-winner="'+esc(match.participants[0])+'" data-board="'+board.board_id+'">Won</button>':'')+'</div><div class="vs">versus</div><div class="team"><span class="team-name">'+esc(match.participants[1])+'</span>'+(!match.blocked_reason?'<button class="winner-action" data-winner="'+esc(match.participants[1])+'" data-board="'+board.board_id+'">Won</button>':'')+'</div></div>'+
+   (match.blocked_reason?'<div class="blocked-reason">'+esc(match.blocked_reason)+'</div>':'');
  }else{
   body='<div class="status">'+statusText+'</div>';
  }
- return '<article class="board '+board.status+'"><div class="board-head"><h2>Board '+board.board_id+'</h2><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
+ return '<article class="board '+board.status+'"><div class="board-head"><div class="board-title"><h2 class="board-number">'+board.board_id+'</h2></div><span class="pill">'+esc(board.status.replace('_',' '))+'</span></div>'+body+'</article>';
 }
 function render(data){
  current=data;
- $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
+ $('summary').innerHTML='Four boards available · '+data.ready_matches.length+' matches ready for operator assignment';
  $('boards').innerHTML=data.boards.map(boardMarkup).join('');
- const recommendations=data.scheduler.recommended_boards;
- $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map((match,index)=>{
-  const recommended=recommendations[index];
+ const queueSignature=JSON.stringify({matches:data.ready_matches,freeBoards:data.scheduler.free_boards});
+ if(queueSignature!==readyQueueSignature){
+  readyQueueSignature=queueSignature;
+  $('ready-matches').innerHTML=data.ready_matches.length?data.ready_matches.map(match=>{
   const saved=selectedBoards.get(match.match_id);
-  const selectedBoard=data.scheduler.free_boards.includes(saved)?saved:recommended;
+  const selectedBoard=data.scheduler.free_boards.includes(saved)?saved:null;
   if(saved!==undefined&&!data.scheduler.free_boards.includes(saved))selectedBoards.delete(match.match_id);
-  const options=data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===selectedBoard?'selected':'')+'>Board '+board+(board===recommended?' · recommended':'')+'</option>').join('');
-  return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong><div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div>'+(recommended?'<div class="recommendation">Suggested board: '+recommended+'</div>':'')+'<div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>Assign</button></div></article>';
+  const options='<option value="" '+(selectedBoard===null?'selected':'')+'>Choose a board</option>'+data.scheduler.free_boards.map(board=>'<option value="'+board+'" '+(board===selectedBoard?'selected':'')+'>Board '+board+'</option>').join('');
+  return '<article class="ready-match"><strong>'+(match.match_id==='CHAMPIONSHIP'?'Championship Match':'Match '+esc(match.match_id))+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+esc(match.participants[0])+' vs '+esc(match.participants[1])+'</div><div class="assign-row"><select aria-label="Board for '+esc(match.match_id)+'" data-board-select="'+esc(match.match_id)+'" '+(!data.scheduler.free_boards.length?'disabled':'')+'>'+options+'</select><button data-assign="'+esc(match.match_id)+'" '+(!selectedBoard?'disabled':'')+'>Assign</button></div></article>';
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
+ }
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
- $('bracket').innerHTML=data.bracket.map(match=>{
-  const names=match.participants.map(esc);
-  const detail=match.status==='waiting'
-   ? names.join(' vs ')
-   : names.join(' vs ');
-  const outcome=match.status==='completed'
-   ? '<div class="detail winner">Winner: '+esc(match.winner)+'</div>'
-   : match.status==='reset_pending'
-    ? '<div class="detail">First game complete · conditional reset pending</div>'
-    : '<div class="detail">'+esc(match.status.replace('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
-  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong><div class="detail">'+detail+'</div>'+outcome+'</article>';
+ $('payouts').hidden=data.complete;
+ document.querySelector('.ready-queue').hidden=data.complete;
+ $('boards').hidden=data.complete;
+ const payoutTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
+ const payoutEntries=Object.entries(payoutTable).sort((a,b)=>Number(a[0])-Number(b[0]));
+ const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:data.payouts?.currency||'USD',maximumFractionDigits:0});
+ const completedPlacements={};
+ const placeNumbers={'1st':'1','2nd':'2','3rd':'3','4th':'4','1':'1','2':'2','3':'3','4':'4'};
+ Object.entries(data.placements||{}).forEach(([place,team])=>{
+  const number=placeNumbers[place];
+  if(number&&team)completedPlacements[number]=team;
+ });
+ // Retain compatibility with snapshots/API responses that only include
+ // placement-match details, without allowing them to overwrite final API standings.
+ data.bracket.filter(match=>match.placement_players).forEach(match=>{
+  Object.entries(match.placement_players).forEach(([place,players])=>{
+   if(!completedPlacements[place]&&players)completedPlacements[place]=players;
+  });
+ });
+ $('side-pot-toggle').checked=sidePotEnabled;
+ $('payout-list').innerHTML=payoutEntries.map(([place,amount])=>{
+  const ordinal=place==='1'?'st':place==='2'?'nd':place==='3'?'rd':'th';
+  const team=completedPlacements[place];
+  return '<div class="payout-item"><span>'+esc(place)+ordinal+' place'+(team?' '+esc(team):'')+'</span> ('+formatter.format(Number(amount)/2)+' /ea)</div>';
  }).join('');
- $('results').innerHTML=data.results.length?data.results.map(r=>'<li>'+esc(r.game_id)+': '+esc(r.winner)+' defeated '+esc(r.loser)+'</li>').join(''):'<li>No results yet.</li>';
+ $('side-pot-value').hidden=!sidePotEnabled;
+ $('side-pot-value').textContent=sidePotEnabled?'Separate side pot: '+formatter.format(data.payouts?.side_pot_amount||0):'';
+ $('placement-awards').innerHTML=['3','2','1'].filter(place=>completedPlacements[place]).map(place=>{
+  const ordinal=place==='1'?'1st':place==='2'?'2nd':'3rd';
+  return '<div class="placement-award"><span>'+ordinal+' -</span> '+esc(completedPlacements[place])+'</div>';
+ }).join('');
+ $('payouts').hidden=!payoutEntries.length||data.complete;
+
+ const totalMatches=data.bracket.length;
+ const completedMatches=data.bracket.filter(match=>match.status==='completed').length;
+ const activeMatches=data.bracket.filter(match=>match.status==='in_progress'||match.status==='reset_pending').length;
+ const waitingMatches=Math.max(0,totalMatches-completedMatches-activeMatches);
+ const teamsInBracket=Number.isFinite(Number(data.team_count))?Number(data.team_count):new Set(data.bracket.flatMap(match=>(match.participants||[]).filter(name=>name&&name!=='TBD'&&!/^(Winner|Loser) of /.test(name)))).size;
+ const progress=totalMatches?Math.round(completedMatches/totalMatches*100):0;
+ $('overview-title').textContent=data.complete?'Tournament summary':'Tournament progress & bracket';
+ $('overview-intro').textContent=data.complete?'The tournament is complete. Review final standings, prize awards, the full bracket, and every recorded result below.':'A live view of match status, completed results, awarded placements, and what remains to be played.';
+ $('overview-status').textContent=data.complete?'Completed':activeMatches?'Matches in play':'In progress';
+ const stats='<div class="overview-stats">'+
+  '<div class="overview-stat"><strong>'+teamsInBracket+'</strong><span>Teams in bracket</span></div>'+
+  '<div class="overview-stat"><strong>'+completedMatches+' / '+totalMatches+'</strong><span>Matches completed</span></div>'+
+  '<div class="overview-stat"><strong>'+activeMatches+'</strong><span>Matches in play</span></div>'+
+  '<div class="overview-stat"><strong>'+waitingMatches+'</strong><span>Matches remaining</span></div>'+
+  '<div class="overview-stat"><strong>'+progress+'%</strong><span>Bracket completion</span></div></div>';
+ const finishLabels={'1':'1st place','2':'2nd place','3':'3rd place','4':'4th place'};
+ const prizeTable=sidePotEnabled?(data.payouts?.prizes_with_side_pot||{}):(data.payouts?.prizes||{});
+ const awardedPlaces=['1','2','3','4'].filter(place=>completedPlacements[place]);
+ const standingsHtml=awardedPlaces.length?'<div class="overview-standings">'+awardedPlaces.map(place=>{
+  const total=Number(prizeTable[place]||0);
+  const prize=total?'<div class="detail">Prize: '+formatter.format(total)+' per team · '+formatter.format(total/2)+' per player</div>':'<div class="detail">Handshake</div>';
+  return '<article class="overview-place"><strong>'+finishLabels[place]+'</strong><div class="team">'+esc(completedPlacements[place])+'</div>'+prize+'</article>';
+ }).join('')+'</div>':'<p>'+(data.complete?'The tournament is marked complete, but the API has not supplied any placement assignments. Check the tournament bracket results.':'Final placements will appear here as placement matches are completed. The championship winner and runner-up are added when the championship is decided.')+'</p>';
+ const bracketHtml=data.bracket.map(match=>{
+  const names=(match.participants||[]).map(esc);
+  const matchup=names.length?names.join(' vs '):'Participants to be determined';
+  const outcome=match.status==='completed'?'<div class="detail winner">Winner: '+esc(match.winner)+'</div>':match.status==='reset_pending'?'<div class="detail">The first championship game is complete; the conditional reset is still pending.</div>':'<div class="detail">'+esc(match.status.replaceAll('_',' '))+(match.board_id?' · Board '+match.board_id:'')+'</div>';
+  return '<article class="bracket-match '+esc(match.status)+'"><strong>'+esc(match.label)+'</strong>'+(match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+'<div class="detail">'+matchup+'</div>'+outcome+'</article>';
+ }).join('');
+ const resultRows=data.results.length?data.results.map((result,index)=>{
+  const match=data.bracket.find(item=>item.match_id===result.game_id||item.id===result.game_id);
+  const label=result.game_id==='CHAMPIONSHIP'?'Championship match':match?.label||('Match '+result.game_id);
+  return '<article class="overview-match"><div><strong>'+esc(label)+'</strong><div class="detail">'+esc(result.winner)+' defeated '+esc(result.loser)+'</div></div><span class="pill">Result '+(index+1)+'</span></article>';
+ }).join(''):'<p>No matches have been completed yet. Recorded winners and opponents will appear here as results are entered.</p>';
+ const progressNote=data.complete?'Every match in the bracket has been resolved and the tournament champion has been determined.':activeMatches?activeMatches+' match'+(activeMatches===1?' is':'es are')+' currently in play; '+waitingMatches+' match'+(waitingMatches===1?' is':'es are')+' still waiting for earlier results or assignment.':'Matches unlock as earlier results are recorded. Use the Ready to play section above to assign an available board.';
+ $('summary-content').innerHTML=stats+
+  '<section class="overview-section"><h3>Standings &amp; prize awards</h3>'+standingsHtml+(awardedPlaces.length?'<p class="overview-note">Prize amounts show the total award for each two-player team and the equivalent amount per player.</p>':'')+'</section>'+
+  '<section class="overview-section"><h3>Full bracket</h3><p>'+esc(progressNote)+'</p><div class="bracket-list">'+bracketHtml+'</div></section>'+
+  '<section class="overview-section"><h3>Completed match results</h3><p>Recorded winners and opponents, in the order results were entered.</p><div class="overview-match-list">'+resultRows+'</div></section>';
 }
 async function refresh(){
  if(refreshing)return;refreshing=true;
@@ -123,7 +243,11 @@ async function act(path,method='POST',body){
 }
 $('ready-matches').addEventListener('change',e=>{
  const select=e.target.closest('[data-board-select]');
- if(select)selectedBoards.set(select.dataset.boardSelect,Number(select.value));
+ if(!select)return;
+ const matchId=select.dataset.boardSelect;
+ if(select.value)selectedBoards.set(matchId,Number(select.value));else selectedBoards.delete(matchId);
+ const assignButton=$('ready-matches').querySelector('[data-assign="'+CSS.escape(matchId)+'"]');
+ if(assignButton)assignButton.disabled=!select.value;
 });
 $('ready-matches').addEventListener('click',async e=>{
  const target=e.target;
@@ -134,16 +258,26 @@ $('ready-matches').addEventListener('click',async e=>{
  const assigned=await act('/api/tournaments/'+tournamentId+'/boards/'+select.value+'/assign','POST',{match_id:matchId});
  if(assigned)selectedBoards.delete(matchId);
 });
-$('boards').addEventListener('click',async e=>{
- const target=e.target;
- if(target.dataset.winner){
-  const winner=target.dataset.winner;
-  if(!confirm('Record '+winner+' as the winner of this match?'))return;
-  await act('/api/tournaments/'+tournamentId+'/boards/'+target.dataset.board+'/winner','POST',{winner});
+const winnerDialog=$('winner-confirmation');
+$('cancel-winner').addEventListener('click',()=>winnerDialog.close('cancel'));
+$('confirm-winner').addEventListener('click',()=>winnerDialog.close('confirm'));
+winnerDialog.addEventListener('close',async()=>{
+ const action=pendingWinner;
+ pendingWinner=null;
+ if(winnerDialog.returnValue==='confirm'&&action){
+  await act('/api/tournaments/'+tournamentId+'/boards/'+action.board+'/winner','POST',{winner:action.winner});
  }
+});
+$('boards').addEventListener('click',e=>{
+ const target=e.target.closest('[data-winner]');
+ if(!target)return;
+ pendingWinner={winner:target.dataset.winner,board:target.dataset.board};
+ $('winner-confirmation-message').textContent='Record '+pendingWinner.winner+' as the winner of this match?';
+ winnerDialog.showModal();
 });
 $('open-bracket').addEventListener('click',()=>window.open('/tournaments/'+encodeURIComponent(tournamentId)+'/bracket','_blank','noopener'));
 $('refresh').addEventListener('click',refresh);
+$('side-pot-toggle').addEventListener('change',event=>{sidePotEnabled=event.target.checked;if(current)render(current);});
 refresh();
 setInterval(refresh,5000);
 </script>

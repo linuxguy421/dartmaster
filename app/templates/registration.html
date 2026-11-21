@@ -3,45 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dartmaster · Tournament setup</title>
+<title>Pasadena Moose Dart Tournament · Tournament setup</title>
 <style>
-:root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
-header{padding:24px clamp(18px,4vw,56px);border-bottom:1px solid var(--line);background:#141c27}
-header h1{margin:0;font-size:26px;letter-spacing:.04em}header p{margin:4px 0 0;color:var(--muted)}
-main{max-width:1120px;margin:0 auto;padding:28px 20px 64px;display:grid;gap:20px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
-h2{font-size:19px;margin:0 0 14px}h3{font-size:15px;margin:18px 0 8px;color:var(--accent)}
-p.hint,.muted{color:var(--muted);margin:4px 0 12px}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
-label{display:grid;gap:5px;color:var(--muted);font-size:13px;flex:1;min-width:150px}
-input,select{width:100%;padding:10px 11px;border-radius:7px;border:1px solid var(--line);background:#111923;color:var(--text);font:inherit}
-input[type=number]{max-width:110px}
-button{border:0;border-radius:7px;padding:10px 15px;background:var(--accent);color:#1c2025;font-weight:700;cursor:pointer}
-button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
-button.danger{background:#633b40;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
-.small{font-size:12px;color:var(--muted)}.pill{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--panel2);color:var(--muted);font-size:12px}
-.notice{padding:11px 13px;border-radius:8px;background:var(--panel2);margin:12px 0}.error{color:var(--bad)}.success{color:var(--good)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.draw-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}.draw-group{min-width:0;padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}.draw-group h3{margin:0 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line)}.draw-group.female h3{color:#e7a4c2}.draw-group.male h3{color:#8eb9e8}.draw-group .grid{grid-template-columns:1fr}.draw-card{padding:12px;background:#151e29;border:1px solid var(--line);border-radius:8px}
-.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.team{padding:12px;border:1px solid var(--line);border-radius:8px;background:#151e29}
-.hidden{display:none!important}#status{position:sticky;bottom:12px;max-width:1120px;margin:0 auto;padding:0 20px;pointer-events:none}#status span{display:block;padding:10px 14px;background:#263446;border:1px solid var(--line);border-radius:8px;pointer-events:auto}
-@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:700px){.draw-columns{grid-template-columns:1fr}}@media(max-width:600px){section{padding:15px}header{padding:18px}th,td{padding:7px 4px}}
+:root{color-scheme:dark;--bg:#0d131b;--surface:#17212d;--surface-raised:#202d3c;--line:#34465b;--muted:#a7b6c8;--text:#edf3f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585;--female:#e7a4c2;--male:#8eb9e8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:20px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:#121b26}
+header h1{margin:0;font-size:23px;letter-spacing:.09em;font-weight:800}
+header p{margin:3px 0 0;color:var(--muted);font-size:13px}
+main{width:min(100% - 32px,1000px);margin:0 auto;padding:24px 0 48px;display:grid;gap:16px}
+section{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:0 5px 18px #00000012}
+#registration-section{width:100%;max-width:none;justify-self:stretch;display:grid;grid-template-columns:minmax(220px,.8fr) minmax(360px,1.2fr);column-gap:28px;row-gap:8px;align-items:center}
+#registration-section h2,#registration-section>p.hint{grid-column:1}
+#registration-section h2{align-self:end}
+#registration-section>p.hint{align-self:start;margin:0;max-width:360px}
+#registration-section #player-form{grid-column:2;grid-row:1 / span 2;display:flex;align-items:end;justify-content:flex-end}
+#registration-section #player-summary,#registration-section #players{grid-column:1 / -1}
+#registration-section #player-summary{margin:10px 0 2px}
+#registration-section #players{border-top:1px solid var(--line);padding-top:8px;min-height:42px}
+#registration-section #players>p{margin:0;padding:3px 0}
+#registration-section #players table{margin-top:0}
+@media(max-width:700px){#registration-section{grid-template-columns:1fr;gap:8px}#registration-section h2,#registration-section>p.hint,#registration-section #player-form,#registration-section #player-summary,#registration-section #players{grid-column:1;grid-row:auto}#registration-section #player-form{justify-content:flex-start;margin-top:4px}#registration-section>p.hint{max-width:none}}
+h2{font-size:17px;line-height:1.3;margin:0 0 5px;font-weight:750}
+h3{font-size:14px;margin:16px 0 8px;color:var(--accent)}
+p.hint,.muted{color:var(--muted);margin:0 0 12px;font-size:13px}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:600;min-width:0}
+label.player-name-field{flex:0 1 260px;min-width:190px}
+label.gender-field{flex:0 0 auto;min-width:0}
+input,select{width:100%;min-width:0;padding:9px 10px;border-radius:7px;border:1px solid var(--line);background:#101923;color:var(--text);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=number]{max-width:120px}
+button{border:0;border-radius:7px;padding:9px 14px;background:var(--accent);color:#241b0d;font-weight:750;cursor:pointer;min-height:38px}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button.secondary{background:var(--surface-raised);color:var(--text);border:1px solid var(--line)}
+button.danger{background:#633b40;color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+.gender-toggle{width:auto;min-width:72px;min-height:38px;padding:7px 12px;border:0;border-radius:7px;font-size:12px;line-height:1.2;font-weight:750;justify-self:start}
+.gender-toggle.female{background:var(--female);color:#30202a}
+.gender-toggle.male{background:var(--male);color:#172638}
+#player-form{gap:10px}
+#player-summary{display:inline-flex;align-items:center;margin:12px 0 4px;padding:5px 9px;border-radius:6px;background:var(--surface-raised);font-size:12px}
+#players>p{margin:8px 0 0}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+td:last-child{text-align:right;width:1%;white-space:nowrap}
+td button{min-height:30px;padding:5px 9px;font-size:12px}
+.small{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--surface-raised);color:var(--muted);font-size:11px;font-weight:650}.pill.gender-female,.pill.role-female{background:var(--female);color:#30202a}.pill.gender-male,.pill.role-male{background:var(--male);color:#172638}
+.notice{padding:10px 12px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--line);margin:10px 0;font-size:13px}
+.error{color:var(--bad)}.success{color:var(--good)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.draw-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.draw-group{min-width:0;padding:14px;background:#131d28;border:1px solid var(--line);border-radius:9px}
+.draw-group h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.draw-group.female h3{color:var(--female)}.draw-group.male h3{color:var(--male)}
+.draw-group .grid{grid-template-columns:1fr}
+.draw-card{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;align-items:center;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:7px;color:var(--text);font-size:13px}
+.draw-card input{padding:7px 8px}
+.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.team{padding:12px;border:1px solid var(--line);border-radius:8px;background:#131d28}
+.team strong{display:block;margin-bottom:3px}
+.hidden{display:none!important}
+#status{position:sticky;bottom:12px;width:min(100% - 32px,1000px);margin:0 auto;padding:0 0 12px;pointer-events:none}
+#status span{display:block;padding:10px 14px;background:#263446;border:1px solid var(--line);border-radius:8px;pointer-events:auto;box-shadow:0 6px 20px #0005}
+a{color:inherit}
+@media(max-width:700px){main{width:min(100% - 24px,1000px);padding-top:16px}.draw-columns{grid-template-columns:1fr}section{padding:15px}#registration-section{max-width:none}}
+@media(max-width:480px){header{padding:16px 14px}.row{align-items:stretch}.row>button{flex:1}label.player-name-field{flex:1 1 100%;min-width:0}label.gender-field{flex:0 0 auto}.draw-card{grid-template-columns:minmax(0,1fr) 90px}th,td{padding:7px 5px}}
+
+/* Pasadena Moose tournament background */
+body{background:#10151d!important;position:relative;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
+header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
+main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
+
+/* Shared Pasadena Moose tournament masthead */
+.site-header{min-height:104px;padding:16px clamp(18px,3vw,36px)!important;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:linear-gradient(110deg,rgba(17,26,38,.97),rgba(25,37,52,.91))!important;border-bottom:1px solid rgba(229,163,59,.42)!important;box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(10px)}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:0}.brand-mark{width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center;border:2px solid var(--accent);border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(229,163,59,.2),rgba(10,16,24,.92) 68%);box-shadow:inset 0 0 0 4px rgba(229,163,59,.12),0 3px 14px rgba(0,0,0,.28);position:relative}.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:var(--accent);opacity:.72}.brand-mark:before{width:1px;height:48px}.brand-mark:after{height:1px;width:48px}.brand-mark span{z-index:1;padding:3px 5px;background:#17212d;color:#f4c875;font-size:18px;font-weight:900;letter-spacing:.04em}.brand-copy{min-width:0}.brand-kicker{font-size:10px;font-weight:800;letter-spacing:.24em;color:var(--accent);line-height:1.3}.site-header h1{margin:2px 0 1px;font-size:clamp(19px,2.2vw,25px);font-weight:850;letter-spacing:.075em;line-height:1.2;color:var(--text)}.site-header p{margin:4px 0 0;color:var(--muted);font-size:13px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}.header-actions a{font-size:13px;font-weight:650;text-underline-offset:4px}.header-actions button{font-size:13px}
+@media(max-width:560px){.site-header{align-items:flex-start;padding:13px 16px!important;gap:12px}.brand-lockup{gap:12px}.brand-mark{width:54px;height:54px;flex-basis:54px}.brand-mark:before{height:38px}.brand-mark:after{width:38px}.brand-mark span{font-size:15px}.header-actions{width:100%;justify-content:flex-start;padding-left:66px}}
 </style>
 </head>
 <body>
-<header><h1>DARTMASTER</h1><p>Tournament registration and setup</p></header>
+<header class="site-header">
+ <div class="brand-lockup">
+  <div class="brand-mark" aria-label="Pasadena Moose logo placeholder"><span>PM</span></div>
+  <div class="brand-copy"><div class="brand-kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p>Tournament registration and setup</p></div>
+ </div>
+</header>
 <main>
 <section id="resume-section" class="hidden">
   <h2>Resume an unfinished tournament</h2>
   <p class="hint">Open a saved tournament to continue its bracket and board assignments.</p>
   <div id="unfinished-tournaments"></div>
 </section>
-<section>
+<section id="registration-section">
   <h2>1. Register players</h2>
   <p class="hint">Register each player once. The draw pairs players into two-person teams.</p>
   <form id="player-form" class="row">
-    <label>Player name<input id="player-name" maxlength="80" required placeholder="Full name"></label>
-    <label>Gender<select id="player-gender"><option value="female">Female</option><option value="male">Male</option></select></label>
+    <label class="player-name-field">Player name<input id="player-name" maxlength="80" required placeholder="First name + last initial"></label>
+    <label class="gender-field">Gender<input type="hidden" id="player-gender" value="female"><button type="button" id="player-gender-toggle" class="gender-toggle female" aria-label="Gender: Female. Click to switch">Female</button></label>
     <button>Add player</button>
   </form>
   <div id="player-summary" class="muted"></div>
@@ -49,28 +110,20 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;
 </section>
 <section id="draw-section">
   <h2>2. Number draw</h2>
-  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If exactly two players are unmatched, they automatically become partners; four or more unmatched players draw again.</p>
+  <p class="hint">The larger group draws first (females first when tied). The other group draws from those numbers. Matching numbers form mixed teams. If four males remain unmatched, the two with the highest original draw numbers take the female playing role and pair with the two lower-numbered males in order.</p>
   <div id="draw-order" class="notice"></div>
   <div id="draw-inputs" class="draw-columns"></div>
   <div id="draw-off-area" class="hidden">
-    <h3>Draw-off</h3><p class="hint">If exactly two players are unmatched, they automatically become partners. With four or more unmatched players, each draws again; every new number must appear exactly twice.</p>
+    <h3>Playing-role assignment</h3><p class="hint">The two unmatched players with the highest original draw numbers take the opposite playing role. They pair in draw order with the two lower-numbered unmatched players; no second number draw is needed.</p>
     <div id="draw-off-inputs" class="draw-columns"></div>
   </div>
   <div class="row" style="margin-top:14px"><button id="draw-button">Create teams from draw</button><button id="reset-draw" class="secondary hidden" type="button">Reset teams and redraw</button></div>
 </section>
 <section id="teams-section" class="hidden">
-  <h2>3. Review teams</h2>
-  <p class="hint">Confirm the pairings. Bracket seeds are assigned automatically from the original draw numbers.</p>
+  <h2>3. Teams</h2>
+  <p class="hint">Review the partnerships created by the player draw.</p>
   <div id="teams" class="team-list"></div>
-</section>
-<section id="seeds-section" class="hidden">
-  <h2>4. Bracket seeding</h2>
-  <div class="row">
-    <label>Bracket selected automatically<select id="bracket-select" disabled></select></label>
-    <p class="hint">All four boards are always available. The operator assigns each bracket-ready match to a board.</p>
-  </div>
-  <p class="hint">Teams are ordered by their original draw number. If two unmatched players become partners, their team uses the lower of their two original numbers. The JSON bracket determines match order and routing.</p>
-  <div id="seed-inputs" class="grid"></div>
+  <div id="tournament-setup-note" class="notice hidden"></div>
   <div class="row" style="margin-top:14px"><button id="start-tournament" disabled>Start tournament</button></div>
   <div id="tournament-result" class="notice hidden"></div>
 </section>
@@ -86,25 +139,24 @@ async function api(url,options={}){const response=await fetch(url,{headers:{'Con
 function counts(){return {male:state.players.filter(p=>p.gender==='male').length,female:state.players.filter(p=>p.gender==='female').length};}
 function firstGender(){const c=counts();return c.male>c.female?'male':'female';}
 function render(){
- const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=6;
+ const c=counts(),hasBoth=c.male>0&&c.female>0,minimumPlayersMet=state.players.length>=8;
  $('player-summary').textContent=state.players.length+' players · '+c.female+' female · '+c.male+' male';
- $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th></th></tr></thead><tbody>'+state.players.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill">'+p.gender+'</span></td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
+ $('players').innerHTML=state.players.length?'<table><thead><tr><th>Player</th><th>Gender</th><th>Playing role</th><th></th></tr></thead><tbody>'+state.players.map(p=>{const roleAssigned=Boolean(state.draw&&state.teams.length);const role=p.playing_role||p.gender;return '<tr><td>'+escapeHtml(p.display_name)+'</td><td><span class="pill gender-'+p.gender+'">'+p.gender+'</span></td><td>'+(roleAssigned?'<span class="pill role-'+role+'">'+(role==='female'?'female':'male')+'</span>':'<span class="muted">—</span>')+'</td><td><button class="danger secondary" data-remove="'+p.player_id+'" '+(state.teams.length?'disabled':'')+'>Remove</button></td></tr>';}).join('')+'</tbody></table>':'<p class="muted">No players registered yet.</p>';
  $('draw-section').classList.toggle('hidden',!hasBoth||state.teams.length>0);
  const evenPlayerCount=state.players.length%2===0;
  $('draw-button').disabled=!evenPlayerCount||!hasBoth||!minimumPlayersMet;
  if(!state.teams.length&&hasBoth&&(!evenPlayerCount||!minimumPlayersMet)){
-  $('draw-order').textContent=!minimumPlayersMet?'At least 6 players are required to form the minimum 3 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
+  $('draw-order').textContent=!minimumPlayersMet?'At least 8 players are required to form the minimum 4 teams. Add more players before entering draw numbers.':'An even number of players is required to form two-person teams. Add or remove a player before entering draw numbers.';
   $('draw-inputs').innerHTML='';
   $('draw-off-area').classList.add('hidden');
   $('draw-off-inputs').innerHTML='';
   drawOffIds=[];
  }
  $('teams-section').classList.toggle('hidden',!state.teams.length);
- $('seeds-section').classList.toggle('hidden',!state.teams.length);
  $('reset-draw').classList.toggle('hidden',!state.teams.length);
- $('teams').innerHTML=state.teams.map((t,i)=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Mixed team':'Unmatched team')+'</span><div class="muted">Seed '+escapeHtml(Object.keys(state.seed_assignments).find(seed=>state.seed_assignments[seed]===t.team_id)||'—')+'</div></div>').join('');
+ $('teams').innerHTML=state.teams.map(t=>'<div class="team"><strong>'+escapeHtml(t.name)+'</strong><div>'+escapeHtml(t.player_one)+' + '+escapeHtml(t.player_two)+'</div><span class="pill">'+(state.draw?.mixed_team_ids?.includes(t.team_id)?'Co-op':'Same-sex')+'</span></div>').join('');
  if(!state.teams.length&&hasBoth&&evenPlayerCount&&minimumPlayersMet)renderDrawInputs();
- if(state.teams.length)renderSeeds();
+ if(state.teams.length)renderTournamentSetup();
 }
 function drawGroupMarkup(players, attribute, label){
  return ['female','male'].map(gender=>{
@@ -126,41 +178,48 @@ function previewDrawOff(){
  if(!valid){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';drawOffIds=[];return;}
  const numbersByGender={male:new Set(),female:new Set()};
  state.players.forEach(p=>numbersByGender[p.gender].add(values[p.player_id]));
- const first=firstGender(),second=first==='male'?'female':'male';
- const unmatched=state.players.filter(p=>!numbersByGender[second].has(values[p.player_id])||p.gender===first&&!numbersByGender[second].has(values[p.player_id]));
  const matchedIds=new Set();
- state.players.filter(p=>p.gender===first).forEach(p=>{if(numbersByGender[second].has(values[p.player_id]))matchedIds.add(p.player_id)});
- state.players.filter(p=>p.gender===second).forEach(p=>{if(numbersByGender[first].has(values[p.player_id]))matchedIds.add(p.player_id)});
+ state.players.filter(p=>p.gender==='male').forEach(p=>{if(numbersByGender.female.has(values[p.player_id]))matchedIds.add(p.player_id)});
+ state.players.filter(p=>p.gender==='female').forEach(p=>{if(numbersByGender.male.has(values[p.player_id]))matchedIds.add(p.player_id)});
  drawOffIds=state.players.filter(p=>!matchedIds.has(p.player_id)).map(p=>p.player_id);
- if(drawOffIds.length<=2){$('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;}
+ const unmatched=state.players.filter(p=>drawOffIds.includes(p.player_id)).sort((a,b)=>values[a.player_id]-values[b.player_id]);
+ if(unmatched.length!==4||new Set(unmatched.map(p=>p.gender)).size!==1){
+  $('draw-off-area').classList.add('hidden');$('draw-off-inputs').innerHTML='';return;
+ }
+ const lower=unmatched.slice(0,2),higher=unmatched.slice(2);
+ const unmatchedGender=unmatched[0].gender;
+ const lowerRole=unmatchedGender==='male'?'male':'female';
+ const higherRole=unmatchedGender==='male'?'female':'male';
+ const femaleRolePlayers=lowerRole==='female'?lower:higher;
+ const maleRolePlayers=lowerRole==='male'?lower:higher;
+ const pairs=femaleRolePlayers.map((player,index)=>[player,maleRolePlayers[index]]);
  $('draw-off-area').classList.remove('hidden');
- const unmatchedPlayers=state.players.filter(p=>drawOffIds.includes(p.player_id));
- $('draw-off-inputs').innerHTML=drawGroupMarkup(unmatchedPlayers,'data-off','Draw-off number');
+ $('draw-off-inputs').innerHTML='<div class="draw-group '+lowerRole+'"><h3>'+(lowerRole==='female'?'Female':'Male')+' playing role</h3><div class="grid">'+lower.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><div class="draw-group '+higherRole+'"><h3>'+(higherRole==='female'?'Female':'Male')+' playing role</h3><div class="grid">'+higher.map(p=>'<div class="draw-card">'+escapeHtml(p.display_name)+' <span class="pill">#'+values[p.player_id]+'</span></div>').join('')+'</div></div><p class="hint">Pairings: '+pairs.map(pair=>escapeHtml(pair[0].display_name)+' + '+escapeHtml(pair[1].display_name)).join(' and ')+'.</p>';
 }
-$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:$('player-name').value,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+$('player-gender-toggle').addEventListener('click',()=>{
+ const next=$('player-gender').value==='female'?'male':'female';
+ $('player-gender').value=next;
+ $('player-gender-toggle').classList.toggle('female',next==='female');
+ $('player-gender-toggle').classList.toggle('male',next==='male');
+ $('player-gender-toggle').setAttribute('aria-label','Gender: '+(next==='female'?'Female':'Male')+'. Click to switch');
+ $('player-gender-toggle').textContent=next==='female'?'Female':'Male';
+});
+$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
  const mixed={};$('draw-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a number for every player.');mixed[i.dataset.mixed]=Number(i.value)});
- const off={};if(drawOffIds.length){$('draw-off-inputs').querySelectorAll('input').forEach(i=>{if(!i.value)throw new Error('Enter a draw-off number for every unmatched player.');off[i.dataset.off]=Number(i.value)});}
- const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed,draw_off_draws:off})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
+ const byGender={male:new Set(),female:new Set()};state.players.forEach(p=>{const n=mixed[p.player_id];if(byGender[p.gender].has(n))throw new Error('Duplicate draw number '+n+' among '+p.gender+' players. Each number may be used once per gender.');byGender[p.gender].add(n);});const result=await api('/api/registration/draw',{method:'POST',body:JSON.stringify({mixed_draws:mixed})});state=result;render();notify('Teams created. Review the pairings and assign seeds.');
 }catch(err){notify(err.message,true)}});
 $('reset-draw').addEventListener('click',async()=>{if(!confirm('Reset all teams and seed assignments? Registered players will be kept.'))return;try{state=await api('/api/registration/draw',{method:'DELETE'});render();notify('Draw reset.')}catch(err){notify(err.message,true)}});
-function renderSeeds(){
+function renderTournamentSetup(){
  const bracket=brackets.find(b=>b.team_count===state.teams.length);
- $('bracket-select').value=bracket?.filename||'';
- if(!bracket){
-  $('seed-inputs').innerHTML='<p class="error">No bracket definition is available for '+state.teams.length+' teams. Add the matching JSON bracket before continuing.</p>';
-  $('start-tournament').disabled=true;
-  return;
- }
  const assignments=state.seed_assignments||{};
- $('seed-inputs').innerHTML=Array.from({length:bracket.team_count},(_,i)=>{
-  const seed='T'+(i+1),teamId=assignments[seed],team=state.teams.find(item=>item.team_id===teamId);
-  return '<div class="team"><strong>Seed '+seed+'</strong><div>'+(team?escapeHtml(team.player_one)+' + '+escapeHtml(team.player_two):'<span class="error">No team assigned</span>')+'</div></div>';
- }).join('');
- $('start-tournament').disabled=Object.keys(assignments).length!==bracket.team_count;
+ const complete=Boolean(bracket)&&Object.keys(assignments).length===bracket.team_count;
+ $('tournament-setup-note').classList.toggle('hidden',Boolean(bracket));
+ $('tournament-setup-note').textContent=bracket?'': 'No bracket definition is available for '+state.teams.length+' teams. Add the matching bracket before continuing.';
+ $('start-tournament').disabled=!complete;
 }
-$('start-tournament').addEventListener('click',async()=>{const button=$('start-tournament');button.disabled=true;try{const result=await api('/api/tournaments',{method:'POST',body:JSON.stringify({bracket_file:$('bracket-select').value})});if(!result.dashboard_url||!result.dashboard_url.startsWith('/tournaments/'))throw new Error('Tournament was created, but the dashboard URL was missing or invalid.');$('tournament-result').classList.remove('hidden');$('tournament-result').innerHTML='<strong class="success">Tournament created</strong><br> ID: '+escapeHtml(result.tournament_id)+'<br> '+result.team_count+' teams · four boards available';notify('Tournament created. Opening dashboard…');window.location.assign(result.dashboard_url);}catch(err){notify(err.message,true);button.disabled=false}});
+$('start-tournament').addEventListener('click',async()=>{const button=$('start-tournament');button.disabled=true;try{const result=await api('/api/tournaments',{method:'POST',body:JSON.stringify({bracket_file:brackets.find(b=>b.team_count===state.teams.length)?.filename})});if(!result.dashboard_url||!result.dashboard_url.startsWith('/tournaments/'))throw new Error('Tournament was created, but the dashboard URL was missing or invalid.');$('tournament-result').classList.remove('hidden');$('tournament-result').innerHTML='<strong class="success">Tournament created</strong><br> ID: '+escapeHtml(result.tournament_id)+'<br> '+result.team_count+' teams · four boards available';notify('Tournament created. Opening dashboard…');window.location.assign(result.dashboard_url);}catch(err){notify(err.message,true);button.disabled=false}});
 async function refresh(){state=await api('/api/registration');render();}
 $('unfinished-tournaments').addEventListener('click',async event=>{
  const id=event.target.dataset.deleteTournament;
@@ -174,7 +233,7 @@ async function loadUnfinishedTournaments(){
  $('resume-section').classList.toggle('hidden',tournaments.length===0);
  $('unfinished-tournaments').innerHTML=tournaments.length?'<div class="team-list">'+tournaments.map(t=>'<div class="team"><strong>'+escapeHtml(t.bracket_file.replace('.json',''))+'</strong><div class="muted">'+t.team_count+' teams · '+t.completed_matches+' matches completed</div><div class="row" style="margin-top:10px"><a href="'+escapeHtml(t.dashboard_url)+'"><button type="button">Resume tournament</button></a><button type="button" class="danger secondary" data-delete-tournament="'+escapeHtml(t.tournament_id)+'">Delete</button></div></div>').join('')+'</div>':'<p class="muted">No unfinished tournaments.</p>';
 }
-async function init(){try{brackets=await api('/api/brackets');$('bracket-select').innerHTML=brackets.map(b=>'<option value="'+b.filename+'">'+escapeHtml(b.name)+' ('+b.team_count+' teams)'+(b.diagnostics.length?' · bracket warnings':'')+'</option>').join('');await refresh();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
+async function init(){try{brackets=await api('/api/brackets');await refresh();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
 init();
 </script>
 </body></html>

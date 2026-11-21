@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dartmaster · Tournament bracket</title>
+<title>Pasadena Moose Dart Tournament · Tournament bracket</title>
 <style>
 :root{color-scheme:dark;--bg:#10151d;--panel:#1a2330;--panel2:#222e3d;--line:#344357;--muted:#a8b6c8;--text:#f1f5f9;--accent:#e5a33b;--good:#70c79a;--bad:#ef8585}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,sans-serif}
 header{position:sticky;top:0;z-index:5;padding:16px 24px;border-bottom:1px solid var(--line);background:#141c27;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:var(--muted)}a{color:var(--accent)}
-main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summary strong{color:var(--text)}
+main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.view-switch{display:flex;gap:8px;margin:0 0 12px;align-items:center;flex-wrap:wrap}.connector-key{display:flex;gap:14px;align-items:center;margin:0 0 12px;padding:8px 11px;width:max-content;max-width:100%;border:1px solid var(--line);border-radius:7px;background:rgba(26,35,48,.92);color:var(--muted);font-size:12px}.connector-key span{display:inline-flex;align-items:center;gap:7px}.connector-key i{display:inline-block;width:25px;border-top:3px solid var(--good)}.connector-key i.loser{border-top:3px dashed var(--accent)}.view-switch button{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px 12px;border-radius:7px;cursor:pointer}.view-switch button.active{border-color:var(--accent);color:var(--accent)}.bracket-board{position:relative;overflow:auto}.bracket-board .lane{width:max-content;min-width:100%;position:relative}.bracket-board .rounds{overflow:visible}.bracket-board .match{position:relative;z-index:3;isolation:isolate;width:220px;background:#151e29!important}.bracket-board #connectors{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible}.bracket-board.no-connectors #connectors{display:none}.route-note{font-size:10px;color:var(--muted);margin-top:3px}.route-note strong{color:var(--accent)}.summary strong{color:var(--text)}
 .lane{margin:0 0 24px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
 .lane h2{font-size:17px;margin:0 0 12px}.rounds{display:flex;gap:14px;overflow-x:auto;align-items:stretch;padding:2px 2px 12px}
 .round{flex:0 0 240px;display:flex;flex-direction:column;gap:10px}.round h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 2px}
@@ -19,28 +19,53 @@ main{padding:20px 22px 48px}.summary{color:var(--muted);margin-bottom:18px}.summ
 .slot{padding:6px 8px;border-radius:5px;background:#202b39;display:flex;justify-content:space-between;gap:8px;min-width:0}
 .slot.winner{color:var(--good);font-weight:700}.slot span{overflow-wrap:anywhere}.slot small{color:var(--muted);white-space:nowrap}
 .match-foot{font-size:11px;color:var(--muted);margin-top:auto}.match-foot strong{color:var(--good)}
+.placement{color:var(--accent);font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
 .championship .rounds{justify-content:flex-start}.championship .round{flex-basis:300px}
 #notice{color:var(--muted);font-size:12px}
 @media(max-width:600px){header{align-items:flex-start}main{padding:14px}.lane{padding:11px}}
+
+/* Pasadena Moose tournament background */
+body{background:#10151d!important;position:relative;isolation:isolate}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(9,13,19,.78),rgba(9,13,19,.86)),url('/assets/background.jpg') center center/cover no-repeat;}
+header{background:rgba(15,22,31,.72)!important;backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.12)!important}
+main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{background-color:rgba(25,34,46,.82)!important;backdrop-filter:blur(5px)}
+
+/* Shared Pasadena Moose tournament masthead */
+.site-header{min-height:104px;padding:16px clamp(18px,3vw,36px)!important;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;background:linear-gradient(110deg,rgba(17,26,38,.97),rgba(25,37,52,.91))!important;border-bottom:1px solid rgba(229,163,59,.42)!important;box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(10px)}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:0}.brand-mark{width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center;border:2px solid var(--accent);border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(229,163,59,.2),rgba(10,16,24,.92) 68%);box-shadow:inset 0 0 0 4px rgba(229,163,59,.12),0 3px 14px rgba(0,0,0,.28);position:relative}.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:var(--accent);opacity:.72}.brand-mark:before{width:1px;height:48px}.brand-mark:after{height:1px;width:48px}.brand-mark span{z-index:1;padding:3px 5px;background:#17212d;color:#f4c875;font-size:18px;font-weight:900;letter-spacing:.04em}.brand-copy{min-width:0}.brand-kicker{font-size:10px;font-weight:800;letter-spacing:.24em;color:var(--accent);line-height:1.3}.site-header h1{margin:2px 0 1px;font-size:clamp(19px,2.2vw,25px);font-weight:850;letter-spacing:.075em;line-height:1.2;color:var(--text)}.site-header p{margin:4px 0 0;color:var(--muted);font-size:13px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}.header-actions a{font-size:13px;font-weight:650;text-underline-offset:4px}.header-actions button{font-size:13px}
+@media(max-width:560px){.site-header{align-items:flex-start;padding:13px 16px!important;gap:12px}.brand-lockup{gap:12px}.brand-mark{width:54px;height:54px;flex-basis:54px}.brand-mark:before{height:38px}.brand-mark:after{width:38px}.brand-mark span{font-size:15px}.header-actions{width:100%;justify-content:flex-start;padding-left:66px}}
+
+/* Use the available viewport width before requiring horizontal scrolling. */
+main{padding-left:clamp(10px,1.25vw,22px);padding-right:clamp(10px,1.25vw,22px)}
+.bracket-board .lane{width:100%;min-width:100%;padding:12px}
+.bracket-board .rounds{width:100%;gap:clamp(10px,1vw,16px)}
+.bracket-board .round{flex:1 0 240px;min-width:240px}
+.bracket-board .match{width:100%;max-width:360px}
+.bracket-board .championship .round{flex-basis:300px}
 </style>
 </head>
 <body>
-<header>
- <div><h1>DARTMASTER · BRACKET</h1><p id="tournament-name">Loading tournament…</p></div>
- <div><a id="back-link" href="#">Return to tournament controls</a></div>
+<header class="site-header">
+ <div class="brand-lockup">
+  <div class="brand-mark" aria-label="Pasadena Moose logo placeholder"><span>PM</span></div>
+  <div class="brand-copy"><div class="brand-kicker">PASADENA MOOSE</div><h1>DART TOURNAMENT</h1><p id="tournament-name">Loading tournament…</p></div>
+ </div>
 </header>
 <main>
  <div class="summary" id="summary">Loading bracket…</div>
- <section class="lane"><h2>Winners bracket</h2><div class="rounds" id="winners"></div></section>
- <section class="lane"><h2>Losers bracket</h2><div class="rounds" id="losers"></div></section>
- <section class="lane championship"><h2>Championship</h2><div class="rounds" id="championship"></div></section>
+ <div class="view-switch"><button id="traditional-mode" class="active" type="button">Traditional bracket</button><button id="round-mode" type="button">Round view</button></div>
+ <div class="connector-key" aria-label="Bracket connector key"><span><i aria-hidden="true"></i> Winner advances</span><span><i class="loser" aria-hidden="true"></i> Loser drops to losers bracket</span></div>
+ <div class="bracket-board" id="bracket-board"><svg id="connectors" aria-hidden="true"></svg>
+  <section class="lane"><h2>Winners bracket</h2><div class="rounds" id="winners"></div></section>
+  <section class="lane"><h2>Losers bracket</h2><div class="rounds" id="losers"></div></section>
+  <section class="lane championship"><h2>Championship</h2><div class="rounds" id="championship"></div></section>
+ </div>
  <div id="notice">This display refreshes automatically every five seconds.</div>
 </main>
 <script>
 const tournamentId=location.pathname.split('/').filter(Boolean).at(-2);
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-$('back-link').href='/tournaments/'+encodeURIComponent(tournamentId);
 function participantName(value){
  if(/^T[1-9][0-9]*$/.test(value))return 'Seed '+value.slice(1);
  const ref=value.match(/^([WL])-(.+)$/);
@@ -56,14 +81,86 @@ function matchCard(match){
   match.status==='reset_pending'?'Conditional reset may be required':
   match.status==='ready'?'Ready to be assigned':
   match.status==='completed'?'Match complete':statusLabel;
- return '<article class="match '+esc(match.status)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
-  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?'<small>WINNER</small>':'')+'</div>'+
-  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?'<small>WINNER</small>':'')+'</div>'+
-  '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div></article>';
+ const outcomeLabel=role=>{
+  if(match.status!=='completed'||!match.placement_payouts)return '';
+  const place=match.placement_payouts[role+'_place'];
+  const amount=Number(window.currentPayouts?.prizes?.[place]||0);
+  if(!place||amount<=0)return '';
+  const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency:window.currentPayouts?.currency||'USD',maximumFractionDigits:0});
+  return '<small>'+(role==='winner'?'WINNER':esc(place.toUpperCase()))+' · '+formatter.format(amount)+' total payout</small>';
+ };
+ return '<article class="match '+esc(match.status)+'" data-game="'+esc(match.source_game_id)+'"><div class="match-head"><strong>'+esc(match.label)+'</strong><span class="status">'+esc(statusLabel)+'</span></div>'+
+  '<div class="slot '+(winner===first?'winner':'')+'"><span>'+esc(participantName(first))+'</span>'+(winner===first?outcomeLabel('winner'):match.status==='completed'?outcomeLabel('loser'):'')+'</div>'+
+  '<div class="slot '+(winner===second?'winner':'')+'"><span>'+esc(participantName(second))+'</span>'+(winner===second?outcomeLabel('winner'):match.status==='completed'?outcomeLabel('loser'):'')+'</div>'+
+  (match.placement_label?'<div class="placement">Playing for '+esc(match.placement_label)+'</div>':'')+
+  '<div class="match-foot">'+esc(detail)+(match.status==='completed'&&match.loser?' · Runner-up: '+esc(match.loser):'')+'</div>'+routeNotes(match)+'</article>';
 }
+function routeNotes(match){
+ const winner=match.winner_advances_to?.game;
+ const loser=match.loser_drops_to?.game;
+ const notes=[];
+ if(winner)notes.push('<span>W → <strong>'+esc(winner)+'</strong></span>');
+ if(loser)notes.push('<span>L → <strong>'+esc(loser)+'</strong></span>');
+ return notes.length?'<div class="route-note">'+notes.join(' · ')+'</div>':'';
+}
+function drawConnectors(data){
+ const board=$('bracket-board'),svg=$('connectors');
+ const rect=board.getBoundingClientRect(),width=board.scrollWidth,height=board.scrollHeight;
+ svg.setAttribute('width',width);svg.setAttribute('height',height);svg.setAttribute('viewBox','0 0 '+width+' '+height);svg.innerHTML='';
+ const cards=new Map();
+ board.querySelectorAll('[data-game]').forEach(card=>cards.set(card.dataset.game,card));
+ const championshipCard=cards.get('GF')||cards.get('GGF');
+ if(championshipCard){cards.set('GF',championshipCard);cards.set('GGF',championshipCard);}
+ const ns='http://www.w3.org/2000/svg';
+ const edges=[];
+ for(const match of data.bracket){
+  const source=cards.get(match.source_game_id);if(!source)continue;
+  for(const [kind,route] of [['winner',match.winner_advances_to],['loser',match.loser_drops_to]]){
+   if(!route?.game)continue;
+   const target=cards.get(route.game);if(!target||target===source)continue;
+   const slots=target.querySelectorAll('.slot');
+   const targetSlot=slots[Number(route.slot)||0];if(!targetSlot)continue;
+   const a=source.getBoundingClientRect(),b=targetSlot.getBoundingClientRect();
+   const centerY=a.top+a.height/2-rect.top+board.scrollTop;
+   edges.push({
+    kind,
+    x1:a.right-rect.left+board.scrollLeft,
+    y1:centerY+(kind==='winner'?-7:7),
+    x2:b.left-rect.left+board.scrollLeft,
+    y2:b.top+b.height/2-rect.top+board.scrollTop,
+   });
+  }
+ }
+ // Route each edge through a consistent elbow in the open space between cards.
+ // Sorting makes the SVG draw order stable between refreshes.
+ edges.sort((a,b)=>a.x1-b.x1||a.y1-b.y1||a.x2-b.x2||a.y2-b.y2);
+ for(const edge of edges){
+  const path=document.createElementNS(ns,'path');
+  const channel=edge.x1+(edge.x2-edge.x1)*.5;
+  path.setAttribute('d','M '+edge.x1+' '+edge.y1+' H '+channel+' V '+edge.y2+' H '+edge.x2);
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke',edge.kind==='winner'?'#70c79a':'#e5a33b');
+  path.setAttribute('stroke-width','2');
+  path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round');
+  if(edge.kind==='loser')path.setAttribute('stroke-dasharray','5 4');
+  path.setAttribute('opacity','.82');
+  svg.appendChild(path);
+ }
+}
+function setBracketMode(traditional){
+ $('bracket-board').classList.toggle('no-connectors',!traditional);
+ $('traditional-mode').classList.toggle('active',traditional);
+ $('round-mode').classList.toggle('active',!traditional);
+}
+$('traditional-mode').addEventListener('click',()=>setBracketMode(true));
+$('round-mode').addEventListener('click',()=>setBracketMode(false));
+window.addEventListener('resize',()=>{if($('traditional-mode').classList.contains('active')&&window.lastBracketData)drawConnectors(window.lastBracketData);});
 function render(data){
- $('tournament-name').textContent=data.bracket_file+' · '+(data.complete?'Tournament complete':'Live tournament');
- $('summary').innerHTML='<strong>'+esc(data.bracket_file)+'</strong> · '+data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
+ window.lastBracketData=data;
+ window.currentPayouts=data.payouts||{};
+ $('tournament-name').textContent=data.complete?'Tournament complete':'Live tournament';
+ $('summary').innerHTML=data.bracket.length+' bracket matches · updated '+new Date().toLocaleTimeString();
  for(const [type,target] of [['winners','winners'],['losers','losers'],['championship','championship']]){
   const matches=data.bracket.filter(m=>m.bracket_type===type);
   const groups=new Map();
@@ -71,6 +168,7 @@ function render(data){
   const rounds=[...groups.entries()].sort((a,b)=>a[0]-b[0]);
   $(target).innerHTML=rounds.length?rounds.map(([round,items],index)=>'<div class="round"><h3>'+(type==='championship'?'Final': 'Round '+(index+1))+'</h3>'+items.map(matchCard).join('')+'</div>').join(''):'<p class="status">No matches in this bracket.</p>';
  }
+ requestAnimationFrame(()=>{if($('traditional-mode').classList.contains('active'))drawConnectors(data);});
 }
 async function refresh(){
  try{const response=await fetch('/api/tournaments/'+encodeURIComponent(tournamentId));if(!response.ok)throw new Error('Tournament unavailable');render(await response.json());}

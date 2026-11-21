@@ -22,6 +22,10 @@ class BracketDefinition:
 
     tournament_name: str
     prizes: dict[str, int]
+    prizes_with_side_pot: dict[str, int]
+    side_pot_amount: int
+    side_pot_contribution_per_player: int
+    currency: str
     games: dict[str, dict[str, Any]]
     source_path: Path
     diagnostics: tuple[BracketDiagnostic, ...]
@@ -122,10 +126,19 @@ def load_bracket(path: str | Path) -> BracketDefinition:
     prizes = payload.get("prizes", {})
     if not isinstance(prizes, dict):
         raise BracketLoadError(f"{source}: prizes must be an object")
+    prizes_with_side_pot = payload.get("prizes_with_side_pot", {})
+    if not isinstance(prizes_with_side_pot, dict):
+        raise BracketLoadError(f"{source}: prizes_with_side_pot must be an object")
 
     return BracketDefinition(
         tournament_name=str(payload.get("tournament_name", source.stem)),
         prizes={str(place): int(amount) for place, amount in prizes.items()},
+        prizes_with_side_pot={
+            str(place): int(amount) for place, amount in prizes_with_side_pot.items()
+        },
+        side_pot_amount=int(payload.get("side_pot_amount", 0)),
+        side_pot_contribution_per_player=int(payload.get("side_pot_contribution_per_player", 0)),
+        currency=str(payload.get("currency", "USD")),
         games=games,
         source_path=source,
         diagnostics=_diagnose(games),
