@@ -384,7 +384,7 @@ def bracket_payload(session: TournamentSession) -> list[dict]:
 
         game_definition = runtime.definition.games.get(game_id, {})
         placement = game_definition.get("placement_match", {})
-        placement_label = (
+        placement_label = game_definition.get("display_label") or (
             f"{placement['winner']} Place"
             if isinstance(placement, dict)
             and placement.get("winner")
