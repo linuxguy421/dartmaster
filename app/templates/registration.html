@@ -106,7 +106,7 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
     <label class="gender-field">Gender<input type="hidden" id="player-gender" value="female"><button type="button" id="player-gender-toggle" class="gender-toggle female" aria-label="Gender: Female. Click to switch">Female</button></label>
     <button>Add player</button>
   </form>
-  <label style="grid-column:1/-1"><input type="checkbox" id="save-new-player"> Save new player to permanent roster</label>\n  <div id="saved-roster-select" style="grid-column:1/-1;border:1px solid var(--line);padding:12px;border-radius:8px"><strong>Add from saved roster</strong><div id="saved-player-options" class="muted">Loading saved players…</div><button type="button" id="add-saved-players" class="secondary">Add selected players</button></div>\n  <div id="player-summary" class="muted"></div>
+      <div id="player-summary" class="muted"></div>
   <div id="players"></div>
 </section>
 <section id="draw-section">
@@ -211,7 +211,7 @@ $('player-gender-toggle').addEventListener('click',()=>{
  $('player-gender-toggle').setAttribute('aria-label','Gender: '+(next==='female'?'Female':'Male')+'. Click to switch');
  $('player-gender-toggle').textContent=next==='female'?'Female':'Male';
 });
-$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});if($('save-new-player').checked){await api('/api/saved-players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('save-new-player').checked=false;}$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
 $('players').addEventListener('change',async e=>{const id=e.target.dataset.paid;if(!id)return;try{await api('/api/registration/players/'+id+'/payment',{method:'PUT',body:JSON.stringify({paid:e.target.checked})});await refresh();notify('Payment status updated.');}catch(err){notify(err.message,true);await refresh();}});
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
@@ -243,21 +243,6 @@ async function loadUnfinishedTournaments(){
 }
 async function init(){try{brackets=await api('/api/brackets');await refresh();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
 
-// Saved-roster registration integration
-async function loadSavedRosterOptions(){
- try{
-  const saved=await api('/api/saved-players?active_only=true');
-  const registered=new Set(state.players.map(p=>p.display_name.trim().toLocaleLowerCase()));
-  $('saved-player-options').innerHTML=saved.length?saved.map(p=>'<label style="display:inline-flex;gap:7px;align-items:center;margin:5px 12px 5px 0"><input type="checkbox" data-saved-id="'+p.player_id+'" data-saved-name="'+escapeHtml(p.display_name)+'" data-saved-gender="'+p.gender+'" '+(registered.has(p.display_name.trim().toLocaleLowerCase())?'disabled':'')+'>'+escapeHtml(p.display_name)+' ('+p.gender+')</label>').join(''):'No active saved players.';
- }catch(e){$('saved-player-options').textContent=e.message}
-}
-$('add-saved-players').addEventListener('click',async()=>{
- const selected=[...$('saved-player-options').querySelectorAll('input[data-saved-id]:checked:not(:disabled)')];
- if(!selected.length){notify('Select saved players to add.',true);return}
- try{for(const p of selected){await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:p.dataset.savedName,gender:p.dataset.savedGender})})}await refresh();await loadSavedRosterOptions();notify(selected.length+' saved player(s) added.')}catch(e){notify(e.message,true)}
-});
-const originalRefresh=refresh;
-refresh=async function(){await originalRefresh();await loadSavedRosterOptions()};
-\ninit();
+init();
 </script>
 </body></html>
