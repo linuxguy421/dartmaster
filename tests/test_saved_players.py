@@ -27,3 +27,11 @@ def test_setup_page_and_registration_links(tmp_path,monkeypatch):
     assert page.status_code==200
     assert "Add selected players" in page.text
     assert 'href="/setup"' in page.text
+
+
+def test_import_source_returns_players_from_completed_tournaments(tmp_path,monkeypatch):
+    client=client_for(tmp_path,monkeypatch)
+    # Source is empty until completed tournament snapshots are present.
+    response=client.get("/api/saved-players/import-source")
+    assert response.status_code==200
+    assert response.json()==[]
