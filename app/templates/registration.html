@@ -17,13 +17,19 @@ section{min-width:0;background:var(--surface);border:1px solid var(--line);borde
 #registration-section h2,#registration-section>p.hint{grid-column:1}
 #registration-section h2{align-self:end}
 #registration-section>p.hint{align-self:start;margin:0;max-width:360px}
-#registration-section #player-form{grid-column:2;grid-row:1 / span 2;display:flex;align-items:end;justify-content:flex-end}
+#registration-section #saved-roster{grid-column:1;grid-row:3}
+#registration-section #player-form{grid-column:2;grid-row:3;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start}
+.player-entry{min-width:0;padding:14px;background:rgba(16,25,35,.58);border:1px solid var(--line);border-radius:9px;gap:10px}
+.player-entry-heading{display:block;color:var(--text);font-size:14px;font-weight:750}
+.player-entry .row{align-items:end}
+.player-entry label{flex:1;min-width:0}
+.player-entry button{flex:0 0 auto}
 #registration-section #player-summary,#registration-section #players{grid-column:1 / -1}
 #registration-section #player-summary{margin:10px 0 2px}
 #registration-section #players{border-top:1px solid var(--line);padding-top:8px;min-height:42px}
 #registration-section #players>p{margin:0;padding:3px 0}
 #registration-section #players table{margin-top:0}
-@media(max-width:700px){#registration-section{grid-template-columns:1fr;gap:8px}#registration-section h2,#registration-section>p.hint,#registration-section #player-form,#registration-section #player-summary,#registration-section #players{grid-column:1;grid-row:auto}#registration-section #player-form{justify-content:flex-start;margin-top:4px}#registration-section>p.hint{max-width:none}}
+@media(max-width:700px){#registration-section{grid-template-columns:1fr;gap:8px}#registration-section h2,#registration-section>p.hint,#registration-section #saved-roster,#registration-section #player-form,#registration-section #player-summary,#registration-section #players{grid-column:1;grid-row:auto}#registration-section #player-form{margin-top:0}#registration-section>p.hint{max-width:none}}
 h2{font-size:17px;line-height:1.3;margin:0 0 5px;font-weight:750}
 h3{font-size:14px;margin:16px 0 8px;color:var(--accent)}
 p.hint,.muted{color:var(--muted);margin:0 0 12px;font-size:13px}
@@ -101,19 +107,22 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
 <section id="registration-section">
   <h2>1. Register players</h2>
   <p class="hint">Select players from your saved roster, or add someone manually. The draw pairs players into two-person teams.</p>
-  <div id="saved-roster" class="notice">
-    <strong>Saved players</strong>
-    <div class="row" style="margin-top:10px">
+  <div id="saved-roster" class="player-entry">
+    <strong class="player-entry-heading">Add from saved roster</strong>
+    <div class="row">
       <label style="flex:1;min-width:220px">Choose a saved player<select id="saved-player-select"><option value="">Select a player…</option></select></label>
       <button type="button" id="add-saved-player">Add player</button>
     </div>
     <div id="saved-player-status" class="small"></div>
   </div>
-  <form id="player-form" class="row">
-    <label class="player-name-field">Player name<input id="player-name" maxlength="80" required placeholder="First name + last initial"></label>
-    <label class="gender-field">Gender<input type="hidden" id="player-gender" value="female"><button type="button" id="player-gender-toggle" class="gender-toggle female" aria-label="Gender: Female. Click to switch">Female</button></label>
-    <label style="display:flex;align-items:center;gap:7px;min-height:38px"><input type="checkbox" id="save-new-player" style="width:auto">Save to roster</label>
-    <button>Add player</button>
+  <form id="player-form" class="player-entry">
+    <strong class="player-entry-heading">Add manually</strong>
+    <div class="row">
+      <label class="player-name-field">Player name<input id="player-name" maxlength="80" required placeholder="First name + last initial"></label>
+      <label class="gender-field">Gender<input type="hidden" id="player-gender" value="female"><button type="button" id="player-gender-toggle" class="gender-toggle female" aria-label="Gender: Female. Click to switch">Female</button></label>
+      <label style="display:flex;align-items:center;gap:7px;min-height:38px"><input type="checkbox" id="save-new-player" style="width:auto">Save to roster</label>
+      <button>Add player</button>
+    </div>
   </form>
   <div id="player-summary" class="muted"></div>
   <div id="players"></div>
