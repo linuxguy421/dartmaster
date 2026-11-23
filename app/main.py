@@ -171,30 +171,6 @@ def delete_saved_player(player_id: str) -> None:
         raise HTTPException(status_code=404,detail="Saved player not found")
 
 
-@app.get("/api/saved-players/import-source")
-def saved_player_import_source() -> list[dict]:
-    """List unique players from completed tournaments for roster import."""
-    candidates: dict[str, dict] = {}
-    try:
-        records = tournament_store().completed()
-    except TournamentStoreError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    for record in records:
-        registration = (record.get("snapshot") or {}).get("registration") or {}
-        for player in registration.get("players", []):
-            name = str(player.get("display_name", "")).strip()
-            gender = player.get("gender")
-            if not name or gender not in {"male", "female"}:
-                continue
-            key = name.casefold()
-            candidates.setdefault(key, {"display_name": name, "gender": gender, "tournaments": 0})
-            candidates[key]["tournaments"] += 1
-    saved_names = {item["display_name"].casefold() for item in saved_players_store().list()}
-    return sorted(
-        [item for key, item in candidates.items() if key not in saved_names],
-        key=lambda item: item["display_name"].casefold(),
-    )
-
 @app.get("/api/brackets")
 def list_brackets() -> list[dict]:
     output = []
