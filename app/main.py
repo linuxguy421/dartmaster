@@ -303,6 +303,153 @@ def create_tournament(request: TournamentRequest) -> dict:
     }
 
 
+def historical_results_payload(tournament_id: str | None = None) -> dict:
+    """Build historical tournament records and aggregate player/partnership stats."""
+    records = tournament_store().completed()
+    if tournament_id is not None:
+        records = [record for record in records if record["tournament_id"] == tournament_id]
+        if not records:
+            raise HTTPException(status_code=404, detail="Completed tournament not found")
+
+    tournaments = []
+    players: dict[str, dict] = {}
+    partnerships: dict[tuple[str, str], dict] = {}
+
+    for record in records:
+        snapshot = record["snapshot"]
+        runtime = snapshot.get("runtime", {})
+        registration = snapshot.get("registration") or {}
+        raw_players = {
+            item.get("player_id"): item.get("display_name", "").strip()
+            for item in registration.get("players", [])
+            if item.get("player_id") and item.get("display_name")
+        }
+        raw_teams = {
+            item.get("team_id"): item
+            for item in registration.get("teams", [])
+            if item.get("team_id")
+        }
+        seed_assignments = registration.get("seed_assignments", {})
+        entrants = snapshot.get("entrants", {})
+        entrant_members: dict[str, list[str]] = {}
+        for seed, team_id in seed_assignments.items():
+            team = raw_teams.get(team_id, {})
+            names = [
+                raw_players.get(team.get("player_one_id"), ""),
+                raw_players.get(team.get("player_two_id"), ""),
+            ]
+            names = [name for name in names if name]
+            entrant = entrants.get(seed)
+            if entrant and names:
+                entrant_members[entrant] = names
+
+        placements = runtime.get("placements", {})
+        if runtime.get("champion"):
+            placements.setdefault("1st", runtime["champion"])
+        result_rows = runtime.get("results", [])
+        team_records: dict[str, dict] = {}
+        for result in result_rows:
+            for side, outcome in (("winner", "wins"), ("loser", "losses")):
+                team_name = result.get(side)
+                if not team_name:
+                    continue
+                stats = team_records.setdefault(team_name, {"wins": 0, "losses": 0})
+                stats[outcome] += 1
+
+        for team_name, members in entrant_members.items():
+            if len(members) != 2:
+                continue
+            pair_names = sorted(members, key=str.casefold)
+            pair_key = tuple(name.casefold() for name in pair_names)
+            stats = partnerships.setdefault(pair_key, {
+                "players": pair_names, "tournaments": 0, "titles": 0,
+                "games_won": 0, "games_lost": 0, "top_finish": None,
+            })
+            stats["tournaments"] += 1
+            team_stats = team_records.get(team_name, {})
+            stats["games_won"] += team_stats.get("wins", 0)
+            stats["games_lost"] += team_stats.get("losses", 0)
+            finish = next((place for place, value in placements.items() if value == team_name), None)
+            if finish == "1st":
+                stats["titles"] += 1
+            if finish and (stats["top_finish"] is None or int(finish[:-2]) < int(stats["top_finish"][:-2])):
+                stats["top_finish"] = finish
+            for name in members:
+                player = players.setdefault(name.casefold(), {
+                    "name": name, "tournaments": 0, "titles": 0, "games_won": 0,
+                    "games_lost": 0, "finishes": {"1st": 0, "2nd": 0, "3rd": 0, "4th": 0},
+                })
+                player["tournaments"] += 1
+                player["games_won"] += team_stats.get("wins", 0)
+                player["games_lost"] += team_stats.get("losses", 0)
+                if finish in player["finishes"]:
+                    player["finishes"][finish] += 1
+                if finish == "1st":
+                    player["titles"] += 1
+
+        tournaments.append({
+            "tournament_id": record["tournament_id"],
+            "bracket_file": record["bracket_file"],
+            "team_count": len(entrants),
+            "created_at": record["created_at"],
+            "completed_at": record["completed_at"],
+            "champion": runtime.get("champion"),
+            "placements": placements,
+            "results": result_rows,
+            "entrants": entrants,
+            "players": raw_players,
+            "teams": raw_teams,
+            "seed_assignments": seed_assignments,
+        })
+
+    player_rows = sorted(
+        players.values(),
+        key=lambda item: (-item["titles"], -item["tournaments"], item["name"].casefold()),
+    )
+    partnership_rows = sorted(
+        partnerships.values(),
+        key=lambda item: (-item["titles"], -item["tournaments"], item["players"]),
+    )
+    return {
+        "tournaments": tournaments,
+        "summary": {
+            "tournaments": len(tournaments),
+            "games": sum(len(item["results"]) for item in tournaments),
+            "players": len(player_rows),
+            "partnerships": len(partnership_rows),
+        },
+        "players": player_rows,
+        "partnerships": partnership_rows,
+    }
+
+
+@app.get("/historical-results", response_class=HTMLResponse)
+def historical_results_page() -> str:
+    return (ROOT / "app" / "templates" / "historical_results.html").read_text(encoding="utf-8")
+
+
+@app.get("/historical-results/{tournament_id}", response_class=HTMLResponse)
+def historical_tournament_page(tournament_id: str) -> str:
+    historical_results_payload(tournament_id)
+    return (ROOT / "app" / "templates" / "historical_results.html").read_text(encoding="utf-8")
+
+
+@app.get("/api/historical-results")
+def get_historical_results() -> dict:
+    try:
+        return historical_results_payload()
+    except TournamentStoreError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/api/historical-results/{tournament_id}")
+def get_historical_tournament(tournament_id: str) -> dict:
+    try:
+        return historical_results_payload(tournament_id)
+    except TournamentStoreError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.get("/api/tournaments")
 def list_unfinished_tournaments() -> list[dict]:
     try:
