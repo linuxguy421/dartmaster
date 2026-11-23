@@ -18,8 +18,8 @@ from app.registration import (
     TournamentRoster,
     create_teams_from_draw,
 )
-from app.registration.store import RegistrationDraftStore
 from app.registration.saved_players import SavedPlayerStore
+from app.registration.store import RegistrationDraftStore
 from app.state import TournamentSession, TournamentStateStore, TournamentStoreError
 
 ROOT = Path(__file__).resolve().parent.parent
