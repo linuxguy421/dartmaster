@@ -103,8 +103,11 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <p class="hint">Select players from your saved roster, or add someone manually. The draw pairs players into two-person teams.</p>
   <div id="saved-roster" class="notice">
     <strong>Saved players</strong>
-    <div id="saved-player-options" class="grid" style="margin:10px 0"></div>
-    <div class="row"><button type="button" id="add-saved-players">Add selected players</button><span id="saved-player-status" class="small"></span></div>
+    <div class="row" style="margin-top:10px">
+      <label style="flex:1;min-width:220px">Choose a saved player<select id="saved-player-select"><option value="">Select a player…</option></select></label>
+      <button type="button" id="add-saved-player">Add player</button>
+    </div>
+    <div id="saved-player-status" class="small"></div>
   </div>
   <form id="player-form" class="row">
     <label class="player-name-field">Player name<input id="player-name" maxlength="80" required placeholder="First name + last initial"></label>
@@ -219,26 +222,27 @@ $('player-gender-toggle').addEventListener('click',()=>{
 });
 async function loadSavedPlayers(){
  const saved=await api('/api/saved-players?active_only=true');
- $('saved-player-options').innerHTML=saved.length?saved.map(p=>'<label style="display:flex;grid-template-columns:auto 1fr;align-items:center;gap:8px;padding:7px 9px;background:#101923;border:1px solid var(--line);border-radius:7px"><input type="checkbox" class="saved-player-choice" value="'+escapeHtml(p.player_id)+'" style="width:auto">'+escapeHtml(p.display_name)+' <span class="pill gender-'+p.gender+'">'+p.gender+'</span></label>').join(''):'<span class="muted">No active saved players. Add players below or manage the roster in Setup.</span>';
- $('add-saved-players').disabled=!saved.length;
+ $('saved-player-select').innerHTML='<option value="">Select a player…</option>'+saved.map(p=>'<option value="'+escapeHtml(p.player_id)+'">'+escapeHtml(p.display_name)+' ('+p.gender+')</option>').join('');
+ $('add-saved-player').disabled=!saved.length;
+ if(!saved.length)$('saved-player-status').textContent='No active saved players. Add players below or manage the roster in Setup.';
+ else $('saved-player-status').textContent='';
 }
-$('add-saved-players').addEventListener('click',async()=>{
- const ids=Array.from(document.querySelectorAll('.saved-player-choice:checked')).map(input=>input.value);
- if(!ids.length){$('saved-player-status').textContent='Select at least one player.';return;}
+$('add-saved-player').addEventListener('click',async()=>{
+ const id=$('saved-player-select').value;
+ if(!id){$('saved-player-status').textContent='Choose a saved player first.';return;}
  try{
   const saved=await api('/api/saved-players?active_only=true');
-  const selected=saved.filter(p=>ids.includes(p.player_id));
-  const existing=new Set(state.players.map(p=>p.display_name.trim().toLocaleLowerCase()));
-  let added=0,skipped=0;
-  for(const player of selected){
-   if(existing.has(player.display_name.trim().toLocaleLowerCase())){skipped++;continue;}
-   await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:player.display_name,gender:player.gender})});
-   existing.add(player.display_name.trim().toLocaleLowerCase());added++;
+  const player=saved.find(p=>p.player_id===id);
+  if(!player)throw new Error('That saved player is no longer available. Refresh the list.');
+  if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===player.display_name.trim().toLocaleLowerCase())){
+   $('saved-player-status').textContent='That player is already registered.';
+   return;
   }
+  await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:player.display_name,gender:player.gender})});
   await refresh();
-  document.querySelectorAll('.saved-player-choice').forEach(input=>input.checked=false);
-  $('saved-player-status').textContent=added+' added'+(skipped?', '+skipped+' already registered':'')+'.';
-  notify(added+' saved player'+(added===1?'':'s')+' added to registration.');
+  $('saved-player-select').value='';
+  $('saved-player-status').textContent=player.display_name+' added to registration.';
+  notify('Saved player added.');
  }catch(err){notify(err.message,true);}
 });
 $('player-form').addEventListener('submit',async e=>{e.preventDefault();try{
