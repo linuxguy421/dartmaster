@@ -100,13 +100,19 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
 </section>
 <section id="registration-section">
   <h2>1. Register players</h2>
-  <p class="hint">Register each player once. The draw pairs players into two-person teams.</p>
+  <p class="hint">Select players from your saved roster, or add someone manually. The draw pairs players into two-person teams.</p>
+  <div id="saved-roster" class="notice">
+    <strong>Saved players</strong>
+    <div id="saved-player-options" class="grid" style="margin:10px 0"></div>
+    <div class="row"><button type="button" id="add-saved-players">Add selected players</button><span id="saved-player-status" class="small"></span></div>
+  </div>
   <form id="player-form" class="row">
     <label class="player-name-field">Player name<input id="player-name" maxlength="80" required placeholder="First name + last initial"></label>
     <label class="gender-field">Gender<input type="hidden" id="player-gender" value="female"><button type="button" id="player-gender-toggle" class="gender-toggle female" aria-label="Gender: Female. Click to switch">Female</button></label>
+    <label style="display:flex;align-items:center;gap:7px;min-height:38px"><input type="checkbox" id="save-new-player" style="width:auto">Save to roster</label>
     <button>Add player</button>
   </form>
-      <div id="player-summary" class="muted"></div>
+  <div id="player-summary" class="muted"></div>
   <div id="players"></div>
 </section>
 <section id="draw-section">
@@ -211,7 +217,42 @@ $('player-gender-toggle').addEventListener('click',()=>{
  $('player-gender-toggle').setAttribute('aria-label','Gender: '+(next==='female'?'Female':'Male')+'. Click to switch');
  $('player-gender-toggle').textContent=next==='female'?'Female':'Male';
 });
-$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{const name=$('player-name').value.trim();if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender:$('player-gender').value})});$('player-name').value='';await refresh();notify('Player added.')}catch(err){notify(err.message,true)}});
+async function loadSavedPlayers(){
+ const saved=await api('/api/saved-players?active_only=true');
+ $('saved-player-options').innerHTML=saved.length?saved.map(p=>'<label style="display:flex;grid-template-columns:auto 1fr;align-items:center;gap:8px;padding:7px 9px;background:#101923;border:1px solid var(--line);border-radius:7px"><input type="checkbox" class="saved-player-choice" value="'+escapeHtml(p.player_id)+'" style="width:auto">'+escapeHtml(p.display_name)+' <span class="pill gender-'+p.gender+'">'+p.gender+'</span></label>').join(''):'<span class="muted">No active saved players. Add players below or manage the roster in Setup.</span>';
+ $('add-saved-players').disabled=!saved.length;
+}
+$('add-saved-players').addEventListener('click',async()=>{
+ const ids=Array.from(document.querySelectorAll('.saved-player-choice:checked')).map(input=>input.value);
+ if(!ids.length){$('saved-player-status').textContent='Select at least one player.';return;}
+ try{
+  const saved=await api('/api/saved-players?active_only=true');
+  const selected=saved.filter(p=>ids.includes(p.player_id));
+  const existing=new Set(state.players.map(p=>p.display_name.trim().toLocaleLowerCase()));
+  let added=0,skipped=0;
+  for(const player of selected){
+   if(existing.has(player.display_name.trim().toLocaleLowerCase())){skipped++;continue;}
+   await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:player.display_name,gender:player.gender})});
+   existing.add(player.display_name.trim().toLocaleLowerCase());added++;
+  }
+  await refresh();
+  document.querySelectorAll('.saved-player-choice').forEach(input=>input.checked=false);
+  $('saved-player-status').textContent=added+' added'+(skipped?', '+skipped+' already registered':'')+'.';
+  notify(added+' saved player'+(added===1?'':'s')+' added to registration.');
+ }catch(err){notify(err.message,true);}
+});
+$('player-form').addEventListener('submit',async e=>{e.preventDefault();try{
+ const name=$('player-name').value.trim(),gender=$('player-gender').value;
+ if(state.players.some(p=>p.display_name.trim().toLocaleLowerCase()===name.toLocaleLowerCase()))throw new Error('That player name is already registered.');
+ await api('/api/registration/players',{method:'POST',body:JSON.stringify({display_name:name,gender})});
+ let message='Player added.';
+ if($('save-new-player').checked){
+  try{await api('/api/saved-players',{method:'POST',body:JSON.stringify({display_name:name,gender})});message+=' Saved to roster.';}
+  catch(err){if(!/already exists/i.test(err.message))throw err;message+=' That name is already in the saved roster.';}
+ }
+ $('player-name').value='';$('save-new-player').checked=false;await refresh();await loadSavedPlayers();notify(message);
+}catch(err){notify(err.message,true)}});
+
 $('players').addEventListener('change',async e=>{const id=e.target.dataset.paid;if(!id)return;try{await api('/api/registration/players/'+id+'/payment',{method:'PUT',body:JSON.stringify({paid:e.target.checked})});await refresh();notify('Payment status updated.');}catch(err){notify(err.message,true);await refresh();}});
 $('players').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;try{await api('/api/registration/players/'+id,{method:'DELETE'});await refresh();notify('Player removed.')}catch(err){notify(err.message,true)}});
 $('draw-button').addEventListener('click',async()=>{try{
@@ -241,7 +282,7 @@ async function loadUnfinishedTournaments(){
  $('resume-section').classList.toggle('hidden',tournaments.length===0);
  $('unfinished-tournaments').innerHTML=tournaments.length?'<div class="team-list">'+tournaments.map(t=>'<div class="team"><strong>'+escapeHtml(t.bracket_file.replace('.json',''))+'</strong><div class="muted">'+t.team_count+' teams · '+t.completed_matches+' matches completed</div><div class="row" style="margin-top:10px"><a href="'+escapeHtml(t.dashboard_url)+'"><button type="button">Resume tournament</button></a><button type="button" class="danger secondary" data-delete-tournament="'+escapeHtml(t.tournament_id)+'">Delete</button></div></div>').join('')+'</div>':'<p class="muted">No unfinished tournaments.</p>';
 }
-async function init(){try{brackets=await api('/api/brackets');await refresh();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
+async function init(){try{brackets=await api('/api/brackets');await refresh();await loadSavedPlayers();await loadUnfinishedTournaments();}catch(err){notify(err.message,true)}}
 
 init();
 </script>
