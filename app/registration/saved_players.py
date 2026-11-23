@@ -1,7 +1,7 @@
 from __future__ import annotations
 import sqlite3
-from pathlib import Path
 import uuid
+from pathlib import Path
 
 class SavedPlayerStore:
     def __init__(self, db_path):
