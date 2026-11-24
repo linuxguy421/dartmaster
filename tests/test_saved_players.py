@@ -27,7 +27,8 @@ def test_setup_page_and_registration_links(tmp_path,monkeypatch):
     assert client.get("/setup").status_code==200
     page=client.get("/")
     assert page.status_code==200
-    assert "Add selected players" in page.text
+    assert "Add from saved roster" in page.text
+    assert "Add manually" in page.text
     assert 'href="/setup"' in page.text
 
 
