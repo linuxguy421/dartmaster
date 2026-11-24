@@ -95,6 +95,20 @@ def test_championship_reset_retains_same_board_and_logical_match():
     assert scheduler.assignments == ()
 
 
+def test_unassign_releases_board_and_returns_match_to_ready_queue():
+    runtime = runtime_for()
+    scheduler = BoardScheduler()
+    assignment = scheduler.assign(2, "G1", runtime)
+
+    released = scheduler.unassign(2)
+
+    assert released == assignment
+    assert scheduler.free_boards == (1, 2, 3, 4)
+    assert [match.match_id for match in scheduler.ready_matches(runtime)] == ["G1", "G2"]
+    with pytest.raises(BoardSchedulerError, match="no assigned match"):
+        scheduler.unassign(2)
+
+
 def test_board_ids_are_validated():
     scheduler = BoardScheduler()
     with pytest.raises(BoardSchedulerError, match="integer from 1 to 4"):

@@ -18,6 +18,7 @@ from app.registration import (
     TournamentRoster,
     create_teams_from_draw,
 )
+from app.registration.saved_players import SavedPlayerStore
 from app.registration.store import RegistrationDraftStore
 from app.state import TournamentSession, TournamentStateStore, TournamentStoreError
 
@@ -62,6 +63,9 @@ def registration_store() -> RegistrationDraftStore:
 
 def tournament_store() -> TournamentStateStore:
     return TournamentStateStore(database_path())
+
+def saved_players_store() -> SavedPlayerStore:
+    return SavedPlayerStore(database_path())
 
 
 def bracket_path(filename: str) -> Path:
@@ -129,6 +133,42 @@ def dashboard() -> str:
     # Tournament snapshots are stored separately and remain available to resume.
     registration_store().clear()
     return (ROOT / "app" / "templates" / "registration.html").read_text(encoding="utf-8")
+
+
+class SavedPlayerRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=80)
+    gender: Gender
+    active: bool = True
+
+@app.get("/setup", response_class=HTMLResponse)
+def setup_page() -> str:
+    return (ROOT / "app" / "templates" / "setup.html").read_text(encoding="utf-8")
+
+@app.get("/api/saved-players")
+def list_saved_players(active_only: bool = False) -> list[dict]:
+    return saved_players_store().list(active_only)
+
+@app.post("/api/saved-players", status_code=201)
+def create_saved_player(request: SavedPlayerRequest) -> dict:
+    try:
+        player_id=saved_players_store().add(request.display_name, request.gender.value)
+        return {"player_id":player_id,"display_name":request.display_name.strip(),"gender":request.gender.value,"active":True}
+    except ValueError as exc:
+        raise HTTPException(status_code=400,detail=str(exc)) from exc
+
+@app.put("/api/saved-players/{player_id}")
+def update_saved_player(player_id: str, request: SavedPlayerRequest) -> dict:
+    try:
+        changed=saved_players_store().update(player_id,request.display_name,request.gender.value,request.active)
+        if not changed: raise HTTPException(status_code=404,detail="Saved player not found")
+        return {"player_id":player_id,"display_name":request.display_name.strip(),"gender":request.gender.value,"active":request.active}
+    except ValueError as exc:
+        raise HTTPException(status_code=400,detail=str(exc)) from exc
+
+@app.delete("/api/saved-players/{player_id}", status_code=204)
+def delete_saved_player(player_id: str) -> None:
+    if not saved_players_store().delete(player_id):
+        raise HTTPException(status_code=404,detail="Saved player not found")
 
 
 @app.get("/api/brackets")
@@ -777,6 +817,16 @@ def assign_match_to_board(
 
 class WinnerRequest(BaseModel):
     winner: str = Field(min_length=1, max_length=160)
+
+
+@app.delete("/api/tournaments/{tournament_id}/boards/{board_id}/assign")
+def unassign_match_from_board(tournament_id: str, board_id: int) -> dict:
+    session = tournament_session(tournament_id)
+    try:
+        session.unassign_match(board_id)
+    except (BoardSchedulerError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return tournament_payload(session)
 
 
 @app.post("/api/tournaments/{tournament_id}/boards/{board_id}/winner")

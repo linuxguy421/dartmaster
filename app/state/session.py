@@ -106,6 +106,18 @@ class TournamentSession:
             },
         )
 
+    def unassign_match(self, board_id: int) -> None:
+        assignment = self.scheduler.unassign(board_id)
+        self._save_or_rollback(
+            "match_unassigned",
+            {
+                "board_id": board_id,
+                "match_id": assignment.match.match_id,
+                "source_game_id": assignment.match.source_game_id,
+                "assignments": self._assignment_summary(),
+            },
+        )
+
     def complete_match(self, board_id: int, winner: str) -> None:
         assignment = next(
             (item for item in self.scheduler.assignments if item.board_id == board_id),
