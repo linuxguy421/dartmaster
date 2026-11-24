@@ -819,6 +819,16 @@ class WinnerRequest(BaseModel):
     winner: str = Field(min_length=1, max_length=160)
 
 
+@app.delete("/api/tournaments/{tournament_id}/boards/{board_id}/assign")
+def unassign_match_from_board(tournament_id: str, board_id: int) -> dict:
+    session = tournament_session(tournament_id)
+    try:
+        session.unassign_match(board_id)
+    except (BoardSchedulerError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return tournament_payload(session)
+
+
 @app.post("/api/tournaments/{tournament_id}/boards/{board_id}/winner")
 def complete_board_match(tournament_id: str, board_id: int, request: WinnerRequest) -> dict:
     session = tournament_session(tournament_id)
