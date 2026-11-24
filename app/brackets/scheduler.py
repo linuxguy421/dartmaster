@@ -100,6 +100,15 @@ class BoardScheduler:
         self._assignments[board_id] = assignment
         return assignment
 
+    def unassign(self, board_id: int) -> BoardAssignment:
+        """Release an assigned match from a board without recording a result."""
+        self._validate_board(board_id)
+        assignment = self._assignments.get(board_id)
+        if assignment is None:
+            raise BoardSchedulerError(f"Board {board_id} has no assigned match")
+        del self._assignments[board_id]
+        return assignment
+
     def start_available(self, runtime: BracketRuntime) -> tuple[BoardAssignment, ...]:
         """Compatibility no-op: ready matches are never assigned automatically."""
         return self.assignments
