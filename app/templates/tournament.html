@@ -46,8 +46,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
  .champion-trophy{font-size:84px;line-height:1.15;filter:drop-shadow(0 5px 18px rgba(229,163,59,.5));animation:trophy-pop .8s cubic-bezier(.2,.9,.3,1.2) both}
  .champion-celebration h2{margin:12px 0 4px;color:#f4c875;font-size:clamp(25px,4vw,38px);letter-spacing:.04em}
  .champion-celebration p{margin:0;color:var(--text);font-size:17px}
+ .celebration-places{display:flex;justify-content:center;align-items:stretch;gap:12px;margin-top:24px;width:min(100%,680px);flex-wrap:wrap}
+ .celebration-place{flex:1 1 150px;padding:13px 16px;border:1px solid rgba(244,200,117,.35);border-radius:10px;background:rgba(8,13,20,.55)}
+ .celebration-place strong{display:block;color:#f4c875;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+ .celebration-place span{display:block;margin-top:6px;color:#fff;font-weight:750;font-size:16px}
  .celebration-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
- .celebration-confetti span{position:absolute;top:-14%;left:var(--x);width:9px;height:15px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall 6.8s ease-in forwards;animation-delay:var(--d);transform:rotate(var(--r))}
+ .celebration-confetti span{position:absolute;top:-14%;left:var(--x);width:9px;height:15px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall 9.8s ease-in forwards;animation-delay:var(--d);transform:rotate(var(--r))}
  @keyframes confetti-fall{0%{opacity:0;transform:translate3d(0,-15px,0) rotate(0)}10%{opacity:1}100%{opacity:.9;transform:translate3d(var(--drift),360px,0) rotate(720deg)}}
  @keyframes trophy-pop{0%{transform:scale(.35) rotate(-18deg);opacity:0}75%{transform:scale(1.12) rotate(5deg)}100%{transform:scale(1);opacity:1}}
  @media(prefers-reduced-motion:reduce){.champion-trophy,.celebration-confetti span{animation:none!important;opacity:1!important}}
@@ -185,10 +189,12 @@ function render(data){
  if(data.complete&&!celebrationStarted){
   celebrationStarted=true;
   $('celebration-winner').textContent=data.championship.champion+' are the tournament champions!';
-  $('celebration-confetti').innerHTML=Array.from({length:42},(_,i)=>'<span style="--x:'+((i*37)%100)+'%;--c:'+['#f2b84b','#f4f1e8','#e87955','#70c79a','#78a9e8'][i%5]+';--d:'+((i%7)*.12)+'s;--r:'+((i*29)%180)+'deg;--drift:'+(((i*17)%120)-60)+'px"></span>').join('');
+  const celebrationOrdinals={'1':'1st Place','2':'2nd Place','3':'3rd Place'};
+  $('celebration-places').innerHTML=['1','2','3'].filter(place=>completedPlacements[place]).map(place=>'<div class="celebration-place"><strong>'+celebrationOrdinals[place]+'</strong><span>'+esc(completedPlacements[place])+'</span></div>').join('');
+  $('celebration-confetti').innerHTML=Array.from({length:60},(_,i)=>'<span style="--x:'+((i*37)%100)+'%;--c:'+['#f2b84b','#f4f1e8','#e87955','#70c79a','#78a9e8'][i%5]+';--d:'+((i%10)*.12)+'s;--r:'+((i*29)%180)+'deg;--drift:'+(((i*17)%120)-60)+'px"></span>').join('');
   $('champion-celebration').hidden=false;
   $('tournament-overview').hidden=true;
-  window.setTimeout(()=>{$('champion-celebration').hidden=true;$('tournament-overview').hidden=false;},7000);
+  window.setTimeout(()=>{$('champion-celebration').hidden=true;$('tournament-overview').hidden=false;},10000);
  }
  $('payouts').hidden=data.complete;
  document.querySelector('.ready-queue').hidden=data.complete;
