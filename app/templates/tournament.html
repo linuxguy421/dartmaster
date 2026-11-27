@@ -198,7 +198,7 @@ function render(data){
   cashRemaining-=count*denomination;
   return {denomination,count};
  });
- $('cash-breakdown').innerHTML='<span class="cash-total">Cash to pay out: '+formatter.format(payoutTotal)+'</span>'+cashDenominations.map(({denomination,count})=>'<span>'+count+' × 
+ $('cash-breakdown').innerHTML='<span class="cash-total">Cash to pay out: '+formatter.format(payoutTotal)+'</span>'+cashDenominations.map(item=>'<span>'+item.count+' bills of $'+item.denomination+'</span>').join('');
  $('placement-awards').innerHTML=['3','2','1'].filter(place=>completedPlacements[place]).map(place=>{
   const ordinal=place==='1'?'1st':place==='2'?'2nd':'3rd';
   return '<div class="placement-award"><span>'+ordinal+' -</span> '+esc(completedPlacements[place])+'</div>';
