@@ -204,7 +204,7 @@ function render(data){
    remaining-=count*denomination;
   });
  });
- $('cash-breakdown').innerHTML='<span class="cash-total">Cash to pay out: '+formatter.format(payoutTotal)+'</span>'+[20,10,5,1].map(denomination=>'<span>;
+ $('cash-breakdown').innerHTML='<span class="cash-total">Cash to pay out: '+formatter.format(payoutTotal)+'</span>'+[20,10,5,1].map(denomination=>'<span>'+String.fromCharCode(36)+denomination+'s ‣ '+cashCounts[denomination]+'</span>').join('');
  $('placement-awards').innerHTML=['3','2','1'].filter(place=>completedPlacements[place]).map(place=>{
   const ordinal=place==='1'?'1st':place==='2'?'2nd':'3rd';
   return '<div class="placement-award"><span>'+ordinal+' -</span> '+esc(completedPlacements[place])+'</div>';
