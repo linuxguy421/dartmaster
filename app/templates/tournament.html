@@ -50,7 +50,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
  .celebration-place{flex:1 1 150px;padding:13px 16px;border:1px solid rgba(244,200,117,.35);border-radius:10px;background:rgba(8,13,20,.55)}
  .celebration-place strong{display:block;color:#f4c875;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
  .celebration-place span{display:block;margin-top:6px;color:#fff;font-weight:750;font-size:16px}
- .celebration-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+ .celebration-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}.champion-trophy,.champion-celebration h2,.champion-celebration p,.celebration-places{position:relative;z-index:1}
  .celebration-confetti span{position:absolute;top:-14%;left:var(--x);width:9px;height:15px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall 9.8s ease-in forwards;animation-delay:var(--d);transform:rotate(var(--r))}
  @keyframes confetti-fall{0%{opacity:0;transform:translate3d(0,-15px,0) rotate(0)}10%{opacity:1}100%{opacity:.9;transform:translate3d(var(--drift),360px,0) rotate(720deg)}}
  @keyframes trophy-pop{0%{transform:scale(.35) rotate(-18deg);opacity:0}75%{transform:scale(1.12) rotate(5deg)}100%{transform:scale(1);opacity:1}}
@@ -115,6 +115,7 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <div class="champion-trophy" aria-hidden="true">🏆</div>
   <h2>Tournament Champions!</h2>
   <p id="celebration-winner"></p>
+  <div class="celebration-places" id="celebration-places"></div>
  </section>
 <section class="bracket tournament-overview" id="tournament-overview">
   <div class="overview-heading"><div><h2 id="overview-title">Tournament progress &amp; summary</h2><p id="overview-intro" class="status">Bracket and match information will appear here.</p></div><span id="overview-status" class="pill">In progress</span></div>
