@@ -42,6 +42,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .confirm-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 .confirm-dialog-actions button{min-width:96px}
 .complete{padding:16px;border:1px solid var(--good);border-radius:9px;color:var(--good);margin-bottom:16px}
+ .champion-celebration{position:relative;isolation:isolate;overflow:hidden;min-height:290px;margin:0 0 22px;padding:38px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at 50% 35%,rgba(229,163,59,.24),transparent 58%),linear-gradient(135deg,#202b3a,#121a25);border:2px solid rgba(229,163,59,.8);border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.38)}
+ .champion-trophy{font-size:84px;line-height:1.15;filter:drop-shadow(0 5px 18px rgba(229,163,59,.5));animation:trophy-pop .8s cubic-bezier(.2,.9,.3,1.2) both}
+ .champion-celebration h2{margin:12px 0 4px;color:#f4c875;font-size:clamp(25px,4vw,38px);letter-spacing:.04em}
+ .champion-celebration p{margin:0;color:var(--text);font-size:17px}
+ .celebration-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+ .celebration-confetti span{position:absolute;top:-14%;left:var(--x);width:9px;height:15px;border-radius:2px;background:var(--c);opacity:0;animation:confetti-fall 6.8s ease-in forwards;animation-delay:var(--d);transform:rotate(var(--r))}
+ @keyframes confetti-fall{0%{opacity:0;transform:translate3d(0,-15px,0) rotate(0)}10%{opacity:1}100%{opacity:.9;transform:translate3d(var(--drift),360px,0) rotate(720deg)}}
+ @keyframes trophy-pop{0%{transform:scale(.35) rotate(-18deg);opacity:0}75%{transform:scale(1.12) rotate(5deg)}100%{transform:scale(1);opacity:1}}
+ @media(prefers-reduced-motion:reduce){.champion-trophy,.celebration-confetti span{animation:none!important;opacity:1!important}}
+
 .placement{color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase;margin:3px 0}
 .payouts{margin:0 0 18px;padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .payouts h2{font-size:14px;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -96,7 +106,13 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
   <article class="board disabled">Loading board status…</article>
   <article class="board disabled">Loading board status…</article>
  </section>
- <section class="bracket tournament-overview" id="tournament-overview">
+  <section id="champion-celebration" class="champion-celebration" hidden aria-live="polite">
+  <div class="celebration-confetti" id="celebration-confetti" aria-hidden="true"></div>
+  <div class="champion-trophy" aria-hidden="true">🏆</div>
+  <h2>Tournament Champions!</h2>
+  <p id="celebration-winner"></p>
+ </section>
+<section class="bracket tournament-overview" id="tournament-overview">
   <div class="overview-heading"><div><h2 id="overview-title">Tournament progress &amp; summary</h2><p id="overview-intro" class="status">Bracket and match information will appear here.</p></div><span id="overview-status" class="pill">In progress</span></div>
   <div id="summary-content"><p class="status">Loading tournament details…</p></div>
  </section>
@@ -115,7 +131,7 @@ main>section,.board,.ready-queue,.bracket,.results,.ready-match,.bracket-match{b
 <script>
 const tournamentId=location.pathname.split('/').filter(Boolean).pop();
 const $=id=>document.getElementById(id);
-let current=null,refreshing=false,sidePotEnabled=false;
+let current=null,refreshing=false,sidePotEnabled=false,celebrationStarted=false;
 let pendingWinner=null;
 const selectedBoards=new Map();
 let readyQueueSignature=null;
@@ -166,6 +182,14 @@ function render(data){
  }).join(''):'<p class="status">No matches are currently ready. The bracket will unlock the next matches as results are recorded.</p>';
  }
  $('champion').innerHTML=data.complete?'<div class="complete"><strong>Tournament complete</strong> · Champion: '+esc(data.championship.champion)+'</div>':'';
+ if(data.complete&&!celebrationStarted){
+  celebrationStarted=true;
+  $('celebration-winner').textContent=data.championship.champion+' are the tournament champions!';
+  $('celebration-confetti').innerHTML=Array.from({length:42},(_,i)=>'<span style="--x:'+((i*37)%100)+'%;--c:'+['#f2b84b','#f4f1e8','#e87955','#70c79a','#78a9e8'][i%5]+';--d:'+((i%7)*.12)+'s;--r:'+((i*29)%180)+'deg;--drift:'+(((i*17)%120)-60)+'px"></span>').join('');
+  $('champion-celebration').hidden=false;
+  $('tournament-overview').hidden=true;
+  window.setTimeout(()=>{$('champion-celebration').hidden=true;$('tournament-overview').hidden=false;},7000);
+ }
  $('payouts').hidden=data.complete;
  document.querySelector('.ready-queue').hidden=data.complete;
  $('boards').hidden=data.complete;
